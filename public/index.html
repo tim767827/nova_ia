@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NovaAI</title>
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<div class="app">
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+    <div class="logo">NovaAI</div>
+
+    <button class="newChat">+ Nouveau chat</button>
+
+    <div class="history">
+        <div class="item">Conversation 1</div>
+        <div class="item">Conversation 2</div>
+    </div>
+
+    <div class="bottom">
+        <div class="settings">⚙ Paramètres</div>
+    </div>
+</div>
+
+<!-- CHAT AREA -->
+<div class="chat">
+
+    <div class="messages" id="messages">
+
+        <div class="msg bot">
+            Bonjour, je suis NovaAI. Comment puis-je t'aider ?
+        </div>
+
+    </div>
+<div id="chat"></div>
+    <!-- INPUT -->
+    <div class="inputBar">
+        <input id="input" placeholder="Envoyer un message..." />
+        <button onclick="sendMessage()">➤</button>
+    </div>
+
+</div>
+
+</div>
+
+
+<script src="app.js"></script>
+</body>
+</html>
