@@ -1,3 +1,4 @@
+const userHistories = {};
 function addMessage(text, type) {
   const div = document.createElement("div");
   div.className = `msg ${type}`;
