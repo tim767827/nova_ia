@@ -9,21 +9,26 @@ body {
 background:#f3f4f6;
 height:100vh;
 transition:0.3s;
+overflow:hidden;
 }
 
+/* DARK MODE */
 body.dark {
 background:#0f0f10;
 color:white;
 }
 
+/* APP */
 .app {
 display:flex;
 height:100vh;
 }
 
-/* SIDEBAR */
+/* =========================
+   SIDEBAR
+========================= */
 .sidebar {
-width:260px;
+width:280px;
 background:white;
 border-right:1px solid #e5e7eb;
 padding:15px;
@@ -42,23 +47,46 @@ font-weight:700;
 margin-bottom:20px;
 }
 
+/* NEW CHAT */
 .newChat {
-background:#2563eb;
+background:linear-gradient(135deg,#2563eb,#4f46e5);
 color:white;
 border:none;
-padding:10px;
-border-radius:8px;
+padding:12px;
+border-radius:12px;
 cursor:pointer;
 margin-bottom:20px;
+font-weight:600;
 }
 
-/* CHAT */
+/* HISTORY */
+.history {
+flex:1;
+overflow:auto;
+}
+
+.item {
+padding:10px;
+border-radius:10px;
+background:#f1f5f9;
+margin-bottom:6px;
+cursor:pointer;
+}
+
+body.dark .item {
+background:#222;
+}
+
+/* =========================
+   CHAT
+========================= */
 .chat {
 flex:1;
 display:flex;
 flex-direction:column;
 }
 
+/* messages */
 .messages {
 flex:1;
 padding:20px;
@@ -68,24 +96,35 @@ flex-direction:column;
 gap:12px;
 }
 
+/* msg */
 .msg {
-max-width:70%;
+max-width:75%;
 padding:12px 14px;
 border-radius:14px;
 white-space:pre-wrap;
 line-height:1.4;
+animation:fade 0.2s ease;
 }
 
+@keyframes fade {
+from {opacity:0; transform:translateY(5px);}
+to {opacity:1; transform:translateY(0);}
+}
+
+/* USER */
 .user {
 align-self:flex-end;
 background:#2563eb;
 color:white;
+border-bottom-right-radius:6px;
 }
 
+/* BOT */
 .bot {
 align-self:flex-start;
 background:#e5e7eb;
 color:#111;
+border-bottom-left-radius:6px;
 }
 
 body.dark .bot {
@@ -93,7 +132,9 @@ background:#2a2a2a;
 color:white;
 }
 
-/* INPUT */
+/* =========================
+   INPUT BAR
+========================= */
 .inputBar {
 display:flex;
 padding:15px;
@@ -103,13 +144,14 @@ background:white;
 
 body.dark .inputBar {
 background:#171717;
+border-color:#2a2a2a;
 }
 
 .inputBar input {
 flex:1;
 padding:12px;
 border:none;
-border-radius:8px;
+border-radius:10px;
 outline:none;
 background:#f1f5f9;
 }
@@ -123,13 +165,39 @@ color:white;
 margin-left:10px;
 padding:12px 16px;
 border:none;
-border-radius:8px;
+border-radius:10px;
 cursor:pointer;
 background:#2563eb;
 color:white;
 }
 
-/* SETTINGS */
+/* =========================
+   ⚙ SETTINGS BUTTON (FIX POSITION)
+========================= */
+.bottom {
+padding-top:10px;
+border-top:1px solid #e5e7eb;
+}
+
+.settingsBtn {
+width:100%;
+padding:12px;
+border:none;
+border-radius:12px;
+cursor:pointer;
+background:linear-gradient(135deg,#2563eb,#4f46e5);
+color:white;
+font-weight:600;
+transition:0.2s;
+}
+
+.settingsBtn:hover {
+transform:scale(1.02);
+}
+
+/* =========================
+   SETTINGS MODAL
+========================= */
 .settings {
 position:fixed;
 top:50%;
@@ -137,17 +205,66 @@ left:50%;
 transform:translate(-50%,-50%);
 background:white;
 padding:20px;
-border-radius:10px;
+border-radius:14px;
 z-index:999;
 display:flex;
 flex-direction:column;
-gap:10px;
+gap:12px;
+width:280px;
+box-shadow:0 10px 30px rgba(0,0,0,0.2);
 }
 
 body.dark .settings {
 background:#1f1f1f;
 }
 
+/* boutons settings */
+.settings button {
+padding:12px;
+border:none;
+border-radius:10px;
+cursor:pointer;
+background:#f1f5f9;
+font-weight:600;
+}
+
+body.dark .settings button {
+background:#2a2a2a;
+color:white;
+}
+
+/* close */
+.settings button:last-child {
+background:#ef4444;
+color:white;
+}
+
+/* hidden */
 .hidden {
 display:none;
+}
+
+/* =========================
+   📱 MOBILE (iPhone / Android)
+========================= */
+@media (max-width: 768px) {
+
+.sidebar {
+display:none;
+}
+
+.chat {
+width:100%;
+}
+
+.inputBar {
+position:fixed;
+bottom:0;
+left:0;
+right:0;
+}
+
+.messages {
+padding-bottom:80px;
+}
 }
