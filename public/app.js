@@ -1,68 +1,87 @@
+const express = require("express");
+const cors = require("cors");
+const path = require("path");
+require("dotenv").config();
+
+const app = express();
+
+app.use(cors());
+app.use(express.json());
+app.use(express.static(path.join(__dirname, "..", "public")));
+
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "..", "public", "index.html"));
+});
+
+const API_KEY = process.env.API_KEY;
+
+// 🧠 mémoire globale (par user simple)
 const userHistories = {};
-function addMessage(text, type) {
-  const div = document.createElement("div");
-  div.className = `msg ${type}`;
-  div.textContent = text;
 
-  document.getElementById("messages").appendChild(div);
-  scroll();
-}
+/* =========================
+   🤖 ROUTE CHAT
+========================= */
+app.post("/chat", async (req, res) => {
+  try {
+    const { message, userId } = req.body;
 
-function scroll() {
-  const m = document.getElementById("messages");
-  m.scrollTop = m.scrollHeight;
-}
+    if (!message) {
+      return res.json({ reply: "Écris un message 🙂" });
+    }
 
-async function sendMessage() {
-  const input = document.getElementById("input");
-  const text = input.value.trim();
-  if (!text) return;
+    const id = userId || "default";
 
-  addMessage(text, "user");
-  input.value = "";
+    if (!userHistories[id]) {
+      userHistories[id] = [];
+    }
 
-  // 🧠 réflexion IA
-  const thinking = document.createElement("div");
-  thinking.className = "msg bot";
-  thinking.textContent = "Nova réfléchit...";
-  document.getElementById("messages").appendChild(thinking);
-  scroll();
+    const history = userHistories[id];
 
-  const res = await fetch("/chat", {
-    method: "POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({message:text})
-  });
+    history.push({ role: "user", content: message });
 
-  const data = await res.json();
+    if (history.length > 12) history.shift();
 
-  thinking.remove();
+    const response = await fetch(
+      "https://api.groq.com/openai/v1/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${API_KEY}`
+        },
+        body: JSON.stringify({
+          model: "llama-3.1-8b-instant",
+          messages: [
+            {
+              role: "system",
+              content:
+                "Tu es NovaAI. Tu réponds uniquement en français."
+            },
+            ...history
+          ]
+        })
+      }
+    );
 
-  typeWriter(data.reply);
-}
+    const data = await response.json();
 
-// ✨ effet typing ChatGPT
-function typeWriter(text) {
-  const div = document.createElement("div");
-  div.className = "msg bot";
-  document.getElementById("messages").appendChild(div);
+    const reply = data?.choices?.[0]?.message?.content;
 
-  let i = 0;
-  const interval = setInterval(() => {
-    div.textContent += text[i];
-    i++;
-    scroll();
+    history.push({ role: "assistant", content: reply });
 
-    if (i >= text.length) clearInterval(interval);
-  }, 10);
-}
+    res.json({ reply });
 
-/* 🌗 theme */
-function toggleTheme() {
-  document.body.classList.toggle("dark");
-}
+  } catch (err) {
+    console.log(err);
+    res.json({ reply: "Erreur serveur 😕" });
+  }
+});
 
-/* ⚙ settings */
-function toggleSettings() {
-  document.getElementById("settings").classList.toggle("hidden");
-}
+/* =========================
+   🚀 START
+========================= */
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+  console.log("✅ Server running on port " + PORT);
+});
