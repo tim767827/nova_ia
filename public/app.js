@@ -1,15 +1,15 @@
 function addMessage(text, type) {
-  const msg = document.createElement("div");
-  msg.className = `msg ${type}`;
-  msg.textContent = text;
+  const div = document.createElement("div");
+  div.className = `msg ${type}`;
+  div.textContent = text;
 
-  document.getElementById("messages").appendChild(msg);
-  scrollBottom();
+  document.getElementById("messages").appendChild(div);
+  scroll();
 }
 
-function scrollBottom() {
-  const box = document.getElementById("messages");
-  box.scrollTop = box.scrollHeight;
+function scroll() {
+  const m = document.getElementById("messages");
+  m.scrollTop = m.scrollHeight;
 }
 
 async function sendMessage() {
@@ -20,12 +20,12 @@ async function sendMessage() {
   addMessage(text, "user");
   input.value = "";
 
-  // 🧠 animation "réflexion"
+  // 🧠 réflexion IA
   const thinking = document.createElement("div");
   thinking.className = "msg bot";
   thinking.textContent = "Nova réfléchit...";
   document.getElementById("messages").appendChild(thinking);
-  scrollBottom();
+  scroll();
 
   const res = await fetch("/chat", {
     method: "POST",
@@ -37,31 +37,31 @@ async function sendMessage() {
 
   thinking.remove();
 
-  typeMessage(data.reply);
+  typeWriter(data.reply);
 }
 
 // ✨ effet typing ChatGPT
-function typeMessage(text) {
-  const msg = document.createElement("div");
-  msg.className = "msg bot";
-  document.getElementById("messages").appendChild(msg);
+function typeWriter(text) {
+  const div = document.createElement("div");
+  div.className = "msg bot";
+  document.getElementById("messages").appendChild(div);
 
   let i = 0;
   const interval = setInterval(() => {
-    msg.textContent += text[i];
+    div.textContent += text[i];
     i++;
-    scrollBottom();
+    scroll();
 
     if (i >= text.length) clearInterval(interval);
   }, 10);
 }
 
-// 🌗 mode sombre / clair
+/* 🌗 theme */
 function toggleTheme() {
-  document.body.classList.toggle("light");
+  document.body.classList.toggle("dark");
 }
 
-// ⚙ settings
+/* ⚙ settings */
 function toggleSettings() {
-  document.getElementById("settingsPanel").classList.toggle("hidden");
+  document.getElementById("settings").classList.toggle("hidden");
 }
