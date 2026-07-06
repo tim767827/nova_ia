@@ -9,15 +9,20 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// FRONT (dossier public)
+// FRONT
 app.use(express.static(path.join(__dirname, "..", "public")));
 
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "..", "public", "index.html"));
 });
 
-// API KEY Groq
+// API KEY
 const API_KEY = process.env.API_KEY;
+
+/* =========================
+   🧠 MEMOIRE SIMPLE
+========================= */
+const userHistories = {};
 
 /* =========================
    🤖 CHAT ROUTE
@@ -25,9 +30,25 @@ const API_KEY = process.env.API_KEY;
 app.post("/chat", async (req, res) => {
   try {
     const userMessage = req.body.message;
+    const userId = req.body.userId || "default";
 
     if (!userMessage) {
       return res.json({ reply: "Écris un message 🙂" });
+    }
+
+    // init mémoire user
+    if (!userHistories[userId]) {
+      userHistories[userId] = [];
+    }
+
+    const history = userHistories[userId];
+
+    // ajouter message user
+    history.push({ role: "user", content: userMessage });
+
+    // limiter mémoire
+    if (history.length > 12) {
+      history.shift();
     }
 
     const response = await fetch(
@@ -44,12 +65,9 @@ app.post("/chat", async (req, res) => {
             {
               role: "system",
               content:
-                "Tu dois toujours répondre uniquement en français, quelle que soit la langue de l'utilisateur."
+                "Tu es NovaAI. Tu réponds toujours uniquement en français."
             },
-            {
-              role: "user",
-              content: userMessage
-            }
+            ...history
           ]
         })
       }
@@ -61,9 +79,13 @@ app.post("/chat", async (req, res) => {
 
     const reply = data?.choices?.[0]?.message?.content;
 
+    // ajouter réponse IA à mémoire
+    history.push({ role: "assistant", content: reply });
+
     res.json({
       reply: reply || "IA n'a pas répondu 😕"
     });
+
   } catch (err) {
     console.log("ERROR =>", err);
     res.json({ reply: "Erreur serveur 😕" });
@@ -71,7 +93,7 @@ app.post("/chat", async (req, res) => {
 });
 
 /* =========================
-   🚀 START SERVER
+   🚀 SERVER START
 ========================= */
 const PORT = process.env.PORT || 3000;
 
