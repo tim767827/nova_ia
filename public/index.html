@@ -15,12 +15,9 @@
 <div class="sidebar">
   <div class="logo">NovaAI</div>
 
-  <button class="newChat">+ Nouveau chat</button>
+  <button class="newChat" onclick="clearChat()">+ Nouveau chat</button>
 
-  <div class="history">
-    <div class="item">Conversation 1</div>
-    <div class="item">Conversation 2</div>
-  </div>
+  <div class="history" id="history"></div>
 
   <div class="bottom">
     <button onclick="toggleSettings()" class="settingsBtn">⚙ Paramètres</button>
@@ -30,9 +27,7 @@
 <!-- CHAT -->
 <div class="chat">
 
-  <div id="messages" class="messages">
-    <div class="msg bot">Bonjour 👋, comment puis-je t’aider ?</div>
-  </div>
+  <div id="messages" class="messages"></div>
 
   <div class="inputBar">
     <input id="input" placeholder="Écris ton message..." />
