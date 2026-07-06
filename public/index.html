@@ -11,59 +11,43 @@
 
 <div class="app">
 
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NovaAI</title>
-<link rel="stylesheet" href="style.css">
-</head>
-
-<body>
-
-<div class="app">
-
 <!-- SIDEBAR -->
 <div class="sidebar">
-    <div class="logo">NovaAI</div>
+  <div class="logo">NovaAI</div>
 
-    <button class="newChat">+ Nouveau chat</button>
+  <button class="newChat">+ Nouveau chat</button>
 
-    <div class="history">
-        <div class="item">Conversation 1</div>
-        <div class="item">Conversation 2</div>
-    </div>
+  <div class="history">
+    <div class="item">Conversation 1</div>
+    <div class="item">Conversation 2</div>
+  </div>
 
-    <div class="bottom">
-        <button class="settings" onclick="toggleSettings()">⚙ Paramètres</button>
-    </div>
+  <div class="bottom">
+    <button onclick="toggleSettings()" class="settingsBtn">⚙ Paramètres</button>
+  </div>
 </div>
 
 <!-- CHAT -->
 <div class="chat">
 
-    <div id="messages" class="messages">
-        <div class="msg bot">Bonjour 👋, je suis NovaAI.</div>
-    </div>
+  <div id="messages" class="messages">
+    <div class="msg bot">Bonjour 👋, comment puis-je t’aider ?</div>
+  </div>
 
-    <!-- INPUT -->
-    <div class="inputBar">
-        <input id="input" placeholder="Envoyer un message..." />
-        <button onclick="sendMessage()">➤</button>
-    </div>
-
-</div>
+  <div class="inputBar">
+    <input id="input" placeholder="Écris ton message..." />
+    <button onclick="sendMessage()">➤</button>
+  </div>
 
 </div>
 
-<!-- SETTINGS MODAL -->
-<div id="settingsPanel" class="settingsPanel hidden">
-    <h3>Paramètres</h3>
+</div>
 
-    <button onclick="toggleTheme()">🌗 Mode clair / sombre</button>
-
-    <button onclick="toggleSettings()">Fermer</button>
+<!-- SETTINGS -->
+<div id="settings" class="settings hidden">
+  <h3>Paramètres</h3>
+  <button onclick="toggleTheme()">🌗 Mode sombre / clair</button>
+  <button onclick="toggleSettings()">Fermer</button>
 </div>
 
 <script src="app.js"></script>
