@@ -20,7 +20,7 @@ app.get("/", (req, res) => {
 /* =================================================
    🤖 GROQ API
 ================================================= */
-const API_KEY = process.env.GROQ_API_KEY;
+const API_KEY = process.env.API_KEY;
 
 app.post("/chat", async (req, res) => {
   try {
