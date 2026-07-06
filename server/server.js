@@ -39,6 +39,10 @@ app.post("/chat", async (req, res) => {
       body: JSON.stringify({
         model: "llama-3.1-8b-instant",
         messages: [
+                 role: "system",
+      content: "Tu dois toujours répondre uniquement en français, quelle que soit la langue de l'utilisateur."
+    },
+    {
           { role: "user", content: userMessage }
         ]
       })
