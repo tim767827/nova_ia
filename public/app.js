@@ -1,87 +1,70 @@
-const express = require("express");
-const cors = require("cors");
-const path = require("path");
-require("dotenv").config();
+function addMessage(text, type) {
+  const div = document.createElement("div");
+  div.className = `msg ${type}`;
+  div.textContent = text;
 
-const app = express();
+  document.getElementById("messages").appendChild(div);
+  scroll();
+}
 
-app.use(cors());
-app.use(express.json());
-app.use(express.static(path.join(__dirname, "..", "public")));
+function scroll() {
+  const m = document.getElementById("messages");
+  m.scrollTop = m.scrollHeight;
+}
 
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "..", "public", "index.html"));
-});
+async function sendMessage() {
+  const input = document.getElementById("input");
+  const text = input.value.trim();
+  if (!text) return;
 
-const API_KEY = process.env.API_KEY;
+  addMessage(text, "user");
+  input.value = "";
 
-// 🧠 mémoire globale (par user simple)
-const userHistories = {};
+  const thinking = document.createElement("div");
+  thinking.className = "msg bot";
+  thinking.textContent = "Nova réfléchit...";
+  document.getElementById("messages").appendChild(thinking);
 
-/* =========================
-   🤖 ROUTE CHAT
-========================= */
-app.post("/chat", async (req, res) => {
-  try {
-    const { message, userId } = req.body;
+  scroll();
 
-    if (!message) {
-      return res.json({ reply: "Écris un message 🙂" });
-    }
+  const res = await fetch("/chat", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      message: text,
+      userId: "user1"
+    })
+  });
 
-    const id = userId || "default";
+  const data = await res.json();
 
-    if (!userHistories[id]) {
-      userHistories[id] = [];
-    }
+  thinking.remove();
 
-    const history = userHistories[id];
+  typeWriter(data.reply);
+}
 
-    history.push({ role: "user", content: message });
+function typeWriter(text) {
+  const div = document.createElement("div");
+  div.className = "msg bot";
+  document.getElementById("messages").appendChild(div);
 
-    if (history.length > 12) history.shift();
+  let i = 0;
+  const interval = setInterval(() => {
+    div.textContent += text[i];
+    i++;
+    scroll();
+    if (i >= text.length) clearInterval(interval);
+  }, 10);
+}
 
-    const response = await fetch(
-      "https://api.groq.com/openai/v1/chat/completions",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${API_KEY}`
-        },
-        body: JSON.stringify({
-          model: "llama-3.1-8b-instant",
-          messages: [
-            {
-              role: "system",
-              content:
-                "Tu es NovaAI. Tu réponds uniquement en français."
-            },
-            ...history
-          ]
-        })
-      }
-    );
+function toggleTheme() {
+  document.body.classList.toggle("dark");
+}
 
-    const data = await response.json();
+function toggleSettings() {
+  document.getElementById("settings").classList.toggle("hidden");
+}
 
-    const reply = data?.choices?.[0]?.message?.content;
-
-    history.push({ role: "assistant", content: reply });
-
-    res.json({ reply });
-
-  } catch (err) {
-    console.log(err);
-    res.json({ reply: "Erreur serveur 😕" });
-  }
-});
-
-/* =========================
-   🚀 START
-========================= */
-const PORT = process.env.PORT || 3000;
-
-app.listen(PORT, () => {
-  console.log("✅ Server running on port " + PORT);
-});
+function clearChat() {
+  document.getElementById("messages").innerHTML = "";
+}
