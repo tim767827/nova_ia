@@ -236,117 +236,71 @@ reply:"Erreur serveur 😕"
 // ANALYSE IMAGE
 // =========================
 
-app.post("/vision", async(req,res)=>{
+app.post("/vision", async (req, res) => {
+
+  try {
+
+    const image = req.body.image;
+
+    if (!image) {
+      return res.json({
+        reply: "Aucune image reçue."
+      });
+    }
 
 
-try{
+    const response = await fetch(
+      "https://router.huggingface.co/hf-inference/models/Qwen/Qwen2.5-VL-7B-Instruct",
+      {
+        method: "POST",
+
+        headers: {
+          Authorization: `Bearer ${HF_API_KEY}`,
+          "Content-Type": "application/json"
+        },
+
+        body: JSON.stringify({
+
+          inputs: {
+
+            image: `data:image/jpeg;base64,${image}`,
+
+            text: "Décris cette image en français."
+
+          }
+
+        })
+      }
+    );
 
 
-const image = req.body.image;
+    const data = await response.json();
 
 
-
-if(!image){
-
-return res.json({
-
-reply:"Aucune image reçue."
-
-});
-
-}
+    console.log("VISION RESPONSE =>", data);
 
 
+    res.json({
 
-const response = await fetch(
+      reply:
+      data?.generated_text ||
+      data?.[0]?.generated_text ||
+      "Je n'arrive pas à analyser cette image."
 
-"https://router.huggingface.co/hf-inference/models/Salesforce/blip-image-captioning-large",
-
-
-{
-
-
-method:"POST",
+    });
 
 
-headers:{
+  } catch(err) {
 
+    console.log("VISION ERROR =>", err);
 
-Authorization:`Bearer ${HF_API_KEY}`,
+    res.json({
+      reply:"Erreur analyse image."
+    });
 
-"Content-Type":"application/json"
-
-
-},
-
-
-body:JSON.stringify({
-
-
-inputs:`data:image/jpeg;base64,${image}`
-
-
-})
-
-
-}
-
-
-);
-
-
-
-const data = await response.json();
-
-
-
-console.log(
-"VISION RESPONSE =>",
-data
-);
-
-
-
-res.json({
-
-reply:
-
-data?.[0]?.generated_text ||
-
-"Je n'arrive pas à analyser cette image."
+  }
 
 });
-
-
-}
-
-
-catch(err){
-
-
-console.log(
-
-"VISION ERROR =>",
-
-err
-
-);
-
-
-
-res.json({
-
-reply:"Erreur analyse image."
-
-});
-
-
-}
-
-
-
-});
-
 
 
 
