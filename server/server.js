@@ -428,6 +428,11 @@ res.json({
 
 error:"Erreur serveur image."
 
+  console.log(
+"HF KEY PRESENT :",
+process.env.HF_API_KEY ? "OUI" : "NON"
+);
+
 });
 
 
