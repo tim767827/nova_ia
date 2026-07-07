@@ -374,57 +374,35 @@ async function generateImage(){
         return;
     }
 
-
     const response = await fetch("/generate-image", {
-
         method:"POST",
-
         headers:{
             "Content-Type":"application/json"
         },
-
         body:JSON.stringify({
             prompt:prompt
         })
-
     });
-
 
     const data = await response.json();
 
-    console.log("IMAGE RESULT :", data);
-
+    console.log(data);
 
     if(data.image){
 
         const img = document.createElement("img");
 
         img.src = data.image;
-
         img.className = "generatedImage";
 
-
         document.getElementById("messages").appendChild(img);
-
-
-        currentChat.messages.push({
-
-            type:"image",
-
-            text:data.image
-
-        });
-
-
-        saveChats();
-
-        scroll();
-
 
     } else {
 
         alert(data.error || "Erreur image");
 
     }
+
+}
 
 }
