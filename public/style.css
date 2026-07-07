@@ -778,6 +778,32 @@ bottom:0;
 max-width:90%;
 
 }
+   .generatedImage{
+
+max-width:500px;
+
+border-radius:20px;
+
+margin:20px;
+
+align-self:flex-start;
+
+box-shadow:0 10px 30px rgba(0,0,0,.15);
+
+}
+   .bot{
+
+line-height:1.8;
+
+font-size:16px;
+
+letter-spacing:.2px;
+
+white-space:normal;
+
+padding:18px 22px;
+
+}
 
 
 
