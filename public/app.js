@@ -1,39 +1,144 @@
+// ======================
+// Historique
+// ======================
+
+let chats = JSON.parse(localStorage.getItem("novaChats")) || [];
+let currentChat = null;
+
+function saveChats() {
+  localStorage.setItem("novaChats", JSON.stringify(chats));
+}
+
+function renderHistory() {
+  const history = document.getElementById("history");
+  history.innerHTML = "";
+
+  chats.forEach(chat => {
+    const item = document.createElement("div");
+    item.className = "item";
+    item.textContent = chat.title;
+
+    item.onclick = () => loadChat(chat.id);
+
+    history.appendChild(item);
+  });
+}
+
+function newChat() {
+
+  currentChat = {
+    id: Date.now(),
+    title: "Nouvelle conversation",
+    messages: []
+  };
+
+  chats.unshift(currentChat);
+
+  saveChats();
+  renderHistory();
+
+  document.getElementById("messages").innerHTML = "";
+}
+
+function loadChat(id) {
+
+  currentChat = chats.find(c => c.id === id);
+
+  document.getElementById("messages").innerHTML = "";
+
+  currentChat.messages.forEach(msg => {
+    addMessage(msg.text, msg.type);
+  });
+
+}
+
+function clearChat() {
+  newChat();
+}
+
+// ======================
+// Messages
+// ======================
+
 function addMessage(text, type) {
+
   const div = document.createElement("div");
+
   div.className = `msg ${type}`;
+
   div.textContent = text;
 
   document.getElementById("messages").appendChild(div);
+
   scroll();
 }
 
 function scroll() {
+
   const m = document.getElementById("messages");
+
   m.scrollTop = m.scrollHeight;
+
 }
 
+// ======================
+// Envoi message
+// ======================
+
 async function sendMessage() {
+
   const input = document.getElementById("input");
+
   const text = input.value.trim();
+
   if (!text) return;
 
+  if (!currentChat) {
+    newChat();
+  }
+
   addMessage(text, "user");
+
+  currentChat.messages.push({
+    text,
+    type: "user"
+  });
+
+  if (currentChat.title === "Nouvelle conversation") {
+    currentChat.title = text.substring(0, 25);
+  }
+
+  saveChats();
+  renderHistory();
+
   input.value = "";
 
   const thinking = document.createElement("div");
+
   thinking.className = "msg bot";
+
   thinking.textContent = "Nova réfléchit...";
+
   document.getElementById("messages").appendChild(thinking);
 
   scroll();
 
   const res = await fetch("/chat", {
+
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+
+    headers: {
+      "Content-Type": "application/json"
+    },
+
     body: JSON.stringify({
+
       message: text,
+
       userId: "user1"
+
     })
+
   });
 
   const data = await res.json();
@@ -41,30 +146,75 @@ async function sendMessage() {
   thinking.remove();
 
   typeWriter(data.reply);
+
 }
 
+// ======================
+// Typing effect
+// ======================
+
 function typeWriter(text) {
+
   const div = document.createElement("div");
+
   div.className = "msg bot";
+
   document.getElementById("messages").appendChild(div);
 
   let i = 0;
+
   const interval = setInterval(() => {
+
     div.textContent += text[i];
+
     i++;
+
     scroll();
-    if (i >= text.length) clearInterval(interval);
+
+    if (i >= text.length) {
+
+      clearInterval(interval);
+
+      currentChat.messages.push({
+
+        text,
+
+        type: "bot"
+
+      });
+
+      saveChats();
+
+    }
+
   }, 10);
+
 }
 
+// ======================
+// Paramètres
+// ======================
+
 function toggleTheme() {
+
   document.body.classList.toggle("dark");
+
 }
 
 function toggleSettings() {
+
   document.getElementById("settings").classList.toggle("hidden");
+
 }
 
-function clearChat() {
-  document.getElementById("messages").innerHTML = "";
+// ======================
+// Démarrage
+// ======================
+
+renderHistory();
+
+if (chats.length) {
+
+  loadChat(chats[0].id);
+
 }
