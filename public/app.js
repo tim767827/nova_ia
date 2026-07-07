@@ -300,3 +300,54 @@ imageUpload.addEventListener("change", () => {
     document.getElementById("messages").appendChild(img);
 
 });
+async function analyzeImage(){
+
+    const fileInput = document.getElementById("imageUpload");
+
+    const file = fileInput.files[0];
+
+    if(!file){
+        alert("Choisis une image");
+        return;
+    }
+
+
+    addMessage("📷 Image envoyée à NovaAI", "user");
+
+
+    const reader = new FileReader();
+
+
+    reader.onload = async function(){
+
+        const imageBase64 = reader.result.split(",")[1];
+
+
+        const res = await fetch("/vision", {
+
+            method:"POST",
+
+            headers:{
+                "Content-Type":"application/json"
+            },
+
+            body:JSON.stringify({
+
+                image:imageBase64
+
+            })
+
+        });
+
+
+        const data = await res.json();
+
+
+        addMessage(data.reply,"bot");
+
+    };
+
+
+    reader.readAsDataURL(file);
+
+}
