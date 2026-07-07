@@ -12,7 +12,6 @@ function saveChats() {
 function renderHistory() {
 
   const history = document.getElementById("history");
-
   history.innerHTML = "";
 
   chats.forEach(chat => {
@@ -21,10 +20,37 @@ function renderHistory() {
     item.className = "item";
 
     const title = document.createElement("span");
+    title.className = "chatTitle";
     title.textContent = chat.title;
-
     title.onclick = () => loadChat(chat.id);
 
+    // Conteneur des boutons
+    const actions = document.createElement("div");
+    actions.className = "chatActions";
+
+    // Bouton Renommer
+    const edit = document.createElement("button");
+    edit.className = "editBtn";
+    edit.innerHTML = "✏️";
+
+    edit.onclick = (e) => {
+
+      e.stopPropagation();
+
+      const nouveauNom = prompt("Nouveau nom de la conversation :", chat.title);
+
+      if (nouveauNom && nouveauNom.trim() !== "") {
+
+        chat.title = nouveauNom.trim();
+
+        saveChats();
+        renderHistory();
+
+      }
+
+    };
+
+    // Bouton Supprimer
     const trash = document.createElement("button");
     trash.className = "trashBtn";
     trash.innerHTML = "🗑️";
@@ -51,15 +77,17 @@ function renderHistory() {
 
     };
 
+    actions.appendChild(edit);
+    actions.appendChild(trash);
+
     item.appendChild(title);
-    item.appendChild(trash);
+    item.appendChild(actions);
 
     history.appendChild(item);
 
   });
 
 }
-
 function newChat() {
 
   currentChat = {
