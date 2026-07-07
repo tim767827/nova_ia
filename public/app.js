@@ -110,11 +110,25 @@ function loadChat(id) {
 
   document.getElementById("messages").innerHTML = "";
 
-  currentChat.messages.forEach(msg => {
-    addMessage(msg.text, msg.type);
-  });
+ currentChat.messages.forEach(msg => {
 
-}
+    if(msg.type === "image"){
+
+        const img = document.createElement("img");
+
+        img.src = msg.text;
+
+        img.className="generatedImage";
+
+        document.getElementById("messages").appendChild(img);
+
+    } else {
+
+        addMessage(msg.text, msg.type);
+
+    }
+
+});
 
 function clearChat() {
   newChat();
