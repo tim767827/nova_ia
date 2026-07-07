@@ -283,8 +283,7 @@ app.post("/vision", async (req, res) => {
 
 
         body: JSON.stringify({
-
-          model: "Qwen/Qwen2.5-VL-3B-Instruct",
+      model:"Qwen/Qwen2.5-VL-3B-Instruct",
 
 
           messages: [
