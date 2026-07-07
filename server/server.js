@@ -329,115 +329,109 @@ reply:"Erreur analyse image."
 
 });
 
-
+// =========================
+// GENERATION IMAGE
+// =========================
 
 app.post("/generate-image", async (req,res)=>{
 
-try {
+  try {
 
-const prompt = req.body.prompt;
-
-if(!prompt){
-
-return res.json({
-error:"Aucune description donnée."
-});
-
-}
+    const prompt = req.body.prompt;
 
 
-console.log(
-"HF KEY PRESENT :",
-process.env.HF_API_KEY ? "OUI" : "NON"
-);
+    if(!prompt){
+
+      return res.json({
+        error:"Aucune description donnée."
+      });
+
+    }
 
 
+    const response = await fetch(
 
-const response = await fetch(
+      "https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-schnell",
 
-"https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-schnell"
+      {
+        method:"POST",
 
-{
-method:"POST",
+        headers:{
 
-headers:{
-"Authorization":`Bearer ${process.env.HF_API_KEY}`,
-"Content-Type":"application/json"
-},
+          "Authorization":`Bearer ${process.env.HF_API_KEY}`,
+          "Content-Type":"application/json"
 
-body:JSON.stringify({
-inputs:prompt
-})
+        },
 
-}
+        body:JSON.stringify({
 
-);
+          inputs:prompt
 
+        })
 
+      }
 
-console.log(
-"HF STATUS :",
-response.status
-);
+    );
 
 
-
-if(!response.ok){
-
-const errorText = await response.text();
-
-console.log(
-"HF ERROR :",
-errorText
-);
+    console.log(
+      "HF STATUS :",
+      response.status
+    );
 
 
-return res.json({
+    if(!response.ok){
 
-error:errorText
+      const errorText = await response.text();
 
-});
-
-
-}
-
-
-
-const buffer = await response.arrayBuffer();
+      console.log(
+        "HF ERROR :",
+        errorText
+      );
 
 
-const imageBase64 =
-Buffer.from(buffer).toString("base64");
+      return res.json({
+
+        error:errorText
+
+      });
+
+    }
 
 
-
-res.json({
-
-image:
-"data:image/png;base64,"+imageBase64
-
-});
+    const buffer = await response.arrayBuffer();
 
 
-
-}
-
-catch(error){
-
-console.log(
-"IMAGE GENERATION ERROR =>",
-error
-);
+    const imageBase64 =
+      Buffer.from(buffer).toString("base64");
 
 
-res.json({
+    res.json({
 
-error:"Erreur génération image."
+      image:
+      "data:image/png;base64," + imageBase64
 
-});
+    });
 
 
-}
+  }
+
+
+  catch(error){
+
+    console.log(
+      "IMAGE GENERATION ERROR =>",
+      error
+    );
+
+
+    res.json({
+
+      error:"Erreur génération image."
+
+    });
+
+  }
 
 });
 // =========================
