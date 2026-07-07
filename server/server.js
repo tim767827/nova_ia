@@ -182,7 +182,7 @@ app.post("/vision", async (req,res)=>{
 
     const response = await fetch(
 
-      "https://api-inference.huggingface.co/models/Salesforce/blip-image-captioning-base",
+   "https://router.huggingface.co/hf-inference/models/Salesforce/blip-image-captioning-base",
 
       {
 
