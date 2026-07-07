@@ -159,55 +159,62 @@ app.post("/chat", async (req, res) => {
    👁️ ANALYSE IMAGE
 ========================= */
 
-app.post("/vision", async (req,res)=>{
+app.post("/vision", async (req, res) => {
 
-
-  try{
-
+  try {
 
     const image = req.body.image;
 
-
-    if(!image){
-
+    if (!image) {
       return res.json({
-
-        reply:"Aucune image reçue."
-
+        reply: "Aucune image reçue."
       });
-
     }
 
 
-
     const response = await fetch(
-
-   "https://router.huggingface.co/hf-inference/models/Salesforce/blip-image-captioning-base",
-
+      "https://router.huggingface.co/hf-inference/models/Salesforce/blip-image-captioning-base",
       {
+        method: "POST",
 
-        method:"POST",
-
-        headers:{
-
-          Authorization:`Bearer ${HF_API_KEY}`,
-
-          "Content-Type":"application/json"
-
+        headers: {
+          Authorization: `Bearer ${HF_API_KEY}`,
+          "Content-Type": "application/json"
         },
 
-
-        body:JSON.stringify({
-
-          inputs:image
-
+        body: JSON.stringify({
+          inputs: `data:image/jpeg;base64,${image}`
         })
-
       }
-
     );
 
 
+    const data = await response.json();
+
+
+    console.log("VISION RESPONSE =>", data);
+
+
+    res.json({
+
+      reply:
+      data[0]?.generated_text ||
+      "Je n'arrive pas à analyser cette image."
+
+    });
+
+
+  } catch(err) {
+
+    console.log("VISION ERROR =>", err);
+
+    res.json({
+      reply:"Erreur analyse image."
+    });
+
+  }
+
+});
 
     const data = await response.json();
 
