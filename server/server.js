@@ -232,15 +232,11 @@ reply:"Erreur serveur 😕"
 
 
 
-// =========================
-// ANALYSE IMAGE
-// =========================
-
 app.post("/vision", async (req, res) => {
 
   try {
 
-    const image = req.body.image;
+    let image = req.body.image;
 
     if (!image) {
       return res.json({
@@ -249,27 +245,67 @@ app.post("/vision", async (req, res) => {
     }
 
 
-    const response = await fetch(
-      "https://router.huggingface.co/hf-inference/models/Qwen/Qwen2.5-VL-7B-Instruct",
-      {
-        method: "POST",
+    // remet le format image complet
+    if (!image.startsWith("data:image")) {
+      image = "data:image/jpeg;base64," + image;
+    }
 
-        headers: {
-          Authorization: `Bearer ${HF_API_KEY}`,
-          "Content-Type": "application/json"
+
+    const response = await fetch(
+      "https://router.huggingface.co/v1/chat/completions",
+      {
+
+        method:"POST",
+
+        headers:{
+          "Content-Type":"application/json",
+          Authorization:`Bearer ${HF_API_KEY}`
         },
 
-        body: JSON.stringify({
 
-          inputs: {
+        body:JSON.stringify({
 
-            image: `data:image/jpeg;base64,${image}`,
+          model:"Qwen/Qwen2.5-VL-7B-Instruct",
 
-            text: "Décris cette image en français."
+          messages:[
 
-          }
+            {
+
+              role:"user",
+
+              content:[
+
+                {
+
+                  type:"text",
+
+                  text:
+                  "Décris cette image en français. Lis le texte visible, explique les objets, les personnes et réponds aux questions sur cette image."
+
+                },
+
+
+                {
+
+                  type:"image_url",
+
+                  image_url:{
+                    url:image
+                  }
+
+                }
+
+              ]
+
+            }
+
+          ],
+
+
+          max_tokens:500
 
         })
+
       }
     );
 
@@ -277,31 +313,33 @@ app.post("/vision", async (req, res) => {
     const data = await response.json();
 
 
-    console.log("VISION RESPONSE =>", data);
+    console.log("QWEN IMAGE =>",data);
+
 
 
     res.json({
 
       reply:
-      data?.generated_text ||
-      data?.[0]?.generated_text ||
-      "Je n'arrive pas à analyser cette image."
+      data?.choices?.[0]?.message?.content ||
+      "Je n'ai pas réussi à analyser l'image."
 
     });
 
 
-  } catch(err) {
 
-    console.log("VISION ERROR =>", err);
+  } catch(error){
+
+    console.log("VISION ERROR",error);
 
     res.json({
+
       reply:"Erreur analyse image."
+
     });
 
   }
 
 });
-
 
 
 
