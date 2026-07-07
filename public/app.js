@@ -228,8 +228,8 @@ function typeWriter(text) {
   let i = 0;
 
   const interval = setInterval(() => {
-
-    div.textContent += text[i];
+div.innerHTML = text.substring(0,i)
+.replace(/\n/g,"<br><br>");
 
     i++;
 
