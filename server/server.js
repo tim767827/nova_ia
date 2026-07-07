@@ -333,71 +333,7 @@ app.post("/vision", async (req, res) => {
 
 
 
-    // Gestion erreurs Hugging Face
-
-    if(data.error){
-
-      return res.json({
-
-        reply:
-        "Erreur IA image : " + data.error
-
-      });
-
-    }
-
-
-
-    const answer =
-      data?.choices?.[0]?.message?.content;
-
-
-
-    if(!answer){
-
-      return res.json({
-
-        reply:
-        "L'IA n'a pas renvoyé de description."
-
-      });
-
-    }
-
-
-
-    res.json({
-
-      reply: answer
-
-    });
-
-
-
-  }
-
-
-  catch(error){
-
-
-    console.log(
-      "VISION ERROR :",
-      error
-    );
-
-
-    res.json({
-
-      reply:
-      "Erreur serveur analyse image."
-
-    });
-
-
-  }
-
-
-});
+   
 // =========================
 // START SERVER
 // =========================
