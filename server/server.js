@@ -2,9 +2,13 @@ const express = require("express");
 const cors = require("cors");
 const path = require("path");
 require("dotenv").config();
+
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_KEY);
+const genAI = new GoogleGenerativeAI(
+  process.env.GEMINI_KEY
+);
+
 
 const app = express();
 
@@ -16,7 +20,7 @@ const app = express();
 app.use(cors());
 
 app.use(express.json({
-  limit: "20mb"
+  limit:"20mb"
 }));
 
 
@@ -25,18 +29,17 @@ app.use(express.json({
 // =========================
 
 app.use(express.static(
-  path.join(__dirname, "..", "public")
+  path.join(__dirname,"..","public")
 ));
 
 
-app.get("/", (req, res) => {
+app.get("/",(req,res)=>{
 
   res.sendFile(
-    path.join(__dirname, "..", "public", "index.html")
+    path.join(__dirname,"..","public","index.html")
   );
 
 });
-
 
 
 // =========================
@@ -45,12 +48,9 @@ app.get("/", (req, res) => {
 
 const API_KEY = process.env.API_KEY;
 
-const HF_API_KEY = process.env.HF_API_KEY;
-
-
 
 // =========================
-// MEMOIRE SIMPLE
+// MEMOIRE CHAT
 // =========================
 
 const userHistories = {};
@@ -61,7 +61,7 @@ const userHistories = {};
 // CHAT GROQ
 // =========================
 
-app.post("/chat", async (req,res)=>{
+app.post("/chat", async(req,res)=>{
 
 
 try{
@@ -70,7 +70,6 @@ try{
 const userMessage = req.body.message;
 
 const userId = req.body.userId || "default";
-
 
 
 if(!userMessage){
@@ -94,7 +93,6 @@ userHistories[userId]=[];
 
 
 const history = userHistories[userId];
-
 
 
 history.push({
@@ -121,47 +119,37 @@ const response = await fetch(
 
 {
 
-
 method:"POST",
 
 headers:{
 
-
 "Content-Type":"application/json",
 
 Authorization:`Bearer ${API_KEY}`
-
 
 },
 
 
 body:JSON.stringify({
 
-
 model:"llama-3.1-8b-instant",
 
-
 messages:[
-
 
 {
 
 role:"system",
 
 content:
-"Tu es NovaAI. Tu réponds toujours uniquement en français."
+"Tu es NovaAI. Tu réponds toujours en français."
 
 },
 
-
 ...history
-
 
 ]
 
-
 })
-
 
 }
 
@@ -172,16 +160,16 @@ content:
 const data = await response.json();
 
 
-
 console.log(
-"GROQ RESPONSE =>",
+"GROQ =>",
 data
 );
 
 
 
 const reply =
-data?.choices?.[0]?.message?.content;
+data?.choices?.[0]?.message?.content ||
+"Je n'ai pas répondu.";
 
 
 
@@ -197,8 +185,7 @@ content:reply
 
 res.json({
 
-reply:
-reply || "IA n'a pas répondu 😕"
+reply:reply
 
 });
 
@@ -206,19 +193,20 @@ reply || "IA n'a pas répondu 😕"
 
 }
 
-catch(err){
+
+catch(error){
 
 
 console.log(
 "CHAT ERROR =>",
-err
+error
 );
 
 
 
 res.json({
 
-reply:"Erreur serveur 😕"
+reply:"Erreur serveur chat."
 
 });
 
@@ -228,7 +216,6 @@ reply:"Erreur serveur 😕"
 
 
 });
-
 
 
 
@@ -239,107 +226,122 @@ reply:"Erreur serveur 😕"
 // ANALYSE IMAGE GEMINI
 // =========================
 
-app.post("/vision", async (req, res) => {
-
-  try {
-
-    let image = req.body.image;
+app.post("/vision", async(req,res)=>{
 
 
-    if (!image) {
-
-      return res.json({
-
-        reply: "Aucune image reçue."
-
-      });
-
-    }
+try{
 
 
-    // enlève le début base64
-    image = image.replace(
-      /^data:image\/\w+;base64,/,
-      ""
-    );
-
-
-    const model = genAI.getGenerativeModel({
-
-      model: "gemini-1.5-flash"
-
-    });
+let image = req.body.image;
 
 
 
-    const result = await model.generateContent([
+if(!image){
 
+return res.json({
 
-      {
+reply:"Aucune image reçue."
 
-        inlineData: {
+});
 
-          data: image,
-
-          mimeType: "image/jpeg"
-
-        }
-
-      },
-
-
-      "Décris cette image en français. Lis le texte visible, explique les objets, les personnes et réponds aux questions sur cette image."
-
-    ]);
+}
 
 
 
-    const response = result.response;
+
+// enlève le début base64
+
+image = image.replace(
+"data:image/jpeg;base64,",
+""
+);
 
 
 
-    res.json({
+const model = genAI.getGenerativeModel({
 
-      reply: response.text()
-
-    });
-
-
-
-  } catch (error) {
-
-
-    console.log(
-      "GEMINI IMAGE ERROR =>",
-      error
-    );
-
-
-    res.json({
-
-      reply:
-      "Erreur analyse image."
-
-    });
-
-
-  }
+model:"gemini-2.0-flash"
 
 });
 
 
 
-  
+const result = await model.generateContent([
+
+
+{
+
+inlineData:{
+
+data:image,
+
+mimeType:"image/jpeg"
+
+}
+
+},
+
+
+"Analyse cette image en français. Décris ce que tu vois, lis les textes présents, explique les objets, les personnes et réponds aux questions."
 
 
 
-   
+]);
+
+
+
+const text =
+result.response.text();
+
+
+
+res.json({
+
+reply:text
+
+});
+
+
+
+
+}
+
+
+catch(error){
+
+
+console.log(
+"GEMINI ERROR =>",
+error
+);
+
+
+
+res.json({
+
+reply:"Erreur analyse image."
+
+});
+
+
+}
+
+
+
+});
+
+
+
+
+
 // =========================
 // START SERVER
 // =========================
 
 
-const PORT = process.env.PORT || 3000;
+const PORT =
+process.env.PORT || 3000;
+
 
 
 app.listen(PORT,()=>{
