@@ -236,7 +236,7 @@ reply:"Erreur serveur 😕"
 
 
 // =========================
-// ANALYSE IMAGE QWEN VISION
+// ANALYSE IMAGE GEMINI
 // =========================
 
 app.post("/vision", async (req, res) => {
@@ -257,83 +257,75 @@ app.post("/vision", async (req, res) => {
     }
 
 
-
-    // Vérifie le format image
-    if (!image.startsWith("data:image")) {
-
-      image = "data:image/jpeg;base64," + image;
-
-    }
+    // enlève le début base64
+    image = image.replace(
+      /^data:image\/\w+;base64,/,
+      ""
+    );
 
 
+    const model = genAI.getGenerativeModel({
 
-    const response = await fetch(
+      model: "gemini-1.5-flash"
 
-      "https://router.huggingface.co/v1/chat/completions",
+    });
+
+
+
+    const result = await model.generateContent([
+
 
       {
 
-        method: "POST",
+        inlineData: {
+
+          data: image,
+
+          mimeType: "image/jpeg"
+
+        }
+
+      },
 
 
-        headers: {
+      "Décris cette image en français. Lis le texte visible, explique les objets, les personnes et réponds aux questions sur cette image."
 
-          "Content-Type": "application/json",
-
-          "Authorization": `Bearer ${HF_API_KEY}`
-
-        },
+    ]);
 
 
-        body: JSON.stringify({
-      model:"llava-hf/llava-1.5-7b-hf",
+
+    const response = result.response;
 
 
-          messages: [
 
-            {
+    res.json({
 
-              role: "user",
+      reply: response.text()
 
-              content: [
-
-                {
-
-                  type: "text",
-
-                  text:
-                  "Tu es une IA vision. Analyse cette image en français. Décris ce que tu vois, lis les textes présents, explique les objets et réponds aux questions sur cette image."
-
-                },
+    });
 
 
-                {
 
-                  type: "image_url",
-
-                  image_url: {
-
-                    url: image
-
-                  }
-
-                }
-
-              ]
-
-            }
-
-          ],
+  } catch (error) {
 
 
-          max_tokens: 700
-
-        })
-
-      }
-
+    console.log(
+      "GEMINI IMAGE ERROR =>",
+      error
     );
 
+
+    res.json({
+
+      reply:
+      "Erreur analyse image."
+
+    });
+
+
+  }
+
+});
 
 
     const data = await response.json();
