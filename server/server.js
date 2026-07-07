@@ -328,14 +328,8 @@ app.post("/vision", async (req, res) => {
 });
 
 
-    const data = await response.json();
 
-
-
-    console.log(
-      "VISION QWEN RESULTAT :",
-      JSON.stringify(data,null,2)
-    );
+  
 
 
 
