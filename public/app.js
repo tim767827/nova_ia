@@ -10,18 +10,54 @@ function saveChats() {
 }
 
 function renderHistory() {
+
   const history = document.getElementById("history");
+
   history.innerHTML = "";
 
   chats.forEach(chat => {
+
     const item = document.createElement("div");
     item.className = "item";
-    item.textContent = chat.title;
 
-    item.onclick = () => loadChat(chat.id);
+    const title = document.createElement("span");
+    title.textContent = chat.title;
+
+    title.onclick = () => loadChat(chat.id);
+
+    const trash = document.createElement("button");
+    trash.className = "trashBtn";
+    trash.innerHTML = "🗑️";
+
+    trash.onclick = (e) => {
+
+      e.stopPropagation();
+
+      if (confirm("Supprimer cette conversation ?")) {
+
+        chats = chats.filter(c => c.id !== chat.id);
+
+        if (currentChat && currentChat.id === chat.id) {
+
+          currentChat = null;
+          document.getElementById("messages").innerHTML = "";
+
+        }
+
+        saveChats();
+        renderHistory();
+
+      }
+
+    };
+
+    item.appendChild(title);
+    item.appendChild(trash);
 
     history.appendChild(item);
+
   });
+
 }
 
 function newChat() {
