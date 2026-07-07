@@ -400,7 +400,11 @@ async function generateImage(){
 
     if(data.image){
 
-        document.getElementById("generatedImage").src = data.image;
+      const img = document.getElementById("generatedImage");
+
+img.src = data.image;
+
+img.style.display="block";
 
     }
 
