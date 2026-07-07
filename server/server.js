@@ -232,65 +232,87 @@ reply:"Erreur serveur 😕"
 
 
 
+// =========================
+// ANALYSE IMAGE QWEN VISION
+// =========================
+
 app.post("/vision", async (req, res) => {
 
   try {
 
     let image = req.body.image;
 
+
     if (!image) {
+
       return res.json({
+
         reply: "Aucune image reçue."
+
       });
+
     }
 
 
-    // remet le format image complet
+
+    // Vérifie le format image
     if (!image.startsWith("data:image")) {
+
       image = "data:image/jpeg;base64," + image;
+
     }
+
 
 
     const response = await fetch(
+
       "https://router.huggingface.co/v1/chat/completions",
+
       {
 
-        method:"POST",
+        method: "POST",
 
-        headers:{
-          "Content-Type":"application/json",
-          Authorization:`Bearer ${HF_API_KEY}`
+
+        headers: {
+
+          "Content-Type": "application/json",
+
+          "Authorization": `Bearer ${HF_API_KEY}`
+
         },
 
 
-        body:JSON.stringify({
+        body: JSON.stringify({
 
-          model:"Qwen/Qwen2.5-VL-7B-Instruct",
+          model: "Qwen/Qwen2.5-VL-3B-Instruct",
 
-          messages:[
+
+          messages: [
 
             {
 
-              role:"user",
+              role: "user",
 
-              content:[
+              content: [
 
                 {
 
-                  type:"text",
+                  type: "text",
 
                   text:
-                  "Décris cette image en français. Lis le texte visible, explique les objets, les personnes et réponds aux questions sur cette image."
+                  "Tu es une IA vision. Analyse cette image en français. Décris ce que tu vois, lis les textes présents, explique les objets et réponds aux questions sur cette image."
 
                 },
 
 
                 {
 
-                  type:"image_url",
+                  type: "image_url",
 
-                  image_url:{
-                    url:image
+                  image_url: {
+
+                    url: image
+
                   }
 
                 }
@@ -302,48 +324,92 @@ app.post("/vision", async (req, res) => {
           ],
 
 
-          max_tokens:500
+          max_tokens: 700
 
         })
 
       }
+
     );
+
 
 
     const data = await response.json();
 
 
-    console.log("QWEN IMAGE =>",data);
 
+    console.log(
+      "VISION QWEN RESULTAT :",
+      JSON.stringify(data,null,2)
+    );
+
+
+
+    // Gestion erreurs Hugging Face
+
+    if(data.error){
+
+      return res.json({
+
+        reply:
+        "Erreur IA image : " + data.error
+
+      });
+
+    }
+
+
+
+    const answer =
+      data?.choices?.[0]?.message?.content;
+
+
+
+    if(!answer){
+
+      return res.json({
+
+        reply:
+        "L'IA n'a pas renvoyé de description."
+
+      });
+
+    }
+
+
+
+    res.json({
+
+      reply: answer
+
+    });
+
+
+
+  }
+
+
+  catch(error){
+
+
+    console.log(
+      "VISION ERROR :",
+      error
+    );
 
 
     res.json({
 
       reply:
-      data?.choices?.[0]?.message?.content ||
-      "Je n'ai pas réussi à analyser l'image."
+      "Erreur serveur analyse image."
 
     });
 
-
-
-  } catch(error){
-
-    console.log("VISION ERROR",error);
-
-    res.json({
-
-      reply:"Erreur analyse image."
-
-    });
 
   }
 
+
 });
-
-
-
-
 // =========================
 // START SERVER
 // =========================
