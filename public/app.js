@@ -355,18 +355,10 @@ async function generateImage(){
 
     const prompt = document.getElementById("imagePrompt").value;
 
-
     if(!prompt){
-
         alert("Écris une description d'image");
-
         return;
-
     }
-
-
-    console.log("Création image :", prompt);
-
 
 
     const response = await fetch("/generate-image", {
@@ -374,45 +366,51 @@ async function generateImage(){
         method:"POST",
 
         headers:{
-
             "Content-Type":"application/json"
-
         },
 
-
         body:JSON.stringify({
-
             prompt:prompt
-
         })
 
     });
 
 
-
     const data = await response.json();
-
-
 
     console.log("IMAGE RESULT :", data);
 
 
-
     if(data.image){
 
-      const img = document.getElementById("generatedImage");
+        const img = document.createElement("img");
 
-img.src = data.image;
+        img.src = data.image;
 
-img.style.display="block";
+        img.className = "generatedImage";
 
-    }
 
-    else{
+        document.getElementById("messages").appendChild(img);
+
+
+        currentChat.messages.push({
+
+            type:"image",
+
+            text:data.image
+
+        });
+
+
+        saveChats();
+
+        scroll();
+
+
+    } else {
 
         alert(data.error || "Erreur image");
 
     }
-
 
 }
