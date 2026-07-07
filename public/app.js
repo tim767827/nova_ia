@@ -282,3 +282,21 @@ if (chats.length) {
   loadChat(chats[0].id);
 
 }
+const imageUpload = document.getElementById("imageUpload");
+
+imageUpload.addEventListener("change", () => {
+
+    const file = imageUpload.files[0];
+
+    if(!file) return;
+
+    const img = document.createElement("img");
+
+    img.src = URL.createObjectURL(file);
+
+    img.style.maxWidth = "250px";
+    img.style.borderRadius = "12px";
+
+    document.getElementById("messages").appendChild(img);
+
+});
