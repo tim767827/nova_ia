@@ -337,7 +337,6 @@ try {
 
 const prompt = req.body.prompt;
 
-
 if(!prompt){
 
 return res.json({
@@ -347,26 +346,27 @@ error:"Aucune description donnée."
 }
 
 
+console.log(
+"HF KEY PRESENT :",
+process.env.HF_API_KEY ? "OUI" : "NON"
+);
+
+
+
 const response = await fetch(
 
 "https://router.huggingface.co/hf-inference/models/stabilityai/stable-diffusion-xl-base-1.0",
 
 {
-
 method:"POST",
 
 headers:{
-
-Authorization:`Bearer ${process.env.HF_API_KEY}`,
-
+"Authorization":`Bearer ${process.env.HF_API_KEY}`,
 "Content-Type":"application/json"
-
 },
 
 body:JSON.stringify({
-
 inputs:prompt
-
 })
 
 }
@@ -375,7 +375,10 @@ inputs:prompt
 
 
 
-console.log("HF STATUS :", response.status);
+console.log(
+"HF STATUS :",
+response.status
+);
 
 
 
@@ -383,12 +386,15 @@ if(!response.ok){
 
 const errorText = await response.text();
 
-console.log("HF ERROR :",errorText);
+console.log(
+"HF ERROR :",
+errorText
+);
 
 
 return res.json({
 
-error:"Hugging Face erreur : "+errorText
+error:errorText
 
 });
 
@@ -400,7 +406,6 @@ error:"Hugging Face erreur : "+errorText
 const buffer = await response.arrayBuffer();
 
 
-
 const imageBase64 =
 Buffer.from(buffer).toString("base64");
 
@@ -408,7 +413,8 @@ Buffer.from(buffer).toString("base64");
 
 res.json({
 
-image:"data:image/png;base64,"+imageBase64
+image:
+"data:image/png;base64,"+imageBase64
 
 });
 
@@ -426,18 +432,12 @@ error
 
 res.json({
 
-error:"Erreur serveur image."
-
-  console.log(
-"HF KEY PRESENT :",
-process.env.HF_API_KEY ? "OUI" : "NON"
-);
+error:"Erreur génération image."
 
 });
 
 
 }
-
 
 });
 // =========================
