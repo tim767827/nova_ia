@@ -260,8 +260,7 @@ reply:"Aucune image reçue."
 
 const response = await fetch(
 
-
-"https://router.huggingface.co/hf-inference/models/Salesforce/blip-image-captioning-base",
+"https://router.huggingface.co/hf-inference/models/Salesforce/blip-image-captioning-large",
 
 
 {
