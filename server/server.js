@@ -5,249 +5,223 @@ require("dotenv").config();
 
 const app = express();
 
-// Middleware
-app.use(cors());
-app.use(express.json({ limit: "20mb" }));
 
-// FRONT
-app.use(express.static(path.join(__dirname, "..", "public")));
+// =========================
+// MIDDLEWARE
+// =========================
+
+app.use(cors());
+
+app.use(express.json({
+  limit: "20mb"
+}));
+
+
+// =========================
+// FRONTEND
+// =========================
+
+app.use(express.static(
+  path.join(__dirname, "..", "public")
+));
+
 
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "..", "public", "index.html"));
+
+  res.sendFile(
+    path.join(__dirname, "..", "public", "index.html")
+  );
+
 });
 
 
+
 // =========================
-// 🔑 API KEYS
+// API KEYS
 // =========================
 
 const API_KEY = process.env.API_KEY;
+
 const HF_API_KEY = process.env.HF_API_KEY;
 
 
-/* =========================
-   🧠 MEMOIRE SIMPLE
-========================= */
+
+// =========================
+// MEMOIRE SIMPLE
+// =========================
 
 const userHistories = {};
 
 
-/* =========================
-   🤖 CHAT ROUTE GROQ
-========================= */
 
-app.post("/chat", async (req, res) => {
+// =========================
+// CHAT GROQ
+// =========================
 
-  try {
-
-    const userMessage = req.body.message;
-    const userId = req.body.userId || "default";
+app.post("/chat", async (req,res)=>{
 
 
-    if (!userMessage) {
-      return res.json({
-        reply: "Écris un message 🙂"
-      });
-    }
+try{
 
 
-    if (!userHistories[userId]) {
-      userHistories[userId] = [];
-    }
+const userMessage = req.body.message;
 
-
-    const history = userHistories[userId];
-
-
-    history.push({
-      role: "user",
-      content: userMessage
-    });
-
-
-    if (history.length > 12) {
-      history.shift();
-    }
+const userId = req.body.userId || "default";
 
 
 
-    const response = await fetch(
-      "https://api.groq.com/openai/v1/chat/completions",
-      {
+if(!userMessage){
 
-        method: "POST",
+return res.json({
 
-        headers: {
+reply:"Écris un message 🙂"
 
-          "Content-Type": "application/json",
+});
 
-          Authorization: `Bearer ${API_KEY}`
-
-        },
-
-
-        body: JSON.stringify({
-
-          model: "llama-3.1-8b-instant",
-
-          messages: [
-
-            {
-              role: "system",
-              content:
-              "Tu es NovaAI. Tu réponds toujours uniquement en français."
-            },
-
-            ...history
-
-          ]
-
-        })
-
-      }
-    );
-
-
-    const data = await response.json();
-
-
-    console.log("GROQ RESPONSE =>", data);
-
-
-    const reply =
-    data?.choices?.[0]?.message?.content;
+}
 
 
 
-    history.push({
+if(!userHistories[userId]){
 
-      role:"assistant",
+userHistories[userId]=[];
 
-      content:reply
-
-    });
+}
 
 
 
-    res.json({
-
-      reply: reply || "IA n'a pas répondu 😕"
-
-    });
+const history = userHistories[userId];
 
 
 
-  } catch(err){
+history.push({
 
-    console.log("CHAT ERROR =>",err);
+role:"user",
 
-    res.json({
-
-      reply:"Erreur serveur 😕"
-
-    });
-
-  }
+content:userMessage
 
 });
 
 
 
+if(history.length > 12){
+
+history.shift();
+
+}
 
 
-/* =========================
-   👁️ ANALYSE IMAGE
-========================= */
 
-app.post("/vision", async (req, res) => {
+const response = await fetch(
 
-  try {
+"https://api.groq.com/openai/v1/chat/completions",
 
-    const image = req.body.image;
-
-    if (!image) {
-      return res.json({
-        reply: "Aucune image reçue."
-      });
-    }
+{
 
 
-    const response = await fetch(
-      "https://router.huggingface.co/hf-inference/models/Salesforce/blip-image-captioning-base",
-      {
-        method: "POST",
+method:"POST",
 
-        headers: {
-          Authorization: `Bearer ${HF_API_KEY}`,
-          "Content-Type": "application/json"
-        },
-
-        body: JSON.stringify({
-          inputs: `data:image/jpeg;base64,${image}`
-        })
-      }
-    );
+headers:{
 
 
-    const data = await response.json();
+"Content-Type":"application/json",
+
+Authorization:`Bearer ${API_KEY}`
 
 
-    console.log("VISION RESPONSE =>", data);
+},
 
 
-    res.json({
-
-      reply:
-      data[0]?.generated_text ||
-      "Je n'arrive pas à analyser cette image."
-
-    });
+body:JSON.stringify({
 
 
-  } catch(err) {
+model:"llama-3.1-8b-instant",
 
-    console.log("VISION ERROR =>", err);
 
-    res.json({
-      reply:"Erreur analyse image."
-    });
+messages:[
 
-  }
+
+{
+
+role:"system",
+
+content:
+"Tu es NovaAI. Tu réponds toujours uniquement en français."
+
+},
+
+
+...history
+
+
+]
+
+
+})
+
+
+}
+
+);
+
+
+
+const data = await response.json();
+
+
+
+console.log(
+"GROQ RESPONSE =>",
+data
+);
+
+
+
+const reply =
+data?.choices?.[0]?.message?.content;
+
+
+
+history.push({
+
+role:"assistant",
+
+content:reply
 
 });
 
-    const data = await response.json();
+
+
+res.json({
+
+reply:
+reply || "IA n'a pas répondu 😕"
+
+});
 
 
 
-    console.log("VISION RESPONSE =>",data);
+}
+
+catch(err){
+
+
+console.log(
+"CHAT ERROR =>",
+err
+);
 
 
 
-    res.json({
+res.json({
 
-      reply:
-      data[0]?.generated_text ||
-      "Je n'arrive pas à analyser cette image."
+reply:"Erreur serveur 😕"
 
-    });
+});
 
 
+}
 
-  }catch(err){
-
-
-    console.log("VISION ERROR =>",err);
-
-
-    res.json({
-
-      reply:"Erreur analyse image."
-
-    });
-
-
-  }
 
 
 });
@@ -256,15 +230,143 @@ app.post("/vision", async (req, res) => {
 
 
 
-/* =========================
-   🚀 SERVER START
-========================= */
+
+
+// =========================
+// ANALYSE IMAGE
+// =========================
+
+app.post("/vision", async(req,res)=>{
+
+
+try{
+
+
+const image = req.body.image;
+
+
+
+if(!image){
+
+return res.json({
+
+reply:"Aucune image reçue."
+
+});
+
+}
+
+
+
+const response = await fetch(
+
+
+"https://router.huggingface.co/hf-inference/models/Salesforce/blip-image-captioning-base",
+
+
+{
+
+
+method:"POST",
+
+
+headers:{
+
+
+Authorization:`Bearer ${HF_API_KEY}`,
+
+"Content-Type":"application/json"
+
+
+},
+
+
+body:JSON.stringify({
+
+
+inputs:`data:image/jpeg;base64,${image}`
+
+
+})
+
+
+}
+
+
+);
+
+
+
+const data = await response.json();
+
+
+
+console.log(
+"VISION RESPONSE =>",
+data
+);
+
+
+
+res.json({
+
+reply:
+
+data?.[0]?.generated_text ||
+
+"Je n'arrive pas à analyser cette image."
+
+});
+
+
+}
+
+
+catch(err){
+
+
+console.log(
+
+"VISION ERROR =>",
+
+err
+
+);
+
+
+
+res.json({
+
+reply:"Erreur analyse image."
+
+});
+
+
+}
+
+
+
+});
+
+
+
+
+
+
+// =========================
+// START SERVER
+// =========================
+
 
 const PORT = process.env.PORT || 3000;
 
 
 app.listen(PORT,()=>{
 
-console.log(`✅ Server running on port ${PORT}`);
+
+console.log(
+`✅ Server running on port ${PORT}`
+);
+
 
 });
