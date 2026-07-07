@@ -331,94 +331,110 @@ reply:"Erreur analyse image."
 
 
 
-// =========================
-// GENERATION IMAGE
-// =========================
-
 app.post("/generate-image", async (req,res)=>{
 
-  try {
+try {
 
-    const prompt = req.body.prompt;
-
-
-    if(!prompt){
-
-      return res.json({
-        error:"Aucune description donnée."
-      });
-
-    }
+const prompt = req.body.prompt;
 
 
-    const response = await fetch(
+if(!prompt){
 
-      "https://router.huggingface.co/hf-inference/models/stabilityai/stable-diffusion-xl-base-1.0",
+return res.json({
+error:"Aucune description donnée."
+});
 
-      {
-
-        method:"POST",
-
-        headers:{
-
-          "Authorization":`Bearer ${process.env.HF_API_KEY}`,
-
-          "Content-Type":"application/json"
-
-        },
+}
 
 
-        body:JSON.stringify({
+const response = await fetch(
 
-          inputs:prompt
+"https://router.huggingface.co/hf-inference/models/stabilityai/stable-diffusion-xl-base-1.0",
 
-        })
+{
 
-      }
+method:"POST",
 
-    );
+headers:{
 
+Authorization:`Bearer ${process.env.HF_API_KEY}`,
 
-    const buffer = await response.arrayBuffer();
+"Content-Type":"application/json"
 
+},
 
-    const imageBase64 =
-      Buffer.from(buffer).toString("base64");
+body:JSON.stringify({
+
+inputs:prompt
+
+})
+
+}
+
+);
 
 
 
-    res.json({
-
-      image:
-      "data:image/png;base64," + imageBase64
-
-    });
+console.log("HF STATUS :", response.status);
 
 
-  }
+
+if(!response.ok){
+
+const errorText = await response.text();
+
+console.log("HF ERROR :",errorText);
 
 
-  catch(error){
+return res.json({
 
-
-    console.log(
-      "IMAGE GENERATION ERROR =>",
-      error
-    );
-
-
-    res.json({
-
-      error:"Erreur génération image."
-
-    });
-
-
-  }
-
+error:"Hugging Face erreur : "+errorText
 
 });
 
+
+}
+
+
+
+const buffer = await response.arrayBuffer();
+
+
+
+const imageBase64 =
+Buffer.from(buffer).toString("base64");
+
+
+
+res.json({
+
+image:"data:image/png;base64,"+imageBase64
+
+});
+
+
+
+}
+
+catch(error){
+
+console.log(
+"IMAGE GENERATION ERROR =>",
+error
+);
+
+
+res.json({
+
+error:"Erreur serveur image."
+
+});
+
+
+}
+
+
+});
 // =========================
 // START SERVER
 // =========================
