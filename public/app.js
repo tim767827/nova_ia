@@ -351,3 +351,47 @@ async function analyzeImage(){
     reader.readAsDataURL(file);
 
 }
+async function generateImage(){
+
+    const prompt = document.getElementById("imagePrompt").value;
+
+
+    if(!prompt){
+        alert("Décris l'image à créer");
+        return;
+    }
+
+
+    const response = await fetch("/generate-image",{
+
+        method:"POST",
+
+        headers:{
+            "Content-Type":"application/json"
+        },
+
+        body:JSON.stringify({
+
+            prompt:prompt
+
+        })
+
+    });
+
+
+    const data = await response.json();
+
+
+
+    if(data.image){
+
+        document.getElementById("generatedImage").src = data.image;
+
+    }else{
+
+        alert(data.error || "Erreur génération");
+
+    }
+
+
+}
