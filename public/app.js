@@ -357,18 +357,28 @@ async function generateImage(){
 
 
     if(!prompt){
-        alert("Décris l'image à créer");
+
+        alert("Écris une description d'image");
+
         return;
+
     }
 
 
-    const response = await fetch("/generate-image",{
+    console.log("Création image :", prompt);
+
+
+
+    const response = await fetch("/generate-image", {
 
         method:"POST",
 
         headers:{
+
             "Content-Type":"application/json"
+
         },
+
 
         body:JSON.stringify({
 
@@ -379,7 +389,12 @@ async function generateImage(){
     });
 
 
+
     const data = await response.json();
+
+
+
+    console.log("IMAGE RESULT :", data);
 
 
 
@@ -387,9 +402,11 @@ async function generateImage(){
 
         document.getElementById("generatedImage").src = data.image;
 
-    }else{
+    }
 
-        alert(data.error || "Erreur génération");
+    else{
+
+        alert(data.error || "Erreur image");
 
     }
 
