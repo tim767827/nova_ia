@@ -8,14 +8,11 @@ font-family:Inter,system-ui,Arial,sans-serif;
 
 
 body{
-
-height:100vh;
-overflow:hidden;
+min-height:100vh;
 background:#f5f7fb;
 color:#111;
-
 transition:.3s;
-
+overflow-x:hidden;
 }
 
 
