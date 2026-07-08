@@ -1,431 +1,136 @@
 <!DOCTYPE html>
 <html lang="fr">
-
 <head>
-
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>NovaAI - Assistant IA</title>
-
+<title>NovaAI</title>
 <link rel="stylesheet" href="style.css">
-
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
 </head>
-
 
 <body>
 
-
 <div class="app">
-
-
-<!-- =========================
- SIDEBAR
-========================= -->
 
 <aside class="sidebar">
 
-
-<div class="brand">
-
-
-<div class="logo">
-🚀 NovaAI
-</div>
-
-
-<div class="badge">
-AI ASSISTANT
-</div>
-
-
-<p>
-Votre intelligence artificielle personnelle.
-</p>
-
-
-</div>
-
-
+<div class="logo">🚀 NovaAI</div>
+<p class="desc">Assistant IA intelligent</p>
 
 <button class="newChat" onclick="newChat()">
-
-<span>＋</span>
-Nouvelle conversation
-
+＋ Nouveau chat
 </button>
 
+<h3>Historique</h3>
 
+<div id="history" class="history"></div>
 
-
-<div class="sidebarSection">
-
-<h3>
-Historique
-</h3>
-
-
-<div id="history" class="history">
-
-</div>
-
-
-</div>
-
-
-
-
-<div class="sidebarFooter">
-
-
-<button class="settingsBtn" onclick="toggleSettings()">
-
+<div class="sidebarBottom">
+<button onclick="toggleSettings()" class="settingsBtn">
 ⚙️ Paramètres
-
 </button>
-
-
-<div class="status">
-
-<span></span>
-Système opérationnel
-
 </div>
-
-
-</div>
-
 
 </aside>
-
-
-
-
-
-
-<!-- =========================
- ZONE PRINCIPALE
-========================= -->
 
 
 <main class="chat">
 
 
-
-
-
 <header class="topbar">
 
-
-<div class="model">
-
-
-<div class="aiIcon">
-🤖
-</div>
-
-
 <div>
-
-<h2>
-NovaAI
-</h2>
-
-
-<p>
-GPT Intelligent
-</p>
-
-
+<h2>NovaAI</h2>
+<span>🟢 En ligne</span>
 </div>
-
-
-</div>
-
-
-
-
-<div class="online">
-
-<span></span>
-
-En ligne
-
-</div>
-
-
 
 </header>
 
 
-
-
-
-
-
-<!-- =========================
- MESSAGES
-========================= -->
-
-
-<section id="messages" class="messages">
-
-
+<div id="messages" class="messages">
 
 <div class="welcome">
 
-
-<div class="welcomeIcon">
-
-✨
-
-</div>
-
-
-
-<h1>
-Bienvenue sur NovaAI
-</h1>
-
-
+<h1>Bienvenue sur NovaAI 🚀</h1>
 
 <p>
-Discutez, créez des images, analysez vos fichiers
-et développez vos idées avec votre assistant IA.
+Pose tes questions, crée des images et analyse tes fichiers.
 </p>
-
-
-
 
 <div class="suggestions">
 
-
-<button onclick="sendQuick('Explique-moi un concept simplement')">
-
-💡
-Expliquer
-
+<button onclick="sendQuick('Explique-moi une idée')">
+💡 Expliquer
 </button>
 
-
-
-<button onclick="sendQuick('Aide-moi à écrire un texte professionnel')">
-
-✍️
-Rédiger
-
+<button onclick="sendQuick('Aide-moi à écrire un texte')">
+✍️ Écrire
 </button>
 
-
-
-<button onclick="sendQuick('Trouve-moi une idée de projet innovant')">
-
-🚀
-Créer
-
+<button onclick="sendQuick('Donne-moi une idée de projet')">
+🚀 Projet
 </button>
 
+</div>
 
-
-<button onclick="sendQuick('Analyse cette idée et améliore-la')">
-
-🧠
-Analyser
-
-</button>
-
-
+</div>
 
 </div>
 
 
+<div class="imageTools">
 
-</div>
-
-
-</section>
-
-
-
-
-
-
-
-
-<!-- =========================
- OUTILS IA
-========================= -->
-
-
-<div class="tools">
-
-
-
-<label class="toolButton">
-
-
-📷 Vision
-
-
-<input 
-id="imageUpload"
-type="file"
-accept="image/*"
-onchange="analyzeImage()">
-
-
+<label class="upload">
+📷 Image
+<input id="imageUpload" type="file" accept="image/*" onchange="analyzeImage()">
 </label>
 
 
+<input id="imagePrompt" placeholder="Décris une image à créer...">
 
-
-
-<div class="imageGenerator">
-
-
-<input
-id="imagePrompt"
-placeholder="Décris l'image que tu veux créer...">
-
-
-<button onclick="generateImage()">
-
-🎨 Générer
-
+<button onclick="generateImage()" class="imageBtn">
+🎨 Créer
 </button>
 
-
 </div>
 
 
+<div class="inputBar">
 
-</div>
+<input id="input" placeholder="Écris un message..." onkeydown="if(event.key==='Enter')sendMessage()">
 
-
-
-
-
-
-
-
-<!-- =========================
- INPUT CHAT
-========================= -->
-
-
-<div class="inputContainer">
-
-
-<div class="inputBox">
-
-
-<input
-
-id="input"
-
-placeholder="Écrivez votre message à NovaAI..."
-
-onkeydown="if(event.key==='Enter') sendMessage()"
-
-
->
-
-
-
-<button 
-onclick="sendMessage()"
-class="sendBtn">
-
+<button onclick="sendMessage()" class="sendBtn">
 ➤
-
 </button>
 
-
-
 </div>
-
-
-<div class="hint">
-
-NovaAI peut faire des erreurs. Vérifiez les informations importantes.
-
-</div>
-
-
-</div>
-
-
-
-
-
-
 
 
 </main>
 
 
-
-
-
-
-
-
-<!-- =========================
- PARAMETRES
-========================= -->
-
-
 <div id="settings" class="settings hidden">
 
-
-<div class="settingsHeader">
-
-<h2>
-Paramètres
-
-</h2>
-
-
-<button onclick="toggleSettings()">
-
-✕
-
-</button>
-
-
-</div>
-
-
-
+<h2>Paramètres</h2>
 
 <button onclick="toggleTheme()">
-
-🌙 Changer le thème
-
+🌙 Mode sombre
 </button>
-
-
 
 <button onclick="clearHistory()">
-
 🗑 Supprimer historique
-
 </button>
 
-
+<button onclick="toggleSettings()">
+Fermer
+</button>
 
 </div>
 
 
-
-
+</div>
 
 
 <script src="app.js"></script>
 
-
 </body>
-
 </html>
