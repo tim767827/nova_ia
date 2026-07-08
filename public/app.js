@@ -779,23 +779,26 @@ renderHistory();
 
 
 
-// DRAG DROP IMAGE
-
-
 let drop=document.getElementById("dropZone");
 
 
-drop?.addEventListener(
-"dragover",
-e=>e.preventDefault()
-);
+drop?.addEventListener("dragover",e=>{
+e.preventDefault();
+drop.style.background="#2563eb";
+drop.style.color="white";
+});
+
+
+drop?.addEventListener("dragleave",()=>{
+
+drop.style.background="";
+drop.style.color="";
+
+});
 
 
 
-drop?.addEventListener(
-"drop",
-e=>{
-
+drop?.addEventListener("drop",e=>{
 
 e.preventDefault();
 
@@ -803,22 +806,90 @@ e.preventDefault();
 let file=e.dataTransfer.files[0];
 
 
-if(file){
+if(!file)return;
 
 
-document.getElementById("imageUpload")
-.files=e.dataTransfer.files;
 
+showPreview(file);
 
-analyzeImage();
-
-
-}
+sendVisionFile(file);
 
 
 });
 
 
+
+
+function showPreview(file){
+
+let reader=new FileReader();
+
+
+reader.onload=()=>{
+
+let img=document.getElementById("previewImage");
+
+img.src=reader.result;
+
+img.classList.remove("hidden");
+
+};
+
+
+reader.readAsDataURL(file);
+
+}
+
+
+
+
+
+async function sendVisionFile(file){
+
+let reader=new FileReader();
+
+
+reader.onload=async()=>{
+
+
+let base64=
+reader.result.split(",")[1];
+
+
+let res=await fetch("/vision",{
+
+method:"POST",
+
+headers:{
+"Content-Type":"application/json"
+},
+
+body:JSON.stringify({
+
+image:base64,
+
+mimeType:file.type
+
+})
+
+});
+
+
+let data=await res.json();
+
+
+addMessage(
+data.reply,
+"bot"
+);
+
+
+};
+
+
+reader.readAsDataURL(file);
+
+}
 
 
 
