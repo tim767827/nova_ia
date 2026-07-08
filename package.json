@@ -2,6 +2,9 @@
   "name": "novaai",
   "version": "1.0.0",
   "description": "NovaAI - Chat IA + Analyse image",
+  "engines": {
+    "node": "22.x"
+  },
   "main": "server/server.js",
   "scripts": {
     "start": "node server/server.js"
