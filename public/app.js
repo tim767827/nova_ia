@@ -1,12 +1,13 @@
-// ======================
-// IDENTIFIANT UTILISATEUR
-// ======================
+```javascript
+// ==========================
+// UTILISATEUR
+// ==========================
 
 let userId = localStorage.getItem("novaUser");
 
-if (!userId) {
+if(!userId){
 
-    userId = "user_" + Date.now();
+    userId="user_"+Date.now();
 
     localStorage.setItem(
         "novaUser",
@@ -16,849 +17,839 @@ if (!userId) {
 }
 
 
-// ======================
-// HISTORIQUE
-// ======================
 
-let chats = JSON.parse(
-    localStorage.getItem("novaChats")
-) || [];
+// ==========================
+// VARIABLES
+// ==========================
 
-let currentChat = null;
+let chats =
+JSON.parse(
+localStorage.getItem("novaChats")
+)||[];
+
+
+let currentChat=null;
 
 
 
 function saveChats(){
 
-    localStorage.setItem(
-        "novaChats",
-        JSON.stringify(chats)
-    );
+localStorage.setItem(
+"novaChats",
+JSON.stringify(chats)
+);
 
 }
 
 
 
-// ======================
-// AFFICHAGE HISTORIQUE
-// ======================
-
+// ==========================
+// HISTORIQUE
+// ==========================
 
 function renderHistory(){
 
-    const history=document.getElementById(
-        "history"
-    );
+const box=document.getElementById("history");
 
+if(!box)return;
 
-    if(!history) return;
 
+box.innerHTML="";
 
-    history.innerHTML="";
 
+chats.forEach(chat=>{
 
-    chats.forEach(chat=>{
 
+let div=document.createElement("div");
 
-        const item=document.createElement("div");
+div.className="item";
 
-        item.className="item";
 
+div.innerHTML=`
 
+<span>${chat.title}</span>
 
-        const title=document.createElement("span");
+<div>
 
-        title.className="chatTitle";
+<button onclick="renameChat(${chat.id})">
+✏️
+</button>
 
-        title.textContent=chat.title;
+<button onclick="deleteChat(${chat.id})">
+🗑
+</button>
 
+</div>
 
+`;
 
-        title.onclick=()=>loadChat(chat.id);
 
+div.onclick=()=>loadChat(chat.id);
 
 
-        const actions=document.createElement("div");
+box.appendChild(div);
 
-        actions.className="chatActions";
 
-
-
-        const edit=document.createElement("button");
-
-        edit.className="editBtn";
-
-        edit.textContent="✏️";
-
-
-
-        edit.onclick=(e)=>{
-
-
-            e.stopPropagation();
-
-
-            let name=prompt(
-                "Nouveau nom :",
-                chat.title
-            );
-
-
-            if(name && name.trim()){
-
-                chat.title=name.trim();
-
-                saveChats();
-
-                renderHistory();
-
-            }
-
-
-        };
-
-
-
-        const trash=document.createElement("button");
-
-        trash.className="trashBtn";
-
-        trash.textContent="🗑️";
-
-
-
-        trash.onclick=(e)=>{
-
-
-            e.stopPropagation();
-
-
-
-            if(confirm("Supprimer cette conversation ?")){
-
-
-                chats=chats.filter(
-                    c=>c.id!==chat.id
-                );
-
-
-
-                if(currentChat?.id===chat.id){
-
-                    currentChat=null;
-
-                    document.getElementById(
-                        "messages"
-                    ).innerHTML="";
-
-                }
-
-
-
-                saveChats();
-
-                renderHistory();
-
-
-            }
-
-
-        };
-
-
-
-        actions.appendChild(edit);
-
-        actions.appendChild(trash);
-
-
-        item.appendChild(title);
-
-        item.appendChild(actions);
-
-
-        history.appendChild(item);
-
-
-
-    });
+});
 
 
 }
 
 
 
-// ======================
-// NOUVEAU CHAT
-// ======================
 
+
+function renameChat(id){
+
+let chat=chats.find(c=>c.id===id);
+
+let name=prompt(
+"Nouveau nom",
+chat.title
+);
+
+
+if(name){
+
+chat.title=name;
+
+saveChats();
+
+renderHistory();
+
+}
+
+}
+
+
+
+
+function deleteChat(id){
+
+if(!confirm("Supprimer ?"))return;
+
+
+chats=chats.filter(
+c=>c.id!==id
+);
+
+
+if(currentChat?.id===id){
+
+currentChat=null;
+
+messages.innerHTML="";
+
+}
+
+
+saveChats();
+
+renderHistory();
+
+}
+
+
+
+
+// ==========================
+// NOUVEAU CHAT
+// ==========================
 
 function newChat(){
 
 
-    currentChat={
+currentChat={
 
-        id:Date.now(),
+id:Date.now(),
 
-        title:"Nouvelle conversation",
+title:"Nouvelle conversation",
 
-        messages:[]
+messages:[]
 
-    };
-
-
-
-    chats.unshift(
-        currentChat
-    );
+};
 
 
-    saveChats();
+chats.unshift(
+currentChat
+);
 
-    renderHistory();
+
+saveChats();
+
+renderHistory();
 
 
-    document.getElementById(
-        "messages"
-    ).innerHTML="";
+document.getElementById(
+"messages"
+).innerHTML="";
 
 
 }
 
 
 
-// ======================
+
+
+// ==========================
 // CHARGER CHAT
-// ======================
+// ==========================
 
 
 function loadChat(id){
 
-
-    currentChat=chats.find(
-        c=>c.id===id
-    );
-
-
-    if(!currentChat)return;
+currentChat=
+chats.find(
+c=>c.id===id
+);
 
 
-
-    const messages=document.getElementById(
-        "messages"
-    );
+if(!currentChat)return;
 
 
-    messages.innerHTML="";
+let box=
+document.getElementById(
+"messages"
+);
 
 
-
-    currentChat.messages.forEach(msg=>{
-
-
-        if(msg.type==="image"){
+box.innerHTML="";
 
 
-            const img=document.createElement("img");
-
-            img.src=msg.text;
-
-            img.className="generatedImage";
+currentChat.messages.forEach(m=>{
 
 
-            messages.appendChild(img);
+if(m.type==="image"){
 
 
+let img=document.createElement("img");
 
-        }else{
+img.src=m.text;
 
+img.className="generatedImage";
 
-            addMessage(
-                msg.text,
-                msg.type
-            );
-
-
-        }
+box.appendChild(img);
 
 
-    });
+}
+
+else{
+
+
+addMessage(
+m.text,
+m.type
+);
+
+
+}
+
+
+});
+
+
+scroll();
 
 
 }
 
 
 
-// ======================
+
+
+// ==========================
 // MESSAGE
-// ======================
+// ==========================
 
 
 function addMessage(text,type){
 
 
-    const div=document.createElement("div");
+let box=
+document.getElementById(
+"messages"
+);
 
 
-    div.className="msg "+type;
+let div=document.createElement("div");
 
 
-    div.innerHTML=text.replace(
-        /\n/g,
-        "<br>"
-    );
+div.className=
+"msg "+type;
 
 
-    document.getElementById(
-        "messages"
-    ).appendChild(div);
+div.innerHTML=
+text.replace(
+/\n/g,
+"<br>"
+);
 
 
-    scroll();
+box.appendChild(div);
+
+
+scroll();
 
 
 }
 
 
 
-// ======================
-// SCROLL
-// ======================
 
 
 function scroll(){
 
-    const box=document.getElementById(
-        "messages"
-    );
+let box=
+document.getElementById(
+"messages"
+);
 
 
-    box.scrollTop=box.scrollHeight;
-
-
-}
-
-
-
-// ======================
-// BOUTONS RAPIDES
-// ======================
-
-
-function sendQuick(text){
-
-    document.getElementById(
-        "input"
-    ).value=text;
-
-
-    sendMessage();
+box.scrollTop=
+box.scrollHeight;
 
 }
 
 
 
-// ======================
+// ==========================
 // CHAT IA
-// ======================
+// ==========================
 
 
 async function sendMessage(){
 
 
-    const input=document.getElementById(
-        "input"
-    );
+let input=
+document.getElementById(
+"input"
+);
 
 
-    const text=input.value.trim();
+let text=input.value.trim();
 
 
+if(!text)return;
 
-    if(!text)return;
 
 
+if(!currentChat){
 
-    if(!currentChat){
+newChat();
 
-        newChat();
+}
 
-    }
 
 
+addMessage(
+text,
+"user"
+);
 
-    addMessage(
-        text,
-        "user"
-    );
 
 
+currentChat.messages.push({
 
-    currentChat.messages.push({
+text:text,
 
-        text:text,
+type:"user"
 
-        type:"user"
+});
 
-    });
 
 
 
-    if(currentChat.title==="Nouvelle conversation"){
+if(
+currentChat.title==="Nouvelle conversation"
+){
 
-        currentChat.title=text.substring(
-            0,
-            25
-        );
+currentChat.title=
+text.substring(0,25);
 
-    }
+}
 
 
 
-    saveChats();
+saveChats();
 
-    renderHistory();
+renderHistory();
 
 
+input.value="";
 
-    input.value="";
 
 
 
-    const thinking=document.createElement("div");
 
+let loading=document.createElement("div");
 
-    thinking.className="msg bot";
+loading.className="msg bot";
 
+loading.innerHTML="🤖 Nova réfléchit...";
 
-    thinking.textContent="Nova réfléchit...";
 
+document
+.getElementById("messages")
+.appendChild(loading);
 
-    document.getElementById(
-        "messages"
-    ).appendChild(thinking);
 
 
 
-    try{
 
+try{
 
-        const res=await fetch(
-            "/chat",
-            {
 
-                method:"POST",
+let response=
+await fetch(
+"/chat",
+{
 
-                headers:{
+method:"POST",
 
-                    "Content-Type":
-                    "application/json"
+headers:{
 
-                },
+"Content-Type":
+"application/json"
 
+},
 
-                body:JSON.stringify({
+body:JSON.stringify({
 
-                    message:text,
+message:text,
 
-                    userId:userId
+userId:userId
 
-                })
+})
 
 
-            }
-        );
+}
+);
 
 
 
-        const data=await res.json();
+let data=
+await response.json();
 
 
-        thinking.remove();
 
+loading.remove();
 
 
-        typeWriter(
-            data.reply ||
-            "Je n'ai pas reçu de réponse."
-        );
 
+typeWriter(
+data.reply ||
+"Pas de réponse."
+);
 
 
-    }catch(error){
 
+}
 
-        thinking.remove();
+catch(e){
 
 
-        addMessage(
-            "❌ Erreur serveur",
-            "bot"
-        );
+loading.remove();
 
 
-        console.error(error);
+addMessage(
+"❌ Serveur indisponible",
+"bot"
+);
 
 
-    }
+console.error(e);
+
+
+}
 
 
 }
 
 
 
-// ======================
-// ECRITURE IA
-// ======================
+
+// ==========================
+// ECRITURE ANIMEE
+// ==========================
 
 
 function typeWriter(text){
 
 
-    const div=document.createElement("div");
+let div=document.createElement("div");
 
 
-    div.className="msg bot";
+div.className="msg bot";
 
 
-    document.getElementById(
-        "messages"
-    ).appendChild(div);
-
-
-
-    let i=0;
+document
+.getElementById("messages")
+.appendChild(div);
 
 
 
-    const timer=setInterval(()=>{
+let i=0;
 
 
-        div.innerHTML=text
-        .substring(0,i)
-        .replace(
-            /\n/g,
-            "<br>"
-        );
+let timer=setInterval(()=>{
 
 
-        scroll();
+div.innerHTML=
+text.substring(0,i)
+.replace(
+/\n/g,
+"<br>"
+);
 
 
-        i++;
+scroll();
 
 
-
-        if(i>=text.length){
-
-
-            clearInterval(timer);
+i++;
 
 
-
-            currentChat.messages.push({
-
-                text:text,
-
-                type:"bot"
-
-            });
+if(i>=text.length){
 
 
-            saveChats();
+clearInterval(timer);
 
 
-        }
+currentChat.messages.push({
+
+text:text,
+
+type:"bot"
+
+});
 
 
+saveChats();
 
-    },10);
+
+}
+
+
+},15);
+
 
 
 }
 
 
 
-// ======================
-// CREATION IMAGE
-// ======================
+
+// ==========================
+// BOUTONS RAPIDES
+// ==========================
+
+
+function sendQuick(text){
+
+document.getElementById(
+"input"
+).value=text;
+
+
+sendMessage();
+
+}
+
+
+
+
+
+// ==========================
+// IMAGE IA
+// ==========================
 
 
 async function generateImage(){
 
 
-    const input=document.getElementById(
-        "imagePrompt"
-    );
+let input=
+document.getElementById(
+"imagePrompt"
+);
 
 
-    const prompt=input.value.trim();
+let prompt=
+input.value.trim();
 
 
 
-    if(!prompt){
+if(!prompt)return;
 
-        alert(
-            "Décris une image"
-        );
 
-        return;
 
-    }
+if(!currentChat){
 
+newChat();
 
+}
 
-    if(!currentChat){
 
-        newChat();
 
-    }
+addMessage(
+"🎨 "+prompt,
+"user"
+);
 
 
 
-    addMessage(
-        "🎨 Création : "+prompt,
-        "user"
-    );
+try{
 
 
+let res=
+await fetch(
+"/generate-image",
+{
 
-    try{
+method:"POST",
 
+headers:{
 
-        const response=await fetch(
-            "/generate-image",
-            {
+"Content-Type":
+"application/json"
 
-                method:"POST",
+},
 
-                headers:{
-                    "Content-Type":
-                    "application/json"
-                },
+body:JSON.stringify({
 
+prompt:prompt
 
-                body:JSON.stringify({
+})
 
-                    prompt:prompt
 
-                })
+});
 
-            }
-        );
 
+let data=
+await res.json();
 
 
-        const data=await response.json();
 
+if(data.image){
 
 
-        if(data.image){
+let img=
+document.createElement("img");
 
 
-            const img=document.createElement("img");
+img.src=data.image;
 
 
-            img.src=data.image;
+img.className=
+"generatedImage";
 
 
-            img.className="generatedImage";
+document
+.getElementById("messages")
+.appendChild(img);
 
 
-            document.getElementById(
-                "messages"
-            ).appendChild(img);
 
+currentChat.messages.push({
 
+text:data.image,
 
-            currentChat.messages.push({
+type:"image"
 
-                text:data.image,
+});
 
-                type:"image"
 
-            });
+saveChats();
 
-
-
-            saveChats();
-
-
-            scroll();
-
-
-        }else{
-
-
-            alert(
-                data.error ||
-                "Erreur image"
-            );
-
-
-        }
-
-
-    }catch(error){
-
-
-        console.error(error);
-
-
-        alert(
-            "Erreur création image"
-        );
-
-
-    }
+scroll();
 
 
 }
 
 
 
-// ======================
+}
+
+
+catch(e){
+
+alert(
+"Erreur image"
+);
+
+}
+
+
+}
+
+
+
+
+
+// ==========================
 // VISION
-// ======================
+// ==========================
 
 
 async function analyzeImage(){
 
 
-    const file=document.getElementById(
-        "imageUpload"
-    ).files[0];
+let file=
+document
+.getElementById("imageUpload")
+.files[0];
+
+
+if(!file)return;
 
 
 
-    if(!file)return;
+let reader=
+new FileReader();
 
 
 
-    const reader=new FileReader();
+reader.onload=async()=>{
+
+
+let base64=
+reader.result.split(",")[1];
 
 
 
-    reader.onload=async()=>{
+let res=
+await fetch(
+"/vision",
+{
+
+method:"POST",
+
+headers:{
+
+"Content-Type":
+"application/json"
+
+},
+
+body:JSON.stringify({
+
+image:base64
+
+})
 
 
-        const base64=
-        reader.result.split(",")[1];
+});
 
 
-
-        const res=await fetch(
-            "/vision",
-            {
-
-                method:"POST",
-
-                headers:{
-                    "Content-Type":
-                    "application/json"
-                },
+let data=
+await res.json();
 
 
-                body:JSON.stringify({
-
-                    image:base64
-
-                })
-
-            }
-        );
+addMessage(
+data.reply,
+"bot"
+);
 
 
-
-        const data=await res.json();
-
-
-
-        addMessage(
-            data.reply,
-            "bot"
-        );
-
-
-    };
+};
 
 
 
-    reader.readAsDataURL(file);
+reader.readAsDataURL(file);
 
 
 }
 
 
 
-// ======================
-// PARAMETRES
-// ======================
+
+
+// ==========================
+// THEME
+// ==========================
 
 
 function toggleTheme(){
 
-    document.body.classList.toggle(
-        "dark"
-    );
+document.body.classList.toggle(
+"dark"
+);
+
+
+localStorage.setItem(
+"theme",
+document.body.classList.contains("dark")
+);
+
 
 }
 
+
+
+
+if(
+localStorage.getItem("theme")==="true"
+){
+
+document.body.classList.add("dark");
+
+}
+
+
+
+
+
+// ==========================
+// PARAMETRES
+// ==========================
 
 
 function toggleSettings(){
 
-    document.getElementById(
-        "settings"
-    ).classList.toggle(
-        "hidden"
-    );
+document
+.getElementById("settings")
+.classList.toggle(
+"hidden"
+);
 
 }
 
 
-
-// ======================
-// SUPPRIMER HISTORIQUE
-// ======================
 
 
 function clearHistory(){
 
 
-    if(confirm(
-        "Supprimer tout l'historique ?"
-    )){
+if(confirm("Tout supprimer ?")){
 
 
-        localStorage.removeItem(
-            "novaChats"
-        );
+chats=[];
+
+currentChat=null;
 
 
-        chats=[];
-
-        currentChat=null;
-
-
-        document.getElementById(
-            "messages"
-        ).innerHTML="";
+localStorage.removeItem(
+"novaChats"
+);
 
 
-        renderHistory();
+document
+.getElementById("messages")
+.innerHTML="";
 
 
-    }
+renderHistory();
+
+
+}
 
 
 }
 
 
 
-// ======================
-// DEMARRAGE
-// ======================
+
+// ==========================
+// START
+// ==========================
 
 
 renderHistory();
@@ -866,8 +857,9 @@ renderHistory();
 
 if(chats.length){
 
-    loadChat(
-        chats[0].id
-    );
+loadChat(
+chats[0].id
+);
 
 }
+```
