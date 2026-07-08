@@ -6,6 +6,61 @@ require("dotenv").config();
 
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 
+const { search } = require("duck-duck-scrape");
+
+
+// =========================
+// RECHERCHE INTERNET
+// =========================
+
+async function searchInternet(query){
+
+    try{
+
+        const results = await search(query, {
+            safeSearch: false
+        });
+
+
+        if(!results.results.length){
+
+            return "Aucun résultat trouvé.";
+
+        }
+
+
+        return results.results
+            .slice(0,5)
+            .map(result => {
+
+                return `
+Titre : ${result.title}
+
+Description :
+${result.description}
+
+Lien :
+${result.url}
+
+`;
+
+            })
+            .join("\n");
+
+
+    }catch(error){
+
+        console.log(
+            "SEARCH ERROR =>",
+            error
+        );
+
+        return "Recherche impossible.";
+
+    }
+
+}
+
 const genAI = new GoogleGenerativeAI(
   process.env.GEMINI_KEY
 );
@@ -69,6 +124,26 @@ try{
 
 
 const userMessage = req.body.message;
+  let internetResults = "";
+
+const needSearch =
+/actualité|news|internet|aujourd'hui|hier|météo|temps|score|match|résultat|prix|cours|crypto|bourse|dernier|dernière|2025|2026/i
+.test(userMessage);
+
+
+if(needSearch){
+
+    console.log(
+        "🌍 Recherche Internet :",
+        userMessage
+    );
+
+
+    internetResults = await searchInternet(
+        userMessage
+    );
+
+}
 
 const userId = req.body.userId || "default";
 
@@ -142,7 +217,17 @@ messages:[
 role:"system",
 
 content:
-"Tu es NovaAI. Tu réponds toujours en français."
+`
+Tu es NovaAI.
+
+Tu réponds toujours en français.
+
+Si des informations Internet sont fournies,
+utilise-les pour répondre.
+
+Ne parle pas de ta recherche.
+Réponds naturellement.
+`
 
 },
 
