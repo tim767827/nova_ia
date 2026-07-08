@@ -1,5 +1,6 @@
 // ===============================
-// NOVA AI SERVER - PARTIE 1/2
+// NOVA AI SERVER
+// PARTIE 1/2
 // ===============================
 
 
@@ -28,6 +29,7 @@ const genAI = new GoogleGenerativeAI(
 
 const GROQ_KEY = process.env.API_KEY;
 const TAVILY_KEY = process.env.TAVILY_KEY;
+const HF_KEY = process.env.HF_API_KEY;
 
 
 
@@ -66,7 +68,7 @@ app.get("/",(req,res)=>{
 
 
 // ===============================
-// MEMOIRE DES CHATS
+// MEMOIRE CHAT
 // ===============================
 
 
@@ -75,7 +77,7 @@ const userHistories = {};
 
 
 // ===============================
-// RECHERCHE TAVILY
+// RECHERCHE INTERNET TAVILY
 // ===============================
 
 
@@ -91,9 +93,22 @@ async function searchInternet(query){
         );
 
 
+        if(!TAVILY_KEY){
+
+            console.log(
+                "❌ Pas de clé Tavily"
+            );
+
+            return "Recherche internet indisponible.";
+
+        }
+
+
 
         const response = await fetch(
+
             "https://api.tavily.com/search",
+
             {
 
                 method:"POST",
@@ -112,13 +127,14 @@ async function searchInternet(query){
 
                     query:query,
 
-                    search_depth:"basic",
+                    search_depth:"advanced",
 
                     max_results:5
 
                 })
 
             }
+
         );
 
 
@@ -135,31 +151,42 @@ async function searchInternet(query){
 
         if(!data.results || data.results.length===0){
 
-            return "Aucun résultat internet trouvé.";
+
+            return "Aucune information trouvée.";
 
         }
 
 
 
-        return data.results.map(item=>{
+
+        let results = "";
 
 
-            return `
+
+        data.results.forEach((item,index)=>{
+
+
+            results += `
+
+RESULTAT ${index + 1}
 
 Titre :
 ${item.title}
 
-
 Information :
 ${item.content}
-
 
 Source :
 ${item.url}
 
+
 `;
 
-        }).join("\n\n");
+        });
+
+
+
+        return results;
 
 
 
@@ -172,7 +199,7 @@ ${item.url}
         );
 
 
-        return "Impossible de faire la recherche internet.";
+        return "Recherche internet impossible.";
 
     }
 
@@ -182,16 +209,60 @@ ${item.url}
 
 
 
-
-
 // ===============================
-// DETECTION RECHERCHE INTERNET
+// DETECTION BESOIN INTERNET
 // ===============================
 
 
 function needsInternet(text){
 
-    return /actualité|actu|news|aujourd'hui|hier|demain|président|présidente|politique|gouvernement|chef|qui est|où est|quand|prix|coût|météo|temps|match|score|résultat|résultats|gagné|gagner|perdu|classement|dernier|dernière|2025|2026/i.test(text);
+
+    const lower = text.toLowerCase();
+
+
+
+    const words = [
+
+        "actualité",
+        "actu",
+        "news",
+        "aujourd",
+        "hier",
+        "demain",
+        "président",
+        "présidente",
+        "politique",
+        "gouvernement",
+        "ministre",
+        "qui est",
+        "où",
+        "quand",
+        "prix",
+        "coût",
+        "météo",
+        "temps",
+        "match",
+        "score",
+        "résultat",
+        "résultats",
+        "gagné",
+        "gagner",
+        "perdu",
+        "classement",
+        "dernier",
+        "dernière",
+        "2025",
+        "2026",
+        "2027"
+
+    ];
+
+
+
+    return words.some(word =>
+        lower.includes(word)
+    );
+
 
 }
 
@@ -212,7 +283,8 @@ try{
 const message = req.body.message;
 
 
-const userId = req.body.userId || "default";
+const userId =
+req.body.userId || "default";
 
 
 
@@ -230,7 +302,6 @@ reply:"Écris un message 🙂"
 
 
 
-
 let webInfo = "";
 
 
@@ -243,14 +314,11 @@ console.log(
 );
 
 
-
-webInfo = await searchInternet(message);
-
+webInfo =
+await searchInternet(message);
 
 
 }
-
-
 
 
 
@@ -264,8 +332,8 @@ userHistories[userId]=[];
 
 
 
-const history = userHistories[userId];
-
+const history =
+userHistories[userId];
 
 
 
@@ -288,44 +356,41 @@ history.shift();
 
 
 
-
-
-const messages=[
+const messages = [
 
 
 {
 
 role:"system",
 
-content:`
+content:
 
+`
 Tu es NovaAI.
 
 Tu réponds toujours en français.
 
-Tu es une IA utile et précise.
+Tu es une intelligence artificielle utile.
 
-IMPORTANT :
-
-Si des informations INTERNET sont fournies,
+Si des informations internet sont fournies,
 elles sont prioritaires.
 
-Utilise ces informations.
+Utilise uniquement les informations fournies.
 
-Ne dis jamais que tu n'as pas accès à internet.
+Ne dis jamais que tu viens de faire une recherche.
 
-Ne prétends pas connaître une information
-si elle n'est pas présente.
+Ne raconte pas que tu n'as pas accès à internet.
 
-Réponds naturellement sans parler de ta recherche.
+Si une information manque,
+dis simplement que tu n'as pas trouvé.
 
+Réponds naturellement.
 `
 
 }
 
 
 ];
-
 
 
 
@@ -339,14 +404,11 @@ role:"system",
 content:
 
 `
-
-INFORMATIONS INTERNET :
+Informations trouvées sur internet :
 
 ${webInfo}
 
-
-Utilise ces informations pour répondre.
-
+Analyse ces informations et réponds à l'utilisateur.
 `
 
 });
@@ -357,9 +419,6 @@ Utilise ces informations pour répondre.
 
 
 messages.push(...history);
-
-
-
 
 
 
@@ -388,12 +447,9 @@ Authorization:
 
 body:JSON.stringify({
 
-
 model:"llama-3.1-8b-instant",
 
-
 messages:messages
-
 
 })
 
@@ -404,7 +460,8 @@ messages:messages
 
 
 
-const data = await response.json();
+const data =
+await response.json();
 
 
 
@@ -415,11 +472,12 @@ console.log(
 
 
 const reply =
+
 data?.choices?.[0]?.message?.content
+
 ||
+
 "Je n'ai pas trouvé de réponse.";
-
-
 
 
 
@@ -450,7 +508,6 @@ error
 );
 
 
-
 res.json({
 
 reply:"Erreur serveur chat."
@@ -460,9 +517,8 @@ reply:"Erreur serveur chat."
 
 }
 
-    
 
-
+});
 // ===============================
 // ANALYSE IMAGE GEMINI
 // ===============================
@@ -499,7 +555,6 @@ image = image.replace(
 );
 
 
-
 image = image.replace(
 "data:image/png;base64,",
 ""
@@ -514,7 +569,6 @@ const model = genAI.getGenerativeModel({
 model:"gemini-2.5-flash"
 
 });
-
 
 
 
@@ -538,17 +592,15 @@ mimeType:"image/jpeg"
 
 
 `
-
 Analyse cette image.
 
 Réponds en français.
 
-Décris ce que tu vois.
+Décris les éléments visibles.
 
 Lis les textes présents.
 
-Explique les objets,
-les personnes et les détails importants.
+Explique les objets, personnes ou détails importants.
 
 `
 
@@ -578,13 +630,9 @@ reply:text
 }catch(error){
 
 
-
 console.log(
-
 "GEMINI ERROR =>",
-
 error
-
 );
 
 
@@ -618,7 +666,8 @@ app.post("/generate-image", async(req,res)=>{
 try{
 
 
-const prompt = req.body.prompt;
+const prompt =
+req.body.prompt;
 
 
 
@@ -638,6 +687,23 @@ error:"Description image manquante."
 
 
 
+if(!HF_KEY){
+
+
+return res.json({
+
+error:"Clé Hugging Face manquante."
+
+});
+
+
+}
+
+
+
+
+
+
 const response = await fetch(
 
 
@@ -650,22 +716,18 @@ const response = await fetch(
 method:"POST",
 
 
-
 headers:{
 
 
 "Authorization":
-
-`Bearer ${process.env.HF_API_KEY}`,
+`Bearer ${HF_KEY}`,
 
 
 "Content-Type":
-
 "application/json"
 
 
 },
-
 
 
 
@@ -674,6 +736,7 @@ body:JSON.stringify({
 inputs:prompt
 
 })
+
 
 }
 
@@ -688,21 +751,24 @@ inputs:prompt
 if(!response.ok){
 
 
-const error =
+const errorText =
 await response.text();
 
 
 
 console.log(
+
 "HF ERROR =>",
-error
+
+errorText
+
 );
 
 
 
 return res.json({
 
-error:error
+error:errorText
 
 });
 
@@ -720,11 +786,9 @@ await response.arrayBuffer();
 
 
 
-
 const imageBase64 =
 Buffer.from(buffer)
 .toString("base64");
-
 
 
 
@@ -734,8 +798,7 @@ res.json({
 
 image:
 
-"data:image/png;base64," 
-+
+"data:image/png;base64," +
 imageBase64
 
 });
@@ -745,7 +808,6 @@ imageBase64
 
 
 }catch(error){
-
 
 
 console.log(
@@ -768,10 +830,7 @@ error:"Erreur génération image."
 }
 
 
-
 });
-
-
 
 
 
@@ -800,22 +859,31 @@ status:"NovaAI fonctionne 🚀"
 
 
 
+
 // ===============================
-// START
+// START RENDER
 // ===============================
 
 
-console.log("FIN DU CODE SERVER");
+const PORT =
+process.env.PORT || 3000;
 
 
-const PORT = process.env.PORT || 3000;
+
+console.log(
+"🚀 Démarrage NovaAI..."
+);
+
+
 
 app.listen(PORT,()=>{
 
-    console.log(
-        `✅ NovaAI lancé sur le port ${PORT}`
-    );
 
-});
+console.log(
+
+`✅ NovaAI lancé sur le port ${PORT}`
+
+);
+
 
 });
