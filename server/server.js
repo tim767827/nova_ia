@@ -1,6 +1,7 @@
-// =========================
-// IMPORTS
-// =========================
+// ===============================
+// NOVA AI SERVER - PARTIE 1/2
+// ===============================
+
 
 const express = require("express");
 const cors = require("cors");
@@ -12,37 +13,42 @@ const fetch = require("node-fetch");
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 
-// =========================
-// CONFIG
-// =========================
+// ===============================
+// INITIALISATION
+// ===============================
+
 
 const app = express();
 
-const PORT = process.env.PORT || 3000;
-
-
-const GROQ_KEY = process.env.API_KEY;
 
 const genAI = new GoogleGenerativeAI(
     process.env.GEMINI_KEY
 );
 
 
-// =========================
+const GROQ_KEY = process.env.API_KEY;
+const TAVILY_KEY = process.env.TAVILY_KEY;
+
+
+
+// ===============================
 // MIDDLEWARE
-// =========================
+// ===============================
+
 
 app.use(cors());
 
 
 app.use(express.json({
-    limit:"20mb"
+    limit:"25mb"
 }));
 
 
-// =========================
+
+// ===============================
 // FRONTEND
-// =========================
+// ===============================
+
 
 app.use(express.static(
     path.join(__dirname,"..","public")
@@ -59,12 +65,22 @@ app.get("/",(req,res)=>{
 
 
 
-// =========================
+// ===============================
+// MEMOIRE DES CHATS
+// ===============================
+
+
+const userHistories = {};
+
+
+
+// ===============================
 // RECHERCHE TAVILY
-// =========================
+// ===============================
 
 
 async function searchInternet(query){
+
 
     try{
 
@@ -75,41 +91,36 @@ async function searchInternet(query){
         );
 
 
+
         const response = await fetch(
-
             "https://api.tavily.com/search",
-
             {
 
                 method:"POST",
 
                 headers:{
 
-                    "Content-Type":"application/json"
+                    "Content-Type":"application/json",
+
+                    "Authorization":
+                    `Bearer ${TAVILY_KEY}`
 
                 },
 
 
                 body:JSON.stringify({
 
-                    api_key:
-                    process.env.TAVILY_KEY,
-
-
                     query:query,
 
-
-                    search_depth:"advanced",
-
+                    search_depth:"basic",
 
                     max_results:5
-
 
                 })
 
             }
-
         );
+
 
 
         const data = await response.json();
@@ -122,62 +133,46 @@ async function searchInternet(query){
 
 
 
-        if(!data.results ||
-           data.results.length === 0){
+        if(!data.results || data.results.length===0){
 
-
-            return "Aucun résultat trouvé.";
-
+            return "Aucun résultat internet trouvé.";
 
         }
 
 
 
-
-        return data.results
-
-        .map(result=>{
+        return data.results.map(item=>{
 
 
             return `
 
 Titre :
-${result.title}
+${item.title}
 
 
-Informations :
-${result.content}
+Information :
+${item.content}
 
 
 Source :
-${result.url}
-
+${item.url}
 
 `;
 
-        })
-
-
-        .join("\n");
+        }).join("\n\n");
 
 
 
-    }
-
-
-    catch(error){
+    }catch(error){
 
 
         console.log(
-
             "TAVILY ERROR =>",
-
-            error.message
-
+            error
         );
 
 
-        return "Aucune recherche disponible.";
+        return "Impossible de faire la recherche internet.";
 
     }
 
@@ -188,20 +183,60 @@ ${result.url}
 
 
 
-// =========================
-// MEMOIRE CHAT
-// =========================
+
+// ===============================
+// DETECTION RECHERCHE INTERNET
+// ===============================
 
 
-const userHistories = {};
+function needsInternet(text){
+
+
+    return /
+
+
+actualité|
+actu|
+news|
+aujourd'hui|
+hier|
+demain|
+président|
+présidente|
+politique|
+gouvernement|
+chef|
+qui est|
+où est|
+quand|
+prix|
+coût|
+météo|
+temps|
+match|
+score|
+résultat|
+résultats|
+gagné|
+gagner|
+perdu|
+classement|
+dernier|
+dernière|
+2025|
+2026
+
+/i.test(text);
+
+
+}
 
 
 
 
-
-// =========================
+// ===============================
 // CHAT GROQ
-// =========================
+// ===============================
 
 
 app.post("/chat", async(req,res)=>{
@@ -213,8 +248,7 @@ try{
 const message = req.body.message;
 
 
-const userId =
-req.body.userId || "user1";
+const userId = req.body.userId || "default";
 
 
 
@@ -223,7 +257,7 @@ if(!message){
 
 return res.json({
 
-reply:"Écris un message."
+reply:"Écris un message 🙂"
 
 });
 
@@ -232,44 +266,12 @@ reply:"Écris un message."
 
 
 
-// Création mémoire
-
-if(!userHistories[userId]){
-
-
-    userHistories[userId] = [];
-
-
-}
-
-
-
-const history =
-userHistories[userId];
-
-
-
-
-// =========================
-// DETECTION RECHERCHE
-// =========================
-
 
 let webInfo = "";
 
 
 
-const needSearch =
-
-/actualité|actu|aujourd'hui|hier|dernier|dernière|président|gouvernement|match|score|résultat|prix|météo|température|2024|2025|2026|nouveau|nouvelle|information|news|qui est/i
-
-.test(message);
-
-
-
-
-
-if(needSearch){
+if(needsInternet(message)){
 
 
 console.log(
@@ -287,6 +289,22 @@ webInfo = await searchInternet(message);
 
 
 
+
+
+if(!userHistories[userId]){
+
+
+userHistories[userId]=[];
+
+}
+
+
+
+const history = userHistories[userId];
+
+
+
+
 history.push({
 
 role:"user",
@@ -294,8 +312,6 @@ role:"user",
 content:message
 
 });
-
-
 
 
 
@@ -309,69 +325,49 @@ history.shift();
 
 
 
-const systemPrompt = `
+
+const messages=[
+
+
+{
+
+role:"system",
+
+content:`
 
 Tu es NovaAI.
 
 Tu réponds toujours en français.
 
-Tu es une intelligence artificielle utile.
-
-Si des informations internet sont fournies,
-elles sont prioritaires sur ta mémoire.
-
-Ne dis jamais :
-"je n'ai pas accès à internet"
-ou
-"je ne peux pas savoir"
-
-Si une information manque, explique-le simplement.
-
-Réponds naturellement.
-
-`;
-
-
-
-
-
-const messages = [
-
-{
-role:"system",
-content:`
-
-Tu es NovaAI.
-
-Tu dois répondre en français.
+Tu es une IA utile et précise.
 
 IMPORTANT :
 
-Les informations INTERNET fournies ci-dessous sont prioritaires.
+Si des informations INTERNET sont fournies,
+elles sont prioritaires.
 
-Tu dois utiliser ces informations pour répondre.
+Utilise ces informations.
 
-Ne dis jamais :
-"je n'ai pas accès à internet"
-"je n'ai pas de données"
-"je ne peux pas savoir"
+Ne dis jamais que tu n'as pas accès à internet.
 
-Si une information internet existe, utilise-la directement.
+Ne prétends pas connaître une information
+si elle n'est pas présente.
 
-Réponds simplement et clairement.
+Réponds naturellement sans parler de ta recherche.
 
 `
-},
+
+}
 
 
 ];
 
 
 
-// INTERNET AVANT HISTORIQUE
 
 if(webInfo){
 
+
 messages.push({
 
 role:"system",
@@ -379,46 +375,25 @@ role:"system",
 content:
 
 `
-RESULTATS INTERNET :
+
+INFORMATIONS INTERNET :
 
 ${webInfo}
 
-Ces résultats sont fiables.
-Utilise-les pour répondre à la question.
+
+Utilise ces informations pour répondre.
+
 `
 
 });
 
+
 }
 
 
-
-// ensuite seulement la conversation
 
 messages.push(...history);
 
-
-messages.push({
-
-role:"system",
-
-content:
-
-`
-
-Informations trouvées sur internet :
-
-${webInfo}
-
-
-Utilise ces informations pour répondre précisément.
-
-`
-
-});
-
-
-}
 
 
 
@@ -426,9 +401,7 @@ Utilise ces informations pour répondre précisément.
 
 const response = await fetch(
 
-
 "https://api.groq.com/openai/v1/chat/completions",
-
 
 {
 
@@ -455,10 +428,7 @@ body:JSON.stringify({
 model:"llama-3.1-8b-instant",
 
 
-messages:messages,
-
-
-temperature:0.3
+messages:messages
 
 
 })
@@ -466,17 +436,11 @@ temperature:0.3
 
 }
 
-
-
 );
 
 
 
-
-
-const data =
-await response.json();
-
+const data = await response.json();
 
 
 
@@ -486,14 +450,10 @@ console.log(
 
 
 
-
 const reply =
-
 data?.choices?.[0]?.message?.content
-
 ||
-
-"Erreur réponse IA.";
+"Je n'ai pas trouvé de réponse.";
 
 
 
@@ -509,8 +469,6 @@ content:reply
 
 
 
-
-
 res.json({
 
 reply:reply
@@ -519,40 +477,31 @@ reply:reply
 
 
 
-
-
-}
-
-
-
-catch(error){
+}catch(error){
 
 
 console.log(
-
 "CHAT ERROR =>",
-
 error
-
 );
 
 
 
 res.json({
 
-reply:"Erreur serveur."
+reply:"Erreur serveur chat."
 
 });
 
 
 }
 
+    
 
 
-});
-// =========================
+// ===============================
 // ANALYSE IMAGE GEMINI
-// =========================
+// ===============================
 
 
 app.post("/vision", async(req,res)=>{
@@ -579,10 +528,16 @@ reply:"Aucune image reçue."
 
 
 
-// Nettoyage base64
 
 image = image.replace(
-(/^data:image\/\w+;base64,/),
+"data:image/jpeg;base64,",
+""
+);
+
+
+
+image = image.replace(
+"data:image/png;base64,",
 ""
 );
 
@@ -606,18 +561,13 @@ const result = await model.generateContent([
 
 {
 
-
 inlineData:{
-
 
 data:image,
 
-
 mimeType:"image/jpeg"
 
-
 }
-
 
 },
 
@@ -625,16 +575,16 @@ mimeType:"image/jpeg"
 
 `
 
-Analyse cette image en français.
+Analyse cette image.
+
+Réponds en français.
 
 Décris ce que tu vois.
 
 Lis les textes présents.
 
-Explique les objets, lieux, personnes ou éléments importants.
-
-Si l'utilisateur pose une question sur l'image,
-réponds précisément.
+Explique les objets,
+les personnes et les détails importants.
 
 `
 
@@ -661,18 +611,15 @@ reply:text
 
 
 
-}
+}catch(error){
 
-
-
-catch(error){
 
 
 console.log(
 
 "GEMINI ERROR =>",
 
-error.message
+error
 
 );
 
@@ -696,13 +643,9 @@ reply:"Erreur analyse image."
 
 
 
-
-
-
-// =========================
-// GENERATION IMAGE HUGGINGFACE
-// =========================
-
+// ===============================
+// GENERATION IMAGE HUGGING FACE
+// ===============================
 
 
 app.post("/generate-image", async(req,res)=>{
@@ -711,9 +654,7 @@ app.post("/generate-image", async(req,res)=>{
 try{
 
 
-const prompt =
-req.body.prompt;
-
+const prompt = req.body.prompt;
 
 
 
@@ -733,18 +674,6 @@ error:"Description image manquante."
 
 
 
-console.log(
-
-"🎨 IMAGE :",
-
-prompt
-
-);
-
-
-
-
-
 const response = await fetch(
 
 
@@ -757,30 +686,30 @@ const response = await fetch(
 method:"POST",
 
 
+
 headers:{
 
 
-Authorization:
+"Authorization":
 
 `Bearer ${process.env.HF_API_KEY}`,
 
 
-"Content-Type":"application/json"
+"Content-Type":
+
+"application/json"
 
 
 },
 
 
 
-body:JSON.stringify({
 
+body:JSON.stringify({
 
 inputs:prompt
 
-
 })
-
-
 
 }
 
@@ -792,41 +721,24 @@ inputs:prompt
 
 
 
-console.log(
-
-"HF STATUS :",
-
-response.status
-
-);
-
-
-
-
-
-
 if(!response.ok){
 
 
-
-const errorText =
+const error =
 await response.text();
 
 
 
 console.log(
-
 "HF ERROR =>",
-
-errorText
-
+error
 );
 
 
 
 return res.json({
 
-error:errorText
+error:error
 
 });
 
@@ -846,9 +758,7 @@ await response.arrayBuffer();
 
 
 const imageBase64 =
-
 Buffer.from(buffer)
-
 .toString("base64");
 
 
@@ -858,14 +768,11 @@ Buffer.from(buffer)
 
 res.json({
 
-
 image:
 
-"data:image/png;base64,"
-
-+ imageBase64
-
-
+"data:image/png;base64," 
++
+imageBase64
 
 });
 
@@ -873,11 +780,7 @@ image:
 
 
 
-}
-
-
-
-catch(error){
+}catch(error){
 
 
 
@@ -885,10 +788,9 @@ console.log(
 
 "IMAGE ERROR =>",
 
-error.message
+error
 
 );
-
 
 
 
@@ -912,10 +814,35 @@ error:"Erreur génération image."
 
 
 
+// ===============================
+// TEST SERVEUR
+// ===============================
 
-// =========================
-// START SERVER
-// =========================
+
+app.get("/test",(req,res)=>{
+
+
+res.json({
+
+status:"NovaAI fonctionne 🚀"
+
+});
+
+
+});
+
+
+
+
+
+
+// ===============================
+// START
+// ===============================
+
+
+const PORT =
+process.env.PORT || 3000;
 
 
 
@@ -924,9 +851,13 @@ app.listen(PORT,()=>{
 
 console.log(
 
-`✅ NovaAI serveur lancé sur ${PORT}`
+`✅ NovaAI lancé sur le port ${PORT}`
 
 );
+
+
+});
+
 
 
 });
