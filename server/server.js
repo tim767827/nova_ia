@@ -161,12 +161,9 @@ let internetResults = "";
 
 
 // Détection recherche web
-
 const needSearch =
-
-/actualité|news|internet|web|aujourd'hui|hier|météo|temps|score|match|résultat|prix|cours|crypto|bourse|dernier|dernière|récent|récente/i
-
-.test(userMessage);
+/actualité|actu|news|internet|web|cherche|recherche|hier|aujourd'hui|aujourd hui|météo|temps|score|match|résultat|résultats|qui a gagné|gagné|victoire|défaite|prix|cours|crypto|bourse|dernier|dernière|récent|récente|2025|2026/i
+.test(userMessage.toLowerCase());
 
 
 
@@ -234,16 +231,15 @@ Tu es NovaAI.
 
 Tu réponds toujours en français.
 
-Tu es un assistant intelligent.
+IMPORTANT :
+Quand des informations Internet sont fournies,
+elles sont prioritaires sur ta mémoire.
 
-Si des informations Internet sont fournies,
-utilise-les pour répondre.
+Ne réponds jamais avec "je n'ai pas d'information"
+si les résultats Internet donnent une réponse.
 
-Ne dis jamais que tu as cherché sur Internet.
-
-Réponds clairement et naturellement.
+Utilise les résultats fournis pour répondre précisément.
 `
-
 }
 
 
