@@ -12,8 +12,12 @@ let currentChat=null;
 
 
 function saveChats(){
-localStorage.setItem("novaChats",JSON.stringify(chats));
+localStorage.setItem(
+"novaChats",
+JSON.stringify(chats)
+);
 }
+
 
 
 
@@ -23,18 +27,32 @@ let box=document.getElementById("history");
 
 box.innerHTML="";
 
-chats.forEach(chat=>{
+
+let search=document.getElementById("searchHistory")?.value.toLowerCase()||"";
+
+
+chats
+.filter(c=>c.title.toLowerCase().includes(search))
+.forEach(chat=>{
+
 
 let div=document.createElement("div");
+
 div.className="item";
 
 
 div.innerHTML=`
+
 <span>${chat.title}</span>
+
 <div>
+
 <button onclick="renameChat(event,${chat.id})">✏️</button>
+
 <button onclick="deleteChat(event,${chat.id})">🗑️</button>
+
 </div>
+
 `;
 
 
@@ -43,58 +61,23 @@ div.onclick=()=>loadChat(chat.id);
 
 box.appendChild(div);
 
+
 });
 
-}
-
-
-
-
-function renameChat(e,id){
-
-e.stopPropagation();
-
-let chat=chats.find(c=>c.id===id);
-
-let name=prompt("Nouveau nom :",chat.title);
-
-if(name&&name.trim()){
-
-chat.title=name.trim();
-
-saveChats();
-renderHistory();
-
-}
 
 }
 
 
 
-function deleteChat(e,id){
-
-e.stopPropagation();
 
 
-if(!confirm("Supprimer cette conversation ?"))return;
+document.getElementById("searchHistory")
+?.addEventListener(
+"input",
+renderHistory
+);
 
 
-chats=chats.filter(c=>c.id!==id);
-
-
-if(currentChat&&currentChat.id===id){
-
-currentChat=null;
-
-document.getElementById("messages").innerHTML="";
-
-}
-
-
-saveChats();
-renderHistory();
-
-}
 
 
 
@@ -102,9 +85,13 @@ renderHistory();
 function newChat(){
 
 currentChat={
+
 id:Date.now(),
+
 title:"Nouvelle conversation",
+
 messages:[]
+
 };
 
 
@@ -122,11 +109,70 @@ document.getElementById("messages").innerHTML="";
 
 
 
+
+function renameChat(e,id){
+
+e.stopPropagation();
+
+
+let chat=chats.find(c=>c.id===id);
+
+
+let name=prompt(
+"Nouveau nom :",
+chat.title
+);
+
+
+if(name){
+
+chat.title=name;
+
+saveChats();
+
+renderHistory();
+
+}
+
+}
+
+
+
+
+
+function deleteChat(e,id){
+
+e.stopPropagation();
+
+
+if(!confirm("Supprimer ?"))return;
+
+
+chats=chats.filter(
+c=>c.id!==id
+);
+
+
+currentChat=null;
+
+
+saveChats();
+
+renderHistory();
+
+document.getElementById("messages").innerHTML="";
+
+
+}
+
+
+
+
+
 function loadChat(id){
 
-currentChat=chats.find(c=>c.id===id);
-
-if(!currentChat)return;
+currentChat=
+chats.find(c=>c.id===id);
 
 
 let box=document.getElementById("messages");
@@ -134,61 +180,95 @@ let box=document.getElementById("messages");
 box.innerHTML="";
 
 
-currentChat.messages.forEach(msg=>{
+currentChat.messages.forEach(m=>{
 
 
-if(msg.type==="image"){
+if(m.type==="image"){
 
 let img=document.createElement("img");
 
-img.src=msg.text;
+img.src=m.text;
 
 img.className="generatedImage";
 
 box.appendChild(img);
 
+
 }else{
 
-addMessage(msg.text,msg.type);
+addMessage(
+m.text,
+m.type
+);
 
 }
 
 
 });
 
+
 scroll();
 
 }
+
+
+
 
 
 
 
 function addMessage(text,type){
 
+
 let box=document.getElementById("messages");
+
 
 let div=document.createElement("div");
 
 div.className="msg "+type;
 
-div.innerHTML=text.replace(/\n/g,"<br>");
+
+div.innerHTML=text.replace(
+/\n/g,
+"<br>"
+);
+
+
+
+if(type==="bot"){
+
+
+let btn=document.createElement("button");
+
+btn.className="copyBtn";
+
+btn.innerHTML="📋";
+
+btn.onclick=()=>{
+
+navigator.clipboard.writeText(text);
+
+btn.innerHTML="✅";
+
+setTimeout(()=>btn.innerHTML="📋",1000);
+
+};
+
+
+div.appendChild(btn);
+
+}
+
+
 
 box.appendChild(div);
 
 scroll();
 
-}
-
-
-
-
-function scroll(){
-
-let box=document.getElementById("messages");
-
-box.scrollTop=box.scrollHeight;
 
 }
+
+
 
 
 
@@ -204,7 +284,9 @@ sendMessage();
 
 
 
+
 async function sendMessage(){
+
 
 let input=document.getElementById("input");
 
@@ -215,27 +297,39 @@ if(!text)return;
 
 
 if(!currentChat){
+
 newChat();
+
 }
 
 
-addMessage(text,"user");
+
+addMessage(
+text,
+"user"
+);
 
 
 currentChat.messages.push({
-text:text,
+
+text,
+
 type:"user"
+
 });
+
 
 
 if(currentChat.title==="Nouvelle conversation"){
 
-currentChat.title=text.substring(0,25);
+currentChat.title=text.substring(0,30);
 
 }
 
 
+
 saveChats();
+
 renderHistory();
 
 
@@ -247,9 +341,11 @@ let loading=document.createElement("div");
 
 loading.className="msg bot";
 
-loading.textContent="🤖 Nova réfléchit...";
+loading.textContent="🤖 Nova écrit...";
 
-document.getElementById("messages").appendChild(loading);
+
+document.getElementById("messages")
+.appendChild(loading);
 
 
 
@@ -257,15 +353,25 @@ try{
 
 
 let res=await fetch("/chat",{
+
 method:"POST",
+
 headers:{
+
 "Content-Type":"application/json"
+
 },
+
 body:JSON.stringify({
+
 message:text,
+
 userId:userId
+
 })
+
 });
+
 
 
 let data=await res.json();
@@ -274,7 +380,11 @@ let data=await res.json();
 loading.remove();
 
 
-typeWriter(data.reply||"Pas de réponse");
+
+typeWriter(
+data.reply||"Pas de réponse"
+);
+
 
 
 }catch(e){
@@ -282,25 +392,31 @@ typeWriter(data.reply||"Pas de réponse");
 
 loading.remove();
 
-addMessage("❌ Erreur serveur","bot");
+addMessage(
+"❌ Erreur serveur",
+"bot"
+);
 
-console.log(e);
 
 }
 
-
 }
+
 
 
 
 
 function typeWriter(text){
 
+
 let div=document.createElement("div");
 
 div.className="msg bot";
 
-document.getElementById("messages").appendChild(div);
+
+document.getElementById("messages")
+.appendChild(div);
+
 
 
 let i=0;
@@ -309,27 +425,50 @@ let i=0;
 let timer=setInterval(()=>{
 
 
-div.innerHTML=text.substring(0,i).replace(/\n/g,"<br>");
+div.innerHTML=
+text.substring(0,i)
+.replace(/\n/g,"<br>")
++"<button class='copyBtn'>📋</button>";
 
-scroll();
+
 
 i++;
 
 
+scroll();
+
+
+
 if(i>=text.length){
+
 
 clearInterval(timer);
 
 
+
+div.querySelector(".copyBtn")
+.onclick=()=>{
+
+navigator.clipboard.writeText(text);
+
+};
+
+
+
 currentChat.messages.push({
-text:text,
+
+text,
+
 type:"bot"
+
 });
 
 
 saveChats();
 
+
 }
+
 
 
 },15);
@@ -341,41 +480,47 @@ saveChats();
 
 
 
+
+
 async function generateImage(){
 
 
-let input=document.getElementById("imagePrompt");
+let prompt=
+document.getElementById("imagePrompt")
+.value.trim();
 
-let prompt=input.value.trim();
 
 
 if(!prompt)return;
-
-
-if(!currentChat){
-newChat();
-}
-
-
-addMessage("🎨 "+prompt,"user");
 
 
 
 try{
 
 
-let res=await fetch("/generate-image",{
+let res=await fetch(
+"/generate-image",
+{
+
 method:"POST",
+
 headers:{
+
 "Content-Type":"application/json"
+
 },
+
 body:JSON.stringify({
-prompt:prompt
+
+prompt
+
 })
+
 });
 
 
 let data=await res.json();
+
 
 
 if(data.image){
@@ -388,13 +533,17 @@ img.src=data.image;
 img.className="generatedImage";
 
 
-document.getElementById("messages").appendChild(img);
+document.getElementById("messages")
+.appendChild(img);
 
 
 
 currentChat.messages.push({
+
 text:data.image,
+
 type:"image"
+
 });
 
 
@@ -402,10 +551,12 @@ saveChats();
 
 scroll();
 
+
 }
 
 
-}catch(e){
+
+}catch{
 
 alert("Erreur image");
 
@@ -418,10 +569,13 @@ alert("Erreur image");
 
 
 
+
 async function analyzeImage(){
 
 
-let file=document.getElementById("imageUpload").files[0];
+let file=
+document.getElementById("imageUpload")
+.files[0];
 
 
 if(!file)return;
@@ -435,27 +589,56 @@ let reader=new FileReader();
 reader.onload=async()=>{
 
 
-let base64=reader.result.split(",")[1];
+let base64=
+reader.result.split(",")[1];
 
 
-let res=await fetch("/vision",{
+
+let preview=
+document.getElementById("previewImage");
+
+
+preview.src=reader.result;
+
+preview.classList.remove("hidden");
+
+
+
+let res=await fetch(
+"/vision",
+{
+
 method:"POST",
+
 headers:{
+
 "Content-Type":"application/json"
+
 },
+
 body:JSON.stringify({
-image:base64
+
+image:base64,
+
+mimeType:file.type
+
 })
+
 });
+
 
 
 let data=await res.json();
 
 
-addMessage(data.reply||"Aucune analyse","bot");
+addMessage(
+data.reply,
+"bot"
+);
 
 
 };
+
 
 
 reader.readAsDataURL(file);
@@ -466,53 +649,155 @@ reader.readAsDataURL(file);
 
 
 
+
+
+function exportChat(){
+
+
+if(!currentChat)return;
+
+
+let text=
+currentChat.messages
+.map(m=>m.type+": "+m.text)
+.join("\n\n");
+
+
+
+let blob=
+new Blob(
+[text],
+{
+type:"text/plain"
+}
+);
+
+
+
+let a=document.createElement("a");
+
+a.href=
+URL.createObjectURL(blob);
+
+
+a.download="NovaAI-chat.txt";
+
+
+a.click();
+
+
+}
+
+
+
+
+
+
+
 function toggleTheme(){
 
 document.body.classList.toggle("dark");
+
 
 localStorage.setItem(
 "dark",
 document.body.classList.contains("dark")
 );
 
+
 }
 
 
 
 if(localStorage.getItem("dark")==="true"){
+
 document.body.classList.add("dark");
+
 }
+
 
 
 
 
 function toggleSettings(){
 
-document.getElementById("settings").classList.toggle("hidden");
+document
+.getElementById("settings")
+.classList.toggle("hidden");
 
 }
+
 
 
 
 
 function clearHistory(){
 
-if(!confirm("Supprimer tout l'historique ?"))return;
+
+if(!confirm("Tout supprimer ?"))
+return;
 
 
 chats=[];
 
 currentChat=null;
 
+
 localStorage.removeItem("novaChats");
 
 
-document.getElementById("messages").innerHTML="";
+document.getElementById("messages")
+.innerHTML="";
 
 
 renderHistory();
 
+
 }
+
+
+
+
+
+// DRAG DROP IMAGE
+
+
+let drop=document.getElementById("dropZone");
+
+
+drop?.addEventListener(
+"dragover",
+e=>e.preventDefault()
+);
+
+
+
+drop?.addEventListener(
+"drop",
+e=>{
+
+
+e.preventDefault();
+
+
+let file=e.dataTransfer.files[0];
+
+
+if(file){
+
+
+document.getElementById("imageUpload")
+.files=e.dataTransfer.files;
+
+
+analyzeImage();
+
+
+}
+
+
+});
+
 
 
 
