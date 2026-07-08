@@ -137,6 +137,7 @@ try{
 
 
 const userMessage = req.body.message;
+    console.log("MESSAGE REÇU :", userMessage);
 
 
 if(!userMessage){
