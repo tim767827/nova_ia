@@ -335,28 +335,67 @@ Réponds naturellement.
 
 
 
-const messages=[
-
+const messages = [
 
 {
-
 role:"system",
+content:`
 
-content:systemPrompt
+Tu es NovaAI.
 
+Tu dois répondre en français.
+
+IMPORTANT :
+
+Les informations INTERNET fournies ci-dessous sont prioritaires.
+
+Tu dois utiliser ces informations pour répondre.
+
+Ne dis jamais :
+"je n'ai pas accès à internet"
+"je n'ai pas de données"
+"je ne peux pas savoir"
+
+Si une information internet existe, utilise-la directement.
+
+Réponds simplement et clairement.
+
+`
 },
-
-
-...history
 
 
 ];
 
 
 
-
+// INTERNET AVANT HISTORIQUE
 
 if(webInfo){
+
+messages.push({
+
+role:"system",
+
+content:
+
+`
+RESULTATS INTERNET :
+
+${webInfo}
+
+Ces résultats sont fiables.
+Utilise-les pour répondre à la question.
+`
+
+});
+
+}
+
+
+
+// ensuite seulement la conversation
+
+messages.push(...history);
 
 
 messages.push({
