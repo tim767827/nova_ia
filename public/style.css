@@ -474,5 +474,26 @@ flex-direction:column;
 .imageBtn{
 width:100%;
 }
+  .item button{
+border:none;
+background:#e5e7eb;
+width:30px;
+height:30px;
+border-radius:8px;
+cursor:pointer;
+font-size:14px;
+transition:.2s;
+}
+
+.item button:hover{
+background:#2563eb;
+color:white;
+transform:scale(1.05);
+}
+
+.item div{
+display:flex;
+gap:5px;
+}
 
 }
