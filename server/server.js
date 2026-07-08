@@ -805,23 +805,17 @@ status:"NovaAI fonctionne 🚀"
 // ===============================
 
 
-const PORT =
-process.env.PORT || 3000;
+console.log("FIN DU CODE SERVER");
 
 
+const PORT = process.env.PORT || 3000;
 
 app.listen(PORT,()=>{
 
-
-console.log(
-
-`✅ NovaAI lancé sur le port ${PORT}`
-
-);
-
+    console.log(
+        `✅ NovaAI lancé sur le port ${PORT}`
+    );
 
 });
-
-
 
 });
