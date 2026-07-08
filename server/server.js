@@ -191,43 +191,7 @@ ${item.url}
 
 function needsInternet(text){
 
-
-    return /
-
-
-actualité|
-actu|
-news|
-aujourd'hui|
-hier|
-demain|
-président|
-présidente|
-politique|
-gouvernement|
-chef|
-qui est|
-où est|
-quand|
-prix|
-coût|
-météo|
-temps|
-match|
-score|
-résultat|
-résultats|
-gagné|
-gagner|
-perdu|
-classement|
-dernier|
-dernière|
-2025|
-2026
-
-/i.test(text);
-
+    return /actualité|actu|news|aujourd'hui|hier|demain|président|présidente|politique|gouvernement|chef|qui est|où est|quand|prix|coût|météo|temps|match|score|résultat|résultats|gagné|gagner|perdu|classement|dernier|dernière|2025|2026/i.test(text);
 
 }
 
