@@ -1,136 +1,315 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+
 <title>NovaAI</title>
+
 <link rel="stylesheet" href="style.css">
+
 </head>
+
 
 <body>
 
+
 <div class="app">
+
+
+
+<!-- SIDEBAR -->
 
 <aside class="sidebar">
 
-<div class="logo">🚀 NovaAI</div>
-<p class="desc">Assistant IA intelligent</p>
+
+<div class="brand">
+
+<div class="logo">
+🚀 NovaAI
+</div>
+
+<p>
+Assistant IA Premium
+</p>
+
+</div>
+
+
 
 <button class="newChat" onclick="newChat()">
+
 ＋ Nouveau chat
+
 </button>
 
-<h3>Historique</h3>
+
+
+<div class="historySearch">
+
+<input id="searchHistory" placeholder="🔍 Rechercher...">
+
+</div>
+
+
+
+<h3>
+Conversations
+</h3>
+
 
 <div id="history" class="history"></div>
 
+
+
+
 <div class="sidebarBottom">
-<button onclick="toggleSettings()" class="settingsBtn">
-⚙️ Paramètres
+
+
+<button onclick="exportChat()">
+
+📤 Exporter
+
 </button>
+
+
+<button onclick="toggleSettings()">
+
+⚙️ Paramètres
+
+</button>
+
+
 </div>
 
+
+
 </aside>
+
+
+
+
+
+<!-- CHAT -->
 
 
 <main class="chat">
 
 
+
 <header class="topbar">
 
+
 <div>
-<h2>NovaAI</h2>
-<span>🟢 En ligne</span>
+
+<h2>
+NovaAI
+</h2>
+
+
+<span>
+🟢 En ligne
+</span>
+
+
 </div>
+
 
 </header>
 
 
+
+
+
 <div id="messages" class="messages">
+
+
 
 <div class="welcome">
 
-<h1>Bienvenue sur NovaAI 🚀</h1>
+
+<div class="novaLogo">
+🤖
+</div>
+
+
+<h1>
+Bienvenue sur NovaAI
+</h1>
+
 
 <p>
-Pose tes questions, crée des images et analyse tes fichiers.
+Ton assistant IA pour discuter, créer et analyser.
 </p>
+
+
+
 
 <div class="suggestions">
 
-<button onclick="sendQuick('Explique-moi une idée')">
+
+<button onclick="sendQuick('Explique moi un sujet simplement')">
 💡 Expliquer
 </button>
 
-<button onclick="sendQuick('Aide-moi à écrire un texte')">
+
+<button onclick="sendQuick('Aide moi à écrire un texte professionnel')">
 ✍️ Écrire
 </button>
 
-<button onclick="sendQuick('Donne-moi une idée de projet')">
-🚀 Projet
+
+<button onclick="sendQuick('Donne moi une idée de projet')">
+🚀 Idée
 </button>
 
-</div>
 
 </div>
 
+
 </div>
+
+
+
+</div>
+
+
+
+
+
+
+<!-- OUTILS IMAGE -->
 
 
 <div class="imageTools">
 
-<label class="upload">
-📷 Image
-<input id="imageUpload" type="file" accept="image/*" onchange="analyzeImage()">
-</label>
 
 
-<input id="imagePrompt" placeholder="Décris une image à créer...">
+<div id="dropZone" class="dropZone">
 
-<button onclick="generateImage()" class="imageBtn">
-🎨 Créer
-</button>
+📷 Déposer une image
+
+<input 
+type="file"
+id="imageUpload"
+accept="image/*"
+onchange="analyzeImage()">
 
 </div>
+
+
+
+
+<img id="previewImage" class="preview hidden">
+
+
+
+<input 
+id="imagePrompt"
+placeholder="Créer une image avec Nova...">
+
+
+
+<button 
+onclick="generateImage()"
+class="imageBtn">
+
+🎨 Créer
+
+</button>
+
+
+
+</div>
+
+
+
+
+
+
+
+<!-- MESSAGE -->
 
 
 <div class="inputBar">
 
-<input id="input" placeholder="Écris un message..." onkeydown="if(event.key==='Enter')sendMessage()">
 
-<button onclick="sendMessage()" class="sendBtn">
+<input 
+id="input"
+placeholder="Écris ton message..."
+onkeydown="if(event.key==='Enter')sendMessage()">
+
+
+
+<button 
+onclick="sendMessage()"
+class="sendBtn">
+
 ➤
+
 </button>
 
+
+
 </div>
+
 
 
 </main>
 
 
+
+
+
+
+<!-- PARAMETRES -->
+
+
 <div id="settings" class="settings hidden">
 
-<h2>Paramètres</h2>
+
+<h2>
+Paramètres
+</h2>
+
+
 
 <button onclick="toggleTheme()">
+
 🌙 Mode sombre
+
 </button>
+
+
 
 <button onclick="clearHistory()">
+
 🗑 Supprimer historique
+
 </button>
+
+
 
 <button onclick="toggleSettings()">
+
 Fermer
+
 </button>
 
-</div>
 
 
 </div>
+
+
+
+</div>
+
+
 
 
 <script src="app.js"></script>
 
+
 </body>
+
 </html>
