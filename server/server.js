@@ -10,7 +10,7 @@ const express=require("express");
 const cors=require("cors");
 const path=require("path");
 const fetch=require("node-fetch");
-const rateLimit=require("./node_modules/express-rate-limit/dist/index.d.cts");
+const rateLimit = require("express-rate-limit");
 
 require("dotenv").config();
 
