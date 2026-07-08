@@ -714,159 +714,127 @@ display:none;
 
 
 /* =========================
- MOBILE
+   MOBILE
 ========================= */
 
+@media (max-width:768px){
 
-@media(max-width:768px){
+body{
+overflow:auto;
+}
 
+.app{
+flex-direction:column;
+height:100vh;
+}
 
 .sidebar{
-
 display:none;
-
 }
-
-
 
 .topbar{
-
-padding:0 15px;
-
+padding:12px 15px;
+height:auto;
 }
 
-
+.topbar h2{
+font-size:18px;
+}
 
 .messages{
-
-padding:15px;
-
+padding:12px;
+gap:12px;
 }
 
-
-
-.imageTools{
-
-flex-wrap:wrap;
-
+.welcome h1{
+font-size:28px;
 }
 
-
-
-.imageTools input{
-
-width:100%;
-
+.welcome p{
+font-size:15px;
 }
-
-
-
-.inputBar{
-
-padding:10px;
-
-position:sticky;
-
-bottom:0;
-
-}
-
-
 
 .msg{
-
-max-width:90%;
-
-}
-   .generatedImage{
-
-max-width:500px;
-
-border-radius:20px;
-
-margin:20px;
-
-align-self:flex-start;
-
-box-shadow:0 10px 30px rgba(0,0,0,.15);
-
-}
-   .bot{
-
-line-height:1.8;
-
-font-size:16px;
-
-letter-spacing:.2px;
-
-white-space:normal;
-
-padding:18px 22px;
-
-}
-   .generatedImage{
-
-max-width:500px;
-
-border-radius:20px;
-
-margin:20px;
-
-align-self:flex-start;
-
-box-shadow:0 10px 30px rgba(0,0,0,.15);
-
+max-width:100%;
+font-size:15px;
+padding:14px;
+line-height:1.6;
 }
 
-
-
-}
-.tagline{
-
-font-size:12px;
-color:#888;
-margin-top:8px;
-
+.bot{
+font-size:15px;
 }
 
+.user{
+font-size:15px;
+}
 
 .suggestions{
-
-display:flex;
-gap:10px;
-justify-content:center;
-flex-wrap:wrap;
-margin-top:25px;
-
+flex-direction:column;
+align-items:stretch;
 }
-
 
 .suggestions button{
-
-padding:12px 18px;
-border-radius:20px;
-border:none;
-background:white;
-box-shadow:0 5px 20px #0001;
-cursor:pointer;
-transition:.2s;
-
+width:100%;
+padding:14px;
+font-size:15px;
 }
 
-
-.suggestions button:hover{
-
-transform:translateY(-3px);
-
-background:#2563eb;
-color:white;
-
+.imageTools{
+flex-direction:column;
+padding:12px;
+gap:10px;
 }
 
+.upload{
+width:100%;
+text-align:center;
+}
 
-body.dark .suggestions button{
+.imageTools input{
+width:100%;
+}
 
-background:#18181b;
-color:white;
+.imageBtn{
+width:100%;
+padding:14px;
+}
+
+.inputBar{
+padding:10px;
+gap:8px;
+position:sticky;
+bottom:0;
+}
+
+.inputBar input{
+font-size:16px;
+padding:14px;
+}
+
+.sendBtn{
+width:55px;
+height:55px;
+flex-shrink:0;
+}
+
+.imageResult{
+padding:10px;
+text-align:center;
+}
+
+.imageResult img,
+.generatedImage{
+width:100%;
+max-width:100%;
+height:auto;
+margin:10px 0;
+border-radius:15px;
+}
+
+.settings{
+width:95%;
+max-width:350px;
+}
 
 }
