@@ -1,12 +1,22 @@
-const { search } = require("duck-duck-scrape");
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
 require("dotenv").config();
 
 const { GoogleGenerativeAI } = require("@google/generative-ai");
-
 const { search } = require("duck-duck-scrape");
+
+
+const app = express();
+
+
+// =========================
+// CONFIG GEMINI
+// =========================
+
+const genAI = new GoogleGenerativeAI(
+    process.env.GEMINI_KEY
+);
 
 
 // =========================
@@ -18,11 +28,11 @@ async function searchInternet(query){
     try{
 
         const results = await search(query, {
-            safeSearch: false
+            safeSearch:false
         });
 
 
-        if(!results.results.length){
+        if(!results.results || results.results.length === 0){
 
             return "Aucun résultat trouvé.";
 
@@ -30,22 +40,21 @@ async function searchInternet(query){
 
 
         return results.results
-            .slice(0,5)
-            .map(result => {
+        .slice(0,5)
+        .map(result => {
 
-                return `
+            return `
 Titre : ${result.title}
 
-Description :
+Résumé :
 ${result.description}
 
-Lien :
+Source :
 ${result.url}
-
 `;
 
-            })
-            .join("\n");
+        })
+        .join("\n\n");
 
 
     }catch(error){
@@ -61,61 +70,65 @@ ${result.url}
 
 }
 
-const genAI = new GoogleGenerativeAI(
-  process.env.GEMINI_KEY
-);
-
-
-const app = express();
 
 
 // =========================
 // MIDDLEWARE
 // =========================
 
+
 app.use(cors());
 
+
 app.use(express.json({
-  limit:"20mb"
+    limit:"20mb"
 }));
+
 
 
 // =========================
 // FRONTEND
 // =========================
 
+
 app.use(express.static(
-  path.join(__dirname,"..","public")
+    path.join(__dirname,"..","public")
 ));
 
 
 app.get("/",(req,res)=>{
 
-  res.sendFile(
-    path.join(__dirname,"..","public","index.html")
-  );
+    res.sendFile(
+        path.join(__dirname,"..","public","index.html")
+    );
 
 });
 
 
+
 // =========================
-// API KEYS
+// CLE GROQ
 // =========================
+
 
 const API_KEY = process.env.API_KEY;
 
 
+
 // =========================
-// MEMOIRE CHAT
+// MEMOIRE
 // =========================
+
 
 const userHistories = {};
 
 
 
+
 // =========================
-// CHAT GROQ
+// CHAT GROQ + INTERNET
 // =========================
+
 
 app.post("/chat", async(req,res)=>{
 
@@ -124,58 +137,76 @@ try{
 
 
 const userMessage = req.body.message;
-  let internetResults = "";
-
-const needSearch =
-/actualité|news|internet|aujourd'hui|hier|météo|temps|score|match|résultat|prix|cours|crypto|bourse|dernier|dernière|2025|2026/i
-.test(userMessage);
-
-
-if(needSearch){
-
-    console.log(
-        "🌍 Recherche Internet :",
-        userMessage
-    );
-
-
-    internetResults = await searchInternet(
-        userMessage
-    );
-
-}
-
-const userId = req.body.userId || "default";
 
 
 if(!userMessage){
 
-return res.json({
+    return res.json({
 
-reply:"Écris un message 🙂"
+        reply:"Écris un message 🙂"
 
-});
+    });
 
 }
+
+
+
+const userId =
+req.body.userId || "default";
+
+
+
+let internetResults = "";
+
+
+
+// Détection recherche web
+
+const needSearch =
+
+/actualité|news|internet|web|aujourd'hui|hier|météo|temps|score|match|résultat|prix|cours|crypto|bourse|dernier|dernière|récent|récente/i
+
+.test(userMessage);
+
+
+
+if(needSearch){
+
+
+console.log(
+"🌍 Recherche Internet :",
+userMessage
+);
+
+
+
+internetResults =
+await searchInternet(userMessage);
+
+
+}
+
 
 
 
 if(!userHistories[userId]){
 
-userHistories[userId]=[];
+    userHistories[userId]=[];
 
 }
 
 
 
-const history = userHistories[userId];
+const history =
+userHistories[userId];
+
 
 
 history.push({
 
-role:"user",
+    role:"user",
 
-content:userMessage
+    content:userMessage
 
 });
 
@@ -183,9 +214,70 @@ content:userMessage
 
 if(history.length > 12){
 
-history.shift();
+    history.shift();
 
 }
+
+
+
+
+const messages=[
+
+
+{
+
+role:"system",
+
+content:
+`
+Tu es NovaAI.
+
+Tu réponds toujours en français.
+
+Tu es un assistant intelligent.
+
+Si des informations Internet sont fournies,
+utilise-les pour répondre.
+
+Ne dis jamais que tu as cherché sur Internet.
+
+Réponds clairement et naturellement.
+`
+
+}
+
+
+
+];
+
+
+
+// Ajout résultats web
+
+if(internetResults){
+
+
+messages.push({
+
+role:"system",
+
+content:
+`
+Informations trouvées sur Internet :
+
+${internetResults}
+
+Utilise ces informations pour répondre.
+`
+
+});
+
+
+}
+
+
+
+messages.push(...history);
 
 
 
@@ -210,30 +302,7 @@ body:JSON.stringify({
 
 model:"llama-3.1-8b-instant",
 
-messages:[
-
-{
-
-role:"system",
-
-content:
-`
-Tu es NovaAI.
-
-Tu réponds toujours en français.
-
-Si des informations Internet sont fournies,
-utilise-les pour répondre.
-
-Ne parle pas de ta recherche.
-Réponds naturellement.
-`
-
-},
-
-...history
-
-]
+messages:messages
 
 })
 
@@ -243,18 +312,14 @@ Réponds naturellement.
 
 
 
-const data = await response.json();
-
-
-console.log(
-"GROQ =>",
-data
-);
+const data =
+await response.json();
 
 
 
 const reply =
-data?.choices?.[0]?.message?.content ||
+data?.choices?.[0]?.message?.content
+||
 "Je n'ai pas répondu.";
 
 
@@ -279,7 +344,6 @@ reply:reply
 
 }
 
-
 catch(error){
 
 
@@ -287,7 +351,6 @@ console.log(
 "CHAT ERROR =>",
 error
 );
-
 
 
 res.json({
@@ -300,17 +363,11 @@ reply:"Erreur serveur chat."
 }
 
 
-
 });
-
-
-
-
-
-
 // =========================
 // ANALYSE IMAGE GEMINI
 // =========================
+
 
 app.post("/vision", async(req,res)=>{
 
@@ -334,8 +391,7 @@ reply:"Aucune image reçue."
 
 
 
-
-// enlève le début base64
+// Nettoyage base64
 
 image = image.replace(
 "data:image/jpeg;base64,",
@@ -344,14 +400,17 @@ image = image.replace(
 
 
 
-const model = genAI.getGenerativeModel({
+const model =
+genAI.getGenerativeModel({
+
 model:"gemini-2.5-flash"
 
 });
 
 
 
-const result = await model.generateContent([
+const result =
+await model.generateContent([
 
 
 {
@@ -367,9 +426,20 @@ mimeType:"image/jpeg"
 },
 
 
-"Analyse cette image en français. Décris ce que tu vois, lis les textes présents, explique les objets, les personnes et réponds aux questions."
+`
+Analyse cette image en français.
 
+Décris ce que tu vois.
 
+Lis les textes présents.
+
+Explique les objets,
+les personnes,
+les lieux.
+
+Réponds aux questions
+sur cette image.
+`
 
 ]);
 
@@ -385,7 +455,6 @@ res.json({
 reply:text
 
 });
-
 
 
 
@@ -412,114 +481,169 @@ reply:"Erreur analyse image."
 }
 
 
+});
+
+
+
+
+// =========================
+// GENERATION IMAGE HUGGING FACE
+// =========================
+
+
+app.post("/generate-image", async(req,res)=>{
+
+
+try{
+
+
+const prompt =
+req.body.prompt;
+
+
+
+if(!prompt){
+
+
+return res.json({
+
+error:"Aucune description donnée."
 
 });
 
-// =========================
-// GENERATION IMAGE
-// =========================
 
-app.post("/generate-image", async (req,res)=>{
-
-  try {
-
-    const prompt = req.body.prompt;
+}
 
 
-    if(!prompt){
 
-      return res.json({
-        error:"Aucune description donnée."
-      });
-
-    }
+const response =
+await fetch(
 
 
-    const response = await fetch(
-
-      "https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-schnell",
-
-      {
-        method:"POST",
-
-        headers:{
-
-          "Authorization":`Bearer ${process.env.HF_API_KEY}`,
-          "Content-Type":"application/json"
-
-        },
-
-        body:JSON.stringify({
-
-          inputs:prompt
-
-        })
-
-      }
-
-    );
+"https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-schnell",
 
 
-    console.log(
-      "HF STATUS :",
-      response.status
-    );
+{
 
 
-    if(!response.ok){
-
-      const errorText = await response.text();
-
-      console.log(
-        "HF ERROR :",
-        errorText
-      );
+method:"POST",
 
 
-      return res.json({
-
-        error:errorText
-
-      });
-
-    }
+headers:{
 
 
-    const buffer = await response.arrayBuffer();
+"Authorization":
+`Bearer ${process.env.HF_API_KEY}`,
 
 
-    const imageBase64 =
-      Buffer.from(buffer).toString("base64");
+"Content-Type":
+"application/json"
 
 
-    res.json({
-
-      image:
-      "data:image/png;base64," + imageBase64
-
-    });
+},
 
 
-  }
+body:JSON.stringify({
 
 
-  catch(error){
-
-    console.log(
-      "IMAGE GENERATION ERROR =>",
-      error
-    );
+inputs:prompt
 
 
-    res.json({
+})
 
-      error:"Erreur génération image."
 
-    });
+}
 
-  }
+
+
+);
+
+
+
+console.log(
+"HF STATUS :",
+response.status
+);
+
+
+
+if(!response.ok){
+
+
+const errorText =
+await response.text();
+
+
+
+console.log(
+"HF ERROR :",
+errorText
+);
+
+
+
+return res.json({
+
+error:errorText
 
 });
+
+
+}
+
+
+
+const buffer =
+await response.arrayBuffer();
+
+
+
+const imageBase64 =
+Buffer.from(buffer)
+.toString("base64");
+
+
+
+res.json({
+
+image:
+"data:image/png;base64," + imageBase64
+
+});
+
+
+
+}
+
+
+catch(error){
+
+
+console.log(
+
+"IMAGE ERROR =>",
+
+error
+
+);
+
+
+
+res.json({
+
+error:"Erreur génération image."
+
+});
+
+
+}
+
+
+});
+
+
+
+
 // =========================
 // START SERVER
 // =========================
@@ -534,7 +658,9 @@ app.listen(PORT,()=>{
 
 
 console.log(
-`✅ Server running on port ${PORT}`
+
+`✅ NovaAI serveur lancé sur ${PORT}`
+
 );
 
 
