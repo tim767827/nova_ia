@@ -1,65 +1,176 @@
+// =====================================
+// NOVA AI APP.JS V4
+// PARTIE 1/2
+// =====================================
+
+
 let userId=localStorage.getItem("novaUser");
 
+
 if(!userId){
+
 userId="user_"+Date.now();
-localStorage.setItem("novaUser",userId);
+
+localStorage.setItem(
+"novaUser",
+userId
+);
+
 }
 
 
-let chats=JSON.parse(localStorage.getItem("novaChats"))||[];
+
+
+let chats=JSON.parse(
+localStorage.getItem("novaChats")
+)||[];
+
+
 let currentChat=null;
 
 
 
+
+
+// =====================================
+// SAUVEGARDE
+// =====================================
+
+
 function saveChats(){
+
 localStorage.setItem(
 "novaChats",
 JSON.stringify(chats)
 );
+
 }
 
 
 
 
+
+// =====================================
+// HISTORIQUE
+// =====================================
+
+
 function renderHistory(){
 
-let box=document.getElementById("history");
 
-box.innerHTML="";
+let history=document.getElementById("history");
 
 
-let search=document.getElementById("searchHistory")?.value.toLowerCase()||"";
+if(!history)return;
+
+
+
+history.innerHTML="";
+
+
+
+let search=
+document.getElementById("searchHistory")
+?.value
+.toLowerCase()
+||"";
+
 
 
 chats
-.filter(c=>c.title.toLowerCase().includes(search))
+.filter(chat=>
+chat.title
+.toLowerCase()
+.includes(search)
+)
 .forEach(chat=>{
 
 
-let div=document.createElement("div");
+let item=document.createElement("div");
 
-div.className="item";
-
-
-div.innerHTML=`
-
-<span>${chat.title}</span>
-
-<div>
-
-<button onclick="renameChat(event,${chat.id})">✏️</button>
-
-<button onclick="deleteChat(event,${chat.id})">🗑️</button>
-
-</div>
-
-`;
+item.className="item";
 
 
-div.onclick=()=>loadChat(chat.id);
+
+let title=document.createElement("span");
+
+title.textContent=chat.title;
 
 
-box.appendChild(div);
+title.onclick=()=>loadChat(chat.id);
+
+
+
+
+
+let actions=document.createElement("div");
+
+
+
+let edit=document.createElement("button");
+
+edit.textContent="✏️";
+
+
+edit.onclick=(e)=>{
+
+e.stopPropagation();
+
+
+let name=prompt(
+"Nouveau titre :",
+chat.title
+);
+
+
+if(name){
+
+chat.title=name.trim();
+
+saveChats();
+
+renderHistory();
+
+}
+
+};
+
+
+
+
+
+let trash=document.createElement("button");
+
+trash.textContent="🗑️";
+
+
+trash.onclick=(e)=>{
+
+e.stopPropagation();
+
+
+deleteChat(chat.id);
+
+};
+
+
+
+
+
+actions.appendChild(edit);
+
+actions.appendChild(trash);
+
+
+
+item.appendChild(title);
+
+item.appendChild(actions);
+
+
+
+history.appendChild(item);
+
 
 
 });
@@ -71,7 +182,9 @@ box.appendChild(div);
 
 
 
-document.getElementById("searchHistory")
+
+document
+.getElementById("searchHistory")
 ?.addEventListener(
 "input",
 renderHistory
@@ -82,9 +195,13 @@ renderHistory
 
 
 
+
+
 function newChat(){
 
+
 currentChat={
+
 
 id:Date.now(),
 
@@ -92,10 +209,15 @@ title:"Nouvelle conversation",
 
 messages:[]
 
+
 };
 
 
-chats.unshift(currentChat);
+
+chats.unshift(
+currentChat
+);
+
 
 saveChats();
 
@@ -110,60 +232,46 @@ document.getElementById("messages").innerHTML="";
 
 
 
-function renameChat(e,id){
-
-e.stopPropagation();
-
-
-let chat=chats.find(c=>c.id===id);
-
-
-let name=prompt(
-"Nouveau nom :",
-chat.title
-);
-
-
-if(name){
-
-chat.title=name;
-
-saveChats();
-
-renderHistory();
-
-}
-
-}
 
 
 
+function deleteChat(id){
 
 
-function deleteChat(e,id){
-
-e.stopPropagation();
-
-
-if(!confirm("Supprimer ?"))return;
+if(!confirm(
+"Supprimer cette conversation ?"
+))
+return;
 
 
-chats=chats.filter(
+
+chats=
+chats.filter(
 c=>c.id!==id
 );
 
 
+
+if(currentChat?.id===id){
+
 currentChat=null;
+
+}
+
 
 
 saveChats();
 
 renderHistory();
 
+
 document.getElementById("messages").innerHTML="";
 
-
 }
+
+
+
+
 
 
 
@@ -171,35 +279,50 @@ document.getElementById("messages").innerHTML="";
 
 function loadChat(id){
 
+
 currentChat=
-chats.find(c=>c.id===id);
+chats.find(
+c=>c.id===id
+);
+
+
+
+if(!currentChat)return;
+
 
 
 let box=document.getElementById("messages");
 
+
 box.innerHTML="";
 
 
-currentChat.messages.forEach(m=>{
+
+currentChat.messages.forEach(msg=>{
 
 
-if(m.type==="image"){
+if(msg.type==="image"){
+
 
 let img=document.createElement("img");
 
-img.src=m.text;
+img.src=msg.text;
 
 img.className="generatedImage";
+
 
 box.appendChild(img);
 
 
+
 }else{
 
+
 addMessage(
-m.text,
-m.type
+msg.text,
+msg.type
 );
+
 
 }
 
@@ -208,6 +331,35 @@ m.type
 
 
 scroll();
+
+}
+
+
+
+
+
+
+
+
+
+// =====================================
+// MESSAGE
+// =====================================
+
+
+
+function cleanMarkdown(text){
+
+
+return text
+
+.replace(/\*\*(.*?)\*\*/g,"<b>$1</b>")
+
+.replace(/\*(.*?)\*/g,"<i>$1</i>")
+
+.replace(/`(.*?)`/g,"<code>$1</code>")
+
+.replace(/\n/g,"<br>");
 
 }
 
@@ -225,43 +377,59 @@ let box=document.getElementById("messages");
 
 let div=document.createElement("div");
 
-div.className="msg "+type;
+
+div.className=
+"msg "+type;
 
 
-div.innerHTML=text.replace(
-/\n/g,
-"<br>"
-);
+
+div.innerHTML=
+cleanMarkdown(text);
+
 
 
 
 if(type==="bot"){
 
 
-let btn=document.createElement("button");
+let copy=document.createElement("button");
 
-btn.className="copyBtn";
 
-btn.innerHTML="📋";
+copy.className="copyBtn";
 
-btn.onclick=()=>{
+
+copy.textContent="📋";
+
+
+copy.onclick=()=>{
+
 
 navigator.clipboard.writeText(text);
 
-btn.innerHTML="✅";
 
-setTimeout(()=>btn.innerHTML="📋",1000);
+copy.textContent="✅";
+
+
+setTimeout(()=>{
+
+copy.textContent="📋";
+
+},1000);
+
 
 };
 
 
-div.appendChild(btn);
+
+div.appendChild(copy);
+
 
 }
 
 
 
 box.appendChild(div);
+
 
 scroll();
 
@@ -273,11 +441,15 @@ scroll();
 
 
 
-function sendQuick(text){
+function scroll(){
 
-document.getElementById("input").value=text;
 
-sendMessage();
+let box=document.getElementById("messages");
+
+
+box.scrollTop=
+box.scrollHeight;
+
 
 }
 
@@ -285,15 +457,51 @@ sendMessage();
 
 
 
+
+// =====================================
+// REPONSES RAPIDES
+// =====================================
+
+
+
+function sendQuick(text){
+
+
+document.getElementById("input").value=text;
+
+
+sendMessage();
+
+
+}
+
+
+
+
+
+
+
+
+// =====================================
+// CHAT IA
+// =====================================
+
+
+
 async function sendMessage(){
 
 
-let input=document.getElementById("input");
+let input=
+document.getElementById("input");
 
-let text=input.value.trim();
+
+let text=
+input.value.trim();
+
 
 
 if(!text)return;
+
 
 
 if(!currentChat){
@@ -304,15 +512,17 @@ newChat();
 
 
 
+
 addMessage(
 text,
 "user"
 );
 
 
+
 currentChat.messages.push({
 
-text,
+text:text,
 
 type:"user"
 
@@ -320,11 +530,17 @@ type:"user"
 
 
 
+
+
 if(currentChat.title==="Nouvelle conversation"){
-currentChat.title=text
+
+
+currentChat.title=
+text
 .substring(0,30)
 .replace(/[^\wÀ-ÿ ]/g,"")
 .trim();
+
 
 }
 
@@ -339,14 +555,20 @@ input.value="";
 
 
 
+
+
 let loading=document.createElement("div");
 
+
 loading.className="msg bot";
+
 
 loading.textContent="🤖 Nova écrit...";
 
 
-document.getElementById("messages")
+
+document
+.getElementById("messages")
 .appendChild(loading);
 
 
@@ -354,15 +576,20 @@ document.getElementById("messages")
 try{
 
 
-let res=await fetch("/chat",{
+let response=
+await fetch("/chat",{
+
 
 method:"POST",
 
+
 headers:{
 
-"Content-Type":"application/json"
+"Content-Type":
+"application/json"
 
 },
+
 
 body:JSON.stringify({
 
@@ -372,11 +599,14 @@ userId:userId
 
 })
 
+
 });
 
 
 
-let data=await res.json();
+let data=
+await response.json();
+
 
 
 loading.remove();
@@ -384,15 +614,17 @@ loading.remove();
 
 
 typeWriter(
-data.reply||"Pas de réponse"
+data.reply ||
+"Pas de réponse."
 );
 
 
 
-}catch(e){
+}catch(error){
 
 
 loading.remove();
+
 
 addMessage(
 "❌ Erreur serveur",
@@ -400,47 +632,67 @@ addMessage(
 );
 
 
-}
+console.log(error);
 
-}
-
-
-
-
-
-function formatText(text){
-
-return text
-.replace(/\*\*(.*?)\*\*/g,"<b>$1</b>")
-.replace(/\*(.*?)\*/g,"<i>$1</i>")
-.replace(/`(.*?)`/g,"<code>$1</code>")
-.replace(/\n/g,"<br>");
 
 }
 
+
+}
+// =====================================
+// ECRITURE IA
+// =====================================
 
 
 function typeWriter(text){
 
+
 let div=document.createElement("div");
+
 
 div.className="msg bot";
 
 
-document.getElementById("messages")
+document
+.getElementById("messages")
 .appendChild(div);
 
 
+
 let i=0;
+
 
 
 let timer=setInterval(()=>{
 
 
 div.innerHTML=
-formatText(text.substring(0,i))
-+
-`<button class="copyBtn" onclick="navigator.clipboard.writeText(\`${text}\`)">📋</button>`;
+cleanMarkdown(
+text.substring(0,i)
+);
+
+
+
+let copy=document.createElement("button");
+
+
+copy.className="copyBtn";
+
+
+copy.textContent="📋";
+
+
+copy.onclick=()=>{
+
+navigator.clipboard.writeText(text);
+
+copy.textContent="✅";
+
+};
+
+
+
+div.appendChild(copy);
 
 
 
@@ -453,7 +705,9 @@ scroll();
 
 if(i>=text.length){
 
+
 clearInterval(timer);
+
 
 
 currentChat.messages.push({
@@ -465,24 +719,6 @@ type:"bot"
 });
 
 
-saveChats();
-
-}
-
-
-},15);
-
-
-}
-
-currentChat.messages.push({
-
-text,
-
-type:"bot"
-
-});
-
 
 saveChats();
 
@@ -494,52 +730,90 @@ saveChats();
 },15);
 
 
+
 }
 
 
 
 
+
+
+
+// =====================================
+// CREATION IMAGE
+// =====================================
 
 
 
 async function generateImage(){
 
 
+
+let input=
+document.getElementById("imagePrompt");
+
+
 let prompt=
-document.getElementById("imagePrompt")
-.value.trim();
+input.value.trim();
 
 
 
-if(!prompt)return;
+if(!prompt){
+
+alert("Décris une image");
+
+return;
+
+}
+
+
+
+if(!currentChat){
+
+newChat();
+
+}
+
+
+
+addMessage(
+"🎨 Création : "+prompt,
+"user"
+);
 
 
 
 try{
 
 
-let res=await fetch(
-"/generate-image",
-{
+let res=
+await fetch("/generate-image",{
+
 
 method:"POST",
 
+
 headers:{
 
-"Content-Type":"application/json"
+"Content-Type":
+"application/json"
 
 },
 
+
 body:JSON.stringify({
 
-prompt
+prompt:prompt
 
 })
+
 
 });
 
 
-let data=await res.json();
+
+let data=
+await res.json();
 
 
 
@@ -548,12 +822,16 @@ if(data.image){
 
 let img=document.createElement("img");
 
+
 img.src=data.image;
+
 
 img.className="generatedImage";
 
 
-document.getElementById("messages")
+
+document
+.getElementById("messages")
 .appendChild(img);
 
 
@@ -567,26 +845,50 @@ type:"image"
 });
 
 
+
 saveChats();
 
 scroll();
 
 
+}else{
+
+
+alert(
+data.error ||
+"Erreur image"
+);
+
+
 }
 
 
 
-}catch{
+}catch(error){
 
-alert("Erreur image");
+
+console.log(error);
+
+
+alert("Erreur création image");
+
 
 }
 
 
+
 }
 
 
 
+
+
+
+
+
+// =====================================
+// ANALYSE IMAGE
+// =====================================
 
 
 
@@ -594,67 +896,59 @@ async function analyzeImage(){
 
 
 let file=
-document.getElementById("imageUpload")
+document
+.getElementById("imageUpload")
 .files[0];
+
 
 
 if(!file)return;
 
 
 
-let reader=new FileReader();
+sendVisionFile(file);
 
 
 
-reader.onload=async()=>{
-
-
-let base64=
-reader.result.split(",")[1];
+}
 
 
 
-let preview=
+
+
+
+
+
+function previewFile(file){
+
+
+
+let reader=
+new FileReader();
+
+
+
+reader.onload=()=>{
+
+
+let img=
 document.getElementById("previewImage");
 
 
-preview.src=reader.result;
 
-preview.classList.remove("hidden");
-
+if(img){
 
 
-let res=await fetch(
-"/vision",
-{
-
-method:"POST",
-
-headers:{
-
-"Content-Type":"application/json"
-
-},
-
-body:JSON.stringify({
-
-image:base64,
-
-mimeType:file.type
-
-})
-
-});
+img.src=reader.result;
 
 
-
-let data=await res.json();
-
-
-addMessage(
-data.reply,
-"bot"
+img.classList.remove(
+"hidden"
 );
+
+
+}
+
 
 
 };
@@ -671,22 +965,233 @@ reader.readAsDataURL(file);
 
 
 
+
+
+
+async function sendVisionFile(file){
+
+
+previewFile(file);
+
+
+
+let reader=
+new FileReader();
+
+
+
+reader.onload=async()=>{
+
+
+let base64=
+reader.result.split(",")[1];
+
+
+
+try{
+
+
+let res=
+await fetch("/vision",{
+
+
+method:"POST",
+
+
+headers:{
+
+"Content-Type":
+"application/json"
+
+},
+
+
+body:JSON.stringify({
+
+image:base64,
+
+mimeType:file.type
+
+})
+
+
+});
+
+
+
+let data=
+await res.json();
+
+
+
+addMessage(
+data.reply ||
+"Pas de réponse",
+"bot"
+);
+
+
+
+}catch(error){
+
+
+addMessage(
+"❌ Erreur analyse image",
+"bot"
+);
+
+
+}
+
+
+
+};
+
+
+
+reader.readAsDataURL(file);
+
+
+
+}
+
+
+
+
+
+
+
+
+
+// =====================================
+// DRAG DROP IMAGE
+// =====================================
+
+
+
+let dropZone=
+document.getElementById(
+"dropZone"
+);
+
+
+
+if(dropZone){
+
+
+
+dropZone.addEventListener(
+"dragover",
+e=>{
+
+
+e.preventDefault();
+
+
+dropZone.style.background=
+"#2563eb";
+
+
+dropZone.style.color=
+"white";
+
+
+}
+
+);
+
+
+
+dropZone.addEventListener(
+"dragleave",
+()=>{
+
+
+dropZone.style.background="";
+
+
+dropZone.style.color="";
+
+
+}
+
+);
+
+
+
+dropZone.addEventListener(
+"drop",
+e=>{
+
+
+e.preventDefault();
+
+
+
+let file=
+e.dataTransfer.files[0];
+
+
+
+if(file){
+
+sendVisionFile(file);
+
+}
+
+
+
+}
+
+);
+
+
+
+}
+
+
+
+
+
+
+
+// =====================================
+// EXPORT
+// =====================================
+
+
+
 function exportChat(){
 
 
-if(!currentChat)return;
+if(!currentChat){
+
+alert("Aucune conversation");
+
+return;
+
+}
 
 
-let text=
+
+let content=
 currentChat.messages
-.map(m=>m.type+": "+m.text)
+.map(m=>{
+
+return m.type.toUpperCase()
++
+" : "
++
+m.text;
+
+})
 .join("\n\n");
 
 
 
 let blob=
 new Blob(
-[text],
+[content],
 {
 type:"text/plain"
 }
@@ -694,16 +1199,19 @@ type:"text/plain"
 
 
 
-let a=document.createElement("a");
+let link=
+document.createElement("a");
 
-a.href=
+
+link.href=
 URL.createObjectURL(blob);
 
 
-a.download="NovaAI-chat.txt";
+link.download=
+"NovaAI-conversation.txt";
 
 
-a.click();
+link.click();
 
 
 }
@@ -714,14 +1222,29 @@ a.click();
 
 
 
+// =====================================
+// PARAMETRES
+// =====================================
+
+
+
 function toggleTheme(){
 
-document.body.classList.toggle("dark");
+
+document.body.classList.toggle(
+"dark"
+);
+
 
 
 localStorage.setItem(
-"dark",
-document.body.classList.contains("dark")
+
+"novaDark",
+
+document.body.classList.contains(
+"dark"
+)
+
 );
 
 
@@ -729,11 +1252,22 @@ document.body.classList.contains("dark")
 
 
 
-if(localStorage.getItem("dark")==="true"){
 
-document.body.classList.add("dark");
+
+
+if(
+localStorage.getItem("novaDark")
+==="true"
+){
+
+document.body.classList.add(
+"dark"
+);
 
 }
+
+
+
 
 
 
@@ -741,11 +1275,26 @@ document.body.classList.add("dark");
 
 function toggleSettings(){
 
-document
-.getElementById("settings")
-.classList.toggle("hidden");
+
+let box=
+document.getElementById(
+"settings"
+);
+
+
+
+if(box){
+
+box.classList.toggle(
+"hidden"
+);
 
 }
+
+
+}
+
+
 
 
 
@@ -754,8 +1303,12 @@ document
 function clearHistory(){
 
 
-if(!confirm("Tout supprimer ?"))
+
+if(!confirm(
+"Supprimer tout l'historique ?"
+))
 return;
+
 
 
 chats=[];
@@ -763,141 +1316,67 @@ chats=[];
 currentChat=null;
 
 
-localStorage.removeItem("novaChats");
-
-
-document.getElementById("messages")
-.innerHTML="";
-
-
-renderHistory();
-
-
-}
-
-
-
-
-
-let drop=document.getElementById("dropZone");
-
-
-drop?.addEventListener("dragover",e=>{
-e.preventDefault();
-drop.style.background="#2563eb";
-drop.style.color="white";
-});
-
-
-drop?.addEventListener("dragleave",()=>{
-
-drop.style.background="";
-drop.style.color="";
-
-});
-
-
-
-drop?.addEventListener("drop",e=>{
-
-e.preventDefault();
-
-
-let file=e.dataTransfer.files[0];
-
-
-if(!file)return;
-
-
-
-showPreview(file);
-
-sendVisionFile(file);
-
-
-});
-
-
-
-
-function showPreview(file){
-
-let reader=new FileReader();
-
-
-reader.onload=()=>{
-
-let img=document.getElementById("previewImage");
-
-img.src=reader.result;
-
-img.classList.remove("hidden");
-
-};
-
-
-reader.readAsDataURL(file);
-
-}
-
-
-
-
-
-async function sendVisionFile(file){
-
-let reader=new FileReader();
-
-
-reader.onload=async()=>{
-
-
-let base64=
-reader.result.split(",")[1];
-
-
-let res=await fetch("/vision",{
-
-method:"POST",
-
-headers:{
-"Content-Type":"application/json"
-},
-
-body:JSON.stringify({
-
-image:base64,
-
-mimeType:file.type
-
-})
-
-});
-
-
-let data=await res.json();
-
-
-addMessage(
-data.reply,
-"bot"
+localStorage.removeItem(
+"novaChats"
 );
 
 
-};
+
+document
+.getElementById("messages")
+.innerHTML="";
 
 
-reader.readAsDataURL(file);
+
+renderHistory();
+
+
 
 }
 
 
 
+
+
+
+
+
+// =====================================
+// DEMARRAGE
+// =====================================
+
+
+
 renderHistory();
+
 
 
 if(chats.length){
 
-loadChat(chats[0].id);
+loadChat(
+chats[0].id
+);
 
 }
+
+
+
+// rendre les fonctions visibles au HTML
+
+window.newChat=newChat;
+
+window.sendMessage=sendMessage;
+
+window.sendQuick=sendQuick;
+
+window.generateImage=generateImage;
+
+window.analyzeImage=analyzeImage;
+
+window.toggleTheme=toggleTheme;
+
+window.toggleSettings=toggleSettings;
+
+window.clearHistory=clearHistory;
+
+window.exportChat=exportChat;
