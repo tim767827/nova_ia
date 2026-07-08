@@ -321,8 +321,10 @@ type:"user"
 
 
 if(currentChat.title==="Nouvelle conversation"){
-
-currentChat.title=text.substring(0,30);
+currentChat.title=text
+.substring(0,30)
+.replace(/[^\wÀ-ÿ ]/g,"")
+.trim();
 
 }
 
