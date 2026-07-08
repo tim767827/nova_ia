@@ -406,8 +406,19 @@ addMessage(
 
 
 
-function typeWriter(text){
+function formatText(text){
 
+return text
+.replace(/\*\*(.*?)\*\*/g,"<b>$1</b>")
+.replace(/\*(.*?)\*/g,"<i>$1</i>")
+.replace(/`(.*?)`/g,"<code>$1</code>")
+.replace(/\n/g,"<br>");
+
+}
+
+
+
+function typeWriter(text){
 
 let div=document.createElement("div");
 
@@ -418,7 +429,6 @@ document.getElementById("messages")
 .appendChild(div);
 
 
-
 let i=0;
 
 
@@ -426,9 +436,9 @@ let timer=setInterval(()=>{
 
 
 div.innerHTML=
-text.substring(0,i)
-.replace(/\n/g,"<br>")
-+"<button class='copyBtn'>📋</button>";
+formatText(text.substring(0,i))
++
+`<button class="copyBtn" onclick="navigator.clipboard.writeText(\`${text}\`)">📋</button>`;
 
 
 
@@ -441,19 +451,27 @@ scroll();
 
 if(i>=text.length){
 
-
 clearInterval(timer);
 
 
+currentChat.messages.push({
 
-div.querySelector(".copyBtn")
-.onclick=()=>{
+text:text,
 
-navigator.clipboard.writeText(text);
+type:"bot"
 
-};
+});
 
 
+saveChats();
+
+}
+
+
+},15);
+
+
+}
 
 currentChat.messages.push({
 
