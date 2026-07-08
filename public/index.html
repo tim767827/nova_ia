@@ -2,10 +2,12 @@
 <html lang="fr">
 
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
 
-<title>NovaAI</title>
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>NovaAI 🚀</title>
 
 <link rel="stylesheet" href="style.css">
 
@@ -19,26 +21,41 @@
 
 
 
-<!-- SIDEBAR -->
+<!-- =========================
+SIDEBAR
+========================= -->
+
 
 <aside class="sidebar">
 
 
 <div class="brand">
 
+
 <div class="logo">
 🚀 NovaAI
 </div>
 
-<p>
-Assistant IA Premium
-</p>
+
+<div class="version">
+Assistant IA nouvelle génération
+</div>
+
+
+<div class="tagline">
+Discutez, créez et analysez sans limite.
+</div>
+
 
 </div>
 
 
 
-<button class="newChat" onclick="newChat()">
+
+
+<button 
+class="newChat"
+onclick="newChat()">
 
 ＋ Nouveau chat
 
@@ -46,39 +63,61 @@ Assistant IA Premium
 
 
 
+
+
+
 <div class="historySearch">
 
-<input id="searchHistory" placeholder="🔍 Rechercher...">
+
+<input
+id="searchHistory"
+placeholder="🔎 Rechercher une conversation">
 
 </div>
 
 
 
-<h3>
-Conversations
-</h3>
 
 
-<div id="history" class="history"></div>
+<div class="historyTitle">
+
+Historique
+
+</div>
+
+
+
+<div 
+id="history"
+class="history">
+
+</div>
 
 
 
 
-<div class="sidebarBottom">
+
+<div class="bottom">
 
 
-<button onclick="exportChat()">
-
-📤 Exporter
-
-</button>
-
-
-<button onclick="toggleSettings()">
+<button
+class="settingsBtn"
+onclick="toggleSettings()">
 
 ⚙️ Paramètres
 
 </button>
+
+
+
+<button
+class="exportBtn"
+onclick="exportChat()">
+
+📥 Exporter
+
+</button>
+
 
 
 </div>
@@ -91,29 +130,37 @@ Conversations
 
 
 
-<!-- CHAT -->
+
+
+
+
+
+<!-- =========================
+ZONE CHAT
+========================= -->
 
 
 <main class="chat">
 
 
 
+
+
 <header class="topbar">
 
-
-<div>
 
 <h2>
 NovaAI
 </h2>
 
 
-<span>
-🟢 En ligne
-</span>
 
+<div class="status">
+
+🟢 En ligne
 
 </div>
+
 
 
 </header>
@@ -122,26 +169,35 @@ NovaAI
 
 
 
-<div id="messages" class="messages">
+
+
+
+
+<div 
+id="messages"
+class="messages">
+
+
 
 
 
 <div class="welcome">
 
 
-<div class="novaLogo">
-🤖
-</div>
-
-
 <h1>
-Bienvenue sur NovaAI
+Bienvenue sur NovaAI 🚀
 </h1>
 
 
+
 <p>
-Ton assistant IA pour discuter, créer et analyser.
+
+Votre assistant IA pour discuter,
+créer des images,
+analyser vos fichiers et vous aider.
+
 </p>
+
 
 
 
@@ -149,23 +205,29 @@ Ton assistant IA pour discuter, créer et analyser.
 <div class="suggestions">
 
 
-<button onclick="sendQuick('Explique moi un sujet simplement')">
-💡 Expliquer
+<button onclick="sendQuick('Explique moi une idée simplement')">
+
+💡 Explique une idée
+
 </button>
+
 
 
 <button onclick="sendQuick('Aide moi à écrire un texte professionnel')">
-✍️ Écrire
+
+✍️ Écris un texte
+
 </button>
+
 
 
 <button onclick="sendQuick('Donne moi une idée de projet')">
-🚀 Idée
+
+🚀 Trouve une idée
+
 </button>
 
 
-</div>
-
 
 </div>
 
@@ -177,48 +239,80 @@ Ton assistant IA pour discuter, créer et analyser.
 
 
 
-
-<!-- OUTILS IMAGE -->
-
-
-<div class="imageTools">
+</div>
 
 
 
-<div id="dropZone" class="dropZone">
 
-📷 Déposer une image
 
-<input 
+
+
+
+
+<!-- =========================
+OUTILS
+========================= -->
+
+
+<div class="tools">
+
+
+
+<div class="fileZone" id="dropZone">
+
+
+📎 Déposer un fichier ou une image
+
+
+<input
 type="file"
 id="imageUpload"
 accept="image/*"
 onchange="analyzeImage()">
 
+
 </div>
 
 
 
 
-<img id="previewImage" class="preview hidden">
+
+
+<img
+id="previewImage"
+class="preview hidden">
 
 
 
-<input 
+
+
+
+
+<div class="imageCreator">
+
+
+<input
+
 id="imagePrompt"
-placeholder="Créer une image avec Nova...">
+
+placeholder="Décris l'image à créer..."
+
+>
 
 
-
-<button 
-onclick="generateImage()"
-class="imageBtn">
+<button
+onclick="generateImage()">
 
 🎨 Créer
 
 </button>
 
 
+</div>
+
+
+
+
 
 </div>
 
@@ -227,23 +321,37 @@ class="imageBtn">
 
 
 
-
-<!-- MESSAGE -->
+<!-- =========================
+BARRE MESSAGE
+========================= -->
 
 
 <div class="inputBar">
 
 
-<input 
+
+<input
+
 id="input"
-placeholder="Écris ton message..."
-onkeydown="if(event.key==='Enter')sendMessage()">
+
+placeholder="Écris ton message à NovaAI..."
+
+onkeydown="
+if(event.key==='Enter')
+sendMessage()
+"
+
+>
 
 
 
-<button 
+<button
+
+class="sendBtn"
+
 onclick="sendMessage()"
-class="sendBtn">
+
+>
 
 ➤
 
@@ -255,38 +363,52 @@ class="sendBtn">
 
 
 
-</main>
 
 
 
 
 
 
-<!-- PARAMETRES -->
+<!-- =========================
+PARAMETRES
+========================= -->
 
 
-<div id="settings" class="settings hidden">
+<div
+
+id="settings"
+
+class="settings hidden"
+
+>
 
 
-<h2>
+
+<h3>
 Paramètres
-</h2>
+</h3>
+
+
 
 
 
 <button onclick="toggleTheme()">
 
-🌙 Mode sombre
+🌗 Mode sombre
 
 </button>
+
+
 
 
 
 <button onclick="clearHistory()">
 
-🗑 Supprimer historique
+🗑️ Supprimer historique
 
 </button>
+
+
 
 
 
@@ -302,14 +424,37 @@ Fermer
 
 
 
+
+
+
+
+
+
+
+</main>
+
+
+
 </div>
 
 
 
 
+
+
+
+
+
+<!-- =========================
+SCRIPTS
+========================= -->
+
+
 <script src="app.js"></script>
 
 
+
 </body>
+
 
 </html>
