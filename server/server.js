@@ -10,8 +10,9 @@ const { search } = require("duck-duck-scrape");
 const app = express();
 
 
+
 // =========================
-// CONFIG GEMINI
+// GEMINI
 // =========================
 
 const genAI = new GoogleGenerativeAI(
@@ -19,54 +20,135 @@ const genAI = new GoogleGenerativeAI(
 );
 
 
+
 // =========================
-// RECHERCHE INTERNET
+// OUTILS RECHERCHE INTERNET
 // =========================
+
+
+function sleep(ms){
+
+    return new Promise(resolve => 
+        setTimeout(resolve, ms)
+    );
+
+}
+
+
+let lastSearchTime = 0;
+
+
 
 async function searchInternet(query){
 
+
     try{
 
-        const results = await search(query);
+
+        const now = Date.now();
 
 
-        if(!results.results || results.results.length === 0){
 
-            return "Aucun résultat trouvé.";
+        // Anti spam recherche
+
+        if(now - lastSearchTime < 5000){
+
+            console.log(
+                "⏳ Recherche trop rapide"
+            );
+
+            await sleep(5000);
 
         }
 
 
-        return results.results
+        lastSearchTime = Date.now();
+
+
+
+        console.log(
+            "🔎 Recherche DuckDuckGo :",
+            query
+        );
+
+
+
+        // Pause avant requête
+
+        await sleep(3000);
+
+
+
+        const results = await search(query);
+
+
+
+        if(!results.results || results.results.length === 0){
+
+
+            return "Aucun résultat trouvé.";
+
+
+        }
+
+
+
+
+        const text = results.results
         .slice(0,5)
         .map(result => {
 
+
             return `
-Titre : ${result.title}
+
+Titre :
+${result.title}
+
 
 Résumé :
 ${result.description}
 
+
 Source :
 ${result.url}
+
 `;
 
         })
-        .join("\n\n");
+        .join("\n");
 
 
-    }catch(error){
+
+        console.log(
+            "✅ Résultats trouvés"
+        );
+
+
+
+        return text;
+
+
+
+    }
+
+    catch(error){
+
 
         console.log(
             "SEARCH ERROR =>",
             error
         );
 
-        return "Recherche impossible.";
+
+        return "Impossible de faire la recherche Internet.";
+
 
     }
 
+
 }
+
+
 
 
 
@@ -79,8 +161,11 @@ app.use(cors());
 
 
 app.use(express.json({
+
     limit:"20mb"
+
 }));
+
 
 
 
@@ -90,17 +175,30 @@ app.use(express.json({
 
 
 app.use(express.static(
+
     path.join(__dirname,"..","public")
+
 ));
+
 
 
 app.get("/",(req,res)=>{
 
+
     res.sendFile(
-        path.join(__dirname,"..","public","index.html")
+
+        path.join(
+            __dirname,
+            "..",
+            "public",
+            "index.html"
+        )
+
     );
 
+
 });
+
 
 
 
@@ -109,12 +207,14 @@ app.get("/",(req,res)=>{
 // =========================
 
 
-const API_KEY = process.env.API_KEY;
+const API_KEY =
+process.env.API_KEY;
+
 
 
 
 // =========================
-// MEMOIRE
+// MEMOIRE CHAT
 // =========================
 
 
@@ -124,7 +224,7 @@ const userHistories = {};
 
 
 // =========================
-// CHAT GROQ + INTERNET
+// CHAT GROQ
 // =========================
 
 
@@ -134,17 +234,27 @@ app.post("/chat", async(req,res)=>{
 try{
 
 
-const userMessage = req.body.message;
-    console.log("MESSAGE REÇU :", userMessage);
+const userMessage =
+req.body.message;
+
+
+
+console.log(
+    "MESSAGE REÇU :",
+    userMessage
+);
+
 
 
 if(!userMessage){
 
-    return res.json({
 
-        reply:"Écris un message 🙂"
+return res.json({
 
-    });
+reply:"Écris un message 🙂"
+
+});
+
 
 }
 
@@ -155,14 +265,19 @@ req.body.userId || "default";
 
 
 
+
 let internetResults = "";
 
 
 
-// Détection recherche web
+// Détection recherche
+
+
 const needSearch =
-/actualité|actu|news|internet|web|cherche|recherche|hier|aujourd'hui|aujourd hui|météo|temps|score|match|résultat|résultats|qui a gagné|gagné|victoire|défaite|prix|cours|crypto|bourse|dernier|dernière|récent|récente|2025|2026/i
-.test(userMessage.toLowerCase());
+
+/actualité|actu|news|internet|web|cherche|recherche|hier|aujourd'hui|météo|temps|score|match|résultat|résultats|qui a gagné|prix|crypto|bourse|dernier|dernière|2025|2026/i
+
+.test(userMessage);
 
 
 
@@ -170,14 +285,22 @@ if(needSearch){
 
 
 console.log(
-"🌍 Recherche Internet :",
-userMessage
+"🌍 RECHERCHE ACTIVE"
 );
 
 
 
 internetResults =
-await searchInternet(userMessage);
+await searchInternet(
+    userMessage
+);
+
+
+
+console.log(
+"RESULTATS WEB :",
+internetResults
+);
 
 
 }
@@ -187,7 +310,9 @@ await searchInternet(userMessage);
 
 if(!userHistories[userId]){
 
-    userHistories[userId]=[];
+
+userHistories[userId]=[];
+
 
 }
 
@@ -200,9 +325,9 @@ userHistories[userId];
 
 history.push({
 
-    role:"user",
+role:"user",
 
-    content:userMessage
+content:userMessage
 
 });
 
@@ -210,14 +335,15 @@ history.push({
 
 if(history.length > 12){
 
-    history.shift();
+history.shift();
 
 }
+// =========================
+// PREPARATION MESSAGES GROQ
+// =========================
 
 
-
-
-const messages=[
+const messages = [
 
 
 {
@@ -230,39 +356,40 @@ Tu es NovaAI.
 
 Tu réponds toujours en français.
 
-IMPORTANT :
-Quand des informations Internet sont fournies,
-elles sont prioritaires sur ta mémoire.
+Tu es un assistant intelligent.
 
-Ne réponds jamais avec "je n'ai pas d'information"
-si les résultats Internet donnent une réponse.
+Si des informations Internet sont fournies,
+elles sont prioritaires.
 
-Utilise les résultats fournis pour répondre précisément.
+Utilise-les pour répondre précisément.
+
+Ne dis pas que tu as cherché sur Internet.
 `
-}
 
+}
 
 
 ];
 
 
 
-// Ajout résultats web
+// Ajout recherche Internet
 
 if(internetResults){
 
 
 messages.push({
 
-role:"system",
+role:"user",
 
 content:
 `
-Informations trouvées sur Internet :
+Voici les informations trouvées sur Internet :
 
 ${internetResults}
 
-Utilise ces informations pour répondre.
+Réponds à la question de l'utilisateur
+avec ces informations.
 `
 
 });
@@ -276,19 +403,32 @@ messages.push(...history);
 
 
 
+
+
+// =========================
+// APPEL GROQ
+// =========================
+
+
 const response = await fetch(
 
 "https://api.groq.com/openai/v1/chat/completions",
 
 {
 
+
 method:"POST",
+
 
 headers:{
 
+
 "Content-Type":"application/json",
 
-Authorization:`Bearer ${API_KEY}`
+
+Authorization:
+`Bearer ${API_KEY}`
+
 
 },
 
@@ -299,9 +439,12 @@ model:"llama-3.1-8b-instant",
 
 messages:messages
 
+
 })
 
+
 }
+
 
 );
 
@@ -312,10 +455,22 @@ await response.json();
 
 
 
+console.log(
+"GROQ =>",
+data
+);
+
+
+
 const reply =
+
 data?.choices?.[0]?.message?.content
+
 ||
-"Je n'ai pas répondu.";
+
+"Je n'ai pas réussi à répondre.";
+
+
 
 
 
@@ -339,13 +494,18 @@ reply:reply
 
 }
 
+
 catch(error){
 
 
 console.log(
+
 "CHAT ERROR =>",
+
 error
+
 );
+
 
 
 res.json({
@@ -358,7 +518,14 @@ reply:"Erreur serveur chat."
 }
 
 
+
 });
+
+
+
+
+
+
 // =========================
 // ANALYSE IMAGE GEMINI
 // =========================
@@ -370,11 +537,13 @@ app.post("/vision", async(req,res)=>{
 try{
 
 
-let image = req.body.image;
+let image =
+req.body.image;
 
 
 
 if(!image){
+
 
 return res.json({
 
@@ -382,16 +551,18 @@ reply:"Aucune image reçue."
 
 });
 
+
 }
 
 
 
-// Nettoyage base64
 
-image = image.replace(
+image =
+image.replace(
 "data:image/jpeg;base64,",
 ""
 );
+
 
 
 
@@ -404,8 +575,10 @@ model:"gemini-2.5-flash"
 
 
 
+
 const result =
 await model.generateContent([
+
 
 
 {
@@ -426,14 +599,13 @@ Analyse cette image en français.
 
 Décris ce que tu vois.
 
-Lis les textes présents.
+Lis les textes.
 
 Explique les objets,
 les personnes,
 les lieux.
 
-Réponds aux questions
-sur cette image.
+Réponds aux questions.
 `
 
 ]);
@@ -460,8 +632,11 @@ catch(error){
 
 
 console.log(
+
 "GEMINI ERROR =>",
+
 error
+
 );
 
 
@@ -477,6 +652,9 @@ reply:"Erreur analyse image."
 
 
 });
+
+
+
 
 
 
@@ -502,12 +680,13 @@ if(!prompt){
 
 return res.json({
 
-error:"Aucune description donnée."
+error:"Aucune description."
 
 });
 
 
 }
+
 
 
 
@@ -540,9 +719,7 @@ headers:{
 
 body:JSON.stringify({
 
-
 inputs:prompt
-
 
 })
 
@@ -550,15 +727,21 @@ inputs:prompt
 }
 
 
-
 );
+
+
 
 
 
 console.log(
+
 "HF STATUS :",
+
 response.status
+
 );
+
+
 
 
 
@@ -571,8 +754,11 @@ await response.text();
 
 
 console.log(
+
 "HF ERROR :",
+
 errorText
+
 );
 
 
@@ -588,6 +774,8 @@ error:errorText
 
 
 
+
+
 const buffer =
 await response.arrayBuffer();
 
@@ -596,6 +784,7 @@ await response.arrayBuffer();
 const imageBase64 =
 Buffer.from(buffer)
 .toString("base64");
+
 
 
 
@@ -609,6 +798,7 @@ image:
 
 
 }
+
 
 
 catch(error){
@@ -634,7 +824,11 @@ error:"Erreur génération image."
 }
 
 
+
 });
+
+
+
 
 
 
