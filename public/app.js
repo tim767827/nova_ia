@@ -1,42 +1,80 @@
 // ======================
+// IDENTIFIANT UTILISATEUR
+// ======================
+
+let userId = localStorage.getItem("novaUser");
+
+if (!userId) {
+
+    userId = "user_" + Date.now();
+
+    localStorage.setItem(
+        "novaUser",
+        userId
+    );
+
+}
+
+
+// ======================
 // HISTORIQUE
 // ======================
 
-let chats = JSON.parse(localStorage.getItem("novaChats")) || [];
+let chats = JSON.parse(
+    localStorage.getItem("novaChats")
+) || [];
+
 let currentChat = null;
 
 
+
 function saveChats(){
-    localStorage.setItem("novaChats", JSON.stringify(chats));
+
+    localStorage.setItem(
+        "novaChats",
+        JSON.stringify(chats)
+    );
+
 }
+
 
 
 // ======================
 // AFFICHAGE HISTORIQUE
 // ======================
 
+
 function renderHistory(){
 
-    const history = document.getElementById("history");
+    const history=document.getElementById(
+        "history"
+    );
+
 
     if(!history) return;
 
-    history.innerHTML = "";
+
+    history.innerHTML="";
 
 
     chats.forEach(chat=>{
 
-        const item = document.createElement("div");
+
+        const item=document.createElement("div");
+
         item.className="item";
 
 
-        const title = document.createElement("span");
+
+        const title=document.createElement("span");
 
         title.className="chatTitle";
 
-        title.textContent = chat.title;
+        title.textContent=chat.title;
 
-        title.onclick = ()=>loadChat(chat.id);
+
+
+        title.onclick=()=>loadChat(chat.id);
 
 
 
@@ -50,14 +88,17 @@ function renderHistory(){
 
         edit.className="editBtn";
 
-        edit.innerHTML="✏️";
+        edit.textContent="✏️";
+
 
 
         edit.onclick=(e)=>{
 
+
             e.stopPropagation();
 
-            const name=prompt(
+
+            let name=prompt(
                 "Nouveau nom :",
                 chat.title
             );
@@ -73,6 +114,7 @@ function renderHistory(){
 
             }
 
+
         };
 
 
@@ -81,12 +123,15 @@ function renderHistory(){
 
         trash.className="trashBtn";
 
-        trash.innerHTML="🗑️";
+        trash.textContent="🗑️";
+
 
 
         trash.onclick=(e)=>{
 
+
             e.stopPropagation();
+
 
 
             if(confirm("Supprimer cette conversation ?")){
@@ -97,7 +142,8 @@ function renderHistory(){
                 );
 
 
-                if(currentChat && currentChat.id===chat.id){
+
+                if(currentChat?.id===chat.id){
 
                     currentChat=null;
 
@@ -108,11 +154,14 @@ function renderHistory(){
                 }
 
 
+
                 saveChats();
 
                 renderHistory();
 
+
             }
+
 
         };
 
@@ -131,7 +180,9 @@ function renderHistory(){
         history.appendChild(item);
 
 
+
     });
+
 
 }
 
@@ -144,6 +195,7 @@ function renderHistory(){
 
 function newChat(){
 
+
     currentChat={
 
         id:Date.now(),
@@ -155,7 +207,10 @@ function newChat(){
     };
 
 
-    chats.unshift(currentChat);
+
+    chats.unshift(
+        currentChat
+    );
 
 
     saveChats();
@@ -167,8 +222,8 @@ function newChat(){
         "messages"
     ).innerHTML="";
 
-}
 
+}
 
 
 
@@ -185,7 +240,8 @@ function loadChat(id){
     );
 
 
-    if(!currentChat) return;
+    if(!currentChat)return;
+
 
 
     const messages=document.getElementById(
@@ -205,9 +261,7 @@ function loadChat(id){
 
             const img=document.createElement("img");
 
-
             img.src=msg.text;
-
 
             img.className="generatedImage";
 
@@ -249,8 +303,10 @@ function addMessage(text,type){
     div.className="msg "+type;
 
 
-    div.textContent=text;
-
+    div.innerHTML=text.replace(
+        /\n/g,
+        "<br>"
+    );
 
 
     document.getElementById(
@@ -258,8 +314,8 @@ function addMessage(text,type){
     ).appendChild(div);
 
 
-
     scroll();
+
 
 }
 
@@ -278,6 +334,25 @@ function scroll(){
 
 
     box.scrollTop=box.scrollHeight;
+
+
+}
+
+
+
+// ======================
+// BOUTONS RAPIDES
+// ======================
+
+
+function sendQuick(text){
+
+    document.getElementById(
+        "input"
+    ).value=text;
+
+
+    sendMessage();
 
 }
 
@@ -299,7 +374,8 @@ async function sendMessage(){
     const text=input.value.trim();
 
 
-    if(!text) return;
+
+    if(!text)return;
 
 
 
@@ -311,7 +387,10 @@ async function sendMessage(){
 
 
 
-    addMessage(text,"user");
+    addMessage(
+        text,
+        "user"
+    );
 
 
 
@@ -327,7 +406,10 @@ async function sendMessage(){
 
     if(currentChat.title==="Nouvelle conversation"){
 
-        currentChat.title=text.substring(0,25);
+        currentChat.title=text.substring(
+            0,
+            25
+        );
 
     }
 
@@ -336,6 +418,7 @@ async function sendMessage(){
     saveChats();
 
     renderHistory();
+
 
 
     input.value="";
@@ -351,7 +434,6 @@ async function sendMessage(){
     thinking.textContent="Nova réfléchit...";
 
 
-
     document.getElementById(
         "messages"
     ).appendChild(thinking);
@@ -361,24 +443,31 @@ async function sendMessage(){
     try{
 
 
-        const res=await fetch("/chat",{
+        const res=await fetch(
+            "/chat",
+            {
 
-            method:"POST",
+                method:"POST",
 
-            headers:{
-                "Content-Type":"application/json"
-            },
+                headers:{
+
+                    "Content-Type":
+                    "application/json"
+
+                },
 
 
-            body:JSON.stringify({
+                body:JSON.stringify({
 
-                message:text,
+                    message:text,
 
-                userId:"user1"
+                    userId:userId
 
-            })
+                })
 
-        });
+
+            }
+        );
 
 
 
@@ -388,25 +477,28 @@ async function sendMessage(){
         thinking.remove();
 
 
+
         typeWriter(
-            data.reply || "Pas de réponse"
+            data.reply ||
+            "Je n'ai pas reçu de réponse."
         );
 
 
 
-    }catch(e){
+    }catch(error){
 
 
         thinking.remove();
 
 
         addMessage(
-            "Erreur serveur",
+            "❌ Erreur serveur",
             "bot"
         );
 
 
-        console.error(e);
+        console.error(error);
+
 
     }
 
@@ -443,15 +535,17 @@ function typeWriter(text){
 
 
         div.innerHTML=text
-            .substring(0,i)
-            .replace(/\n/g,"<br>");
-
-
-
-        i++;
+        .substring(0,i)
+        .replace(
+            /\n/g,
+            "<br>"
+        );
 
 
         scroll();
+
+
+        i++;
 
 
 
@@ -471,11 +565,11 @@ function typeWriter(text){
             });
 
 
-
             saveChats();
 
 
         }
+
 
 
     },10);
@@ -486,7 +580,7 @@ function typeWriter(text){
 
 
 // ======================
-// IMAGE
+// CREATION IMAGE
 // ======================
 
 
@@ -505,12 +599,27 @@ async function generateImage(){
     if(!prompt){
 
         alert(
-            "Écris une description d'image"
+            "Décris une image"
         );
 
         return;
 
     }
+
+
+
+    if(!currentChat){
+
+        newChat();
+
+    }
+
+
+
+    addMessage(
+        "🎨 Création : "+prompt,
+        "user"
+    );
 
 
 
@@ -524,7 +633,8 @@ async function generateImage(){
                 method:"POST",
 
                 headers:{
-                    "Content-Type":"application/json"
+                    "Content-Type":
+                    "application/json"
                 },
 
 
@@ -543,13 +653,6 @@ async function generateImage(){
 
 
 
-        console.log(
-            "IMAGE:",
-            data
-        );
-
-
-
         if(data.image){
 
 
@@ -562,18 +665,9 @@ async function generateImage(){
             img.className="generatedImage";
 
 
-
             document.getElementById(
                 "messages"
             ).appendChild(img);
-
-
-
-            if(!currentChat){
-
-                newChat();
-
-            }
 
 
 
@@ -590,21 +684,19 @@ async function generateImage(){
             saveChats();
 
 
-
             scroll();
-
 
 
         }else{
 
 
             alert(
-                data.error || "Erreur image"
+                data.error ||
+                "Erreur image"
             );
 
 
         }
-
 
 
     }catch(error){
@@ -639,22 +731,7 @@ async function analyzeImage(){
 
 
 
-    if(!file){
-
-        alert(
-            "Choisis une image"
-        );
-
-        return;
-
-    }
-
-
-
-    addMessage(
-        "📷 Image envoyée à NovaAI",
-        "user"
-    );
+    if(!file)return;
 
 
 
@@ -677,7 +754,8 @@ async function analyzeImage(){
                 method:"POST",
 
                 headers:{
-                    "Content-Type":"application/json"
+                    "Content-Type":
+                    "application/json"
                 },
 
 
@@ -727,6 +805,7 @@ function toggleTheme(){
 }
 
 
+
 function toggleSettings(){
 
     document.getElementById(
@@ -734,6 +813,44 @@ function toggleSettings(){
     ).classList.toggle(
         "hidden"
     );
+
+}
+
+
+
+// ======================
+// SUPPRIMER HISTORIQUE
+// ======================
+
+
+function clearHistory(){
+
+
+    if(confirm(
+        "Supprimer tout l'historique ?"
+    )){
+
+
+        localStorage.removeItem(
+            "novaChats"
+        );
+
+
+        chats=[];
+
+        currentChat=null;
+
+
+        document.getElementById(
+            "messages"
+        ).innerHTML="";
+
+
+        renderHistory();
+
+
+    }
+
 
 }
 
