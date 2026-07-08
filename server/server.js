@@ -1,84 +1,189 @@
-// ===============================
-// NOVA AI SERVER
+// =====================================
+// NOVA AI SERVER V2
 // PARTIE 1/2
-// ===============================
+// =====================================
 
 
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
+const fetch = require("node-fetch");
+const rateLimit = require("express-rate-limit");
+
 require("dotenv").config();
 
-const fetch = require("node-fetch");
 
-const { GoogleGenerativeAI } = require("@google/generative-ai");
+const {
+    GoogleGenerativeAI
+} = require("@google/generative-ai");
 
 
-// ===============================
+
+// =====================================
 // INITIALISATION
-// ===============================
+// =====================================
 
 
 const app = express();
 
 
-const genAI = new GoogleGenerativeAI(
-    process.env.GEMINI_KEY
+
+const PORT =
+process.env.PORT || 3000;
+
+
+
+// =====================================
+// VARIABLES API
+// =====================================
+
+
+const GEMINI_KEY =
+process.env.GEMINI_KEY;
+
+
+const GROQ_KEY =
+process.env.API_KEY;
+
+
+const TAVILY_KEY =
+process.env.TAVILY_KEY;
+
+
+const HF_KEY =
+process.env.HF_API_KEY;
+
+
+
+// =====================================
+// VERIFICATION CONFIGURATION
+// =====================================
+
+
+console.log("🚀 Vérification NovaAI...");
+
+
+if(!GROQ_KEY)
+console.log("❌ API_KEY Groq absente");
+
+
+if(!GEMINI_KEY)
+console.log("❌ GEMINI_KEY absente");
+
+
+if(!TAVILY_KEY)
+console.log("⚠️ TAVILY_KEY absente");
+
+
+if(!HF_KEY)
+console.log("⚠️ HF_API_KEY absente");
+
+
+
+
+
+const genAI =
+new GoogleGenerativeAI(
+    GEMINI_KEY
 );
 
 
-const GROQ_KEY = process.env.API_KEY;
-const TAVILY_KEY = process.env.TAVILY_KEY;
-const HF_KEY = process.env.HF_API_KEY;
 
 
 
-// ===============================
+// =====================================
 // MIDDLEWARE
-// ===============================
+// =====================================
 
 
 app.use(cors());
 
 
 app.use(express.json({
-    limit:"25mb"
+
+    limit:"10mb"
+
 }));
 
 
 
-// ===============================
+
+// Protection anti spam
+
+
+const limiter = rateLimit({
+
+    windowMs:60 * 1000,
+
+    max:40,
+
+    message:{
+
+        error:
+        "Trop de requêtes. Réessaie dans quelques secondes."
+
+    }
+
+});
+
+
+app.use(limiter);
+
+
+
+
+// =====================================
 // FRONTEND
-// ===============================
+// =====================================
 
 
-app.use(express.static(
-    path.join(__dirname,"..","public")
-));
+app.use(
+    express.static(
+        path.join(
+            __dirname,
+            "..",
+            "public"
+        )
+    )
+);
+
 
 
 app.get("/",(req,res)=>{
 
+
     res.sendFile(
-        path.join(__dirname,"..","public","index.html")
+
+        path.join(
+            __dirname,
+            "..",
+            "public",
+            "index.html"
+        )
+
     );
+
 
 });
 
 
 
-// ===============================
-// MEMOIRE CHAT
-// ===============================
+
+
+// =====================================
+// MEMOIRE TEMPORAIRE
+// =====================================
 
 
 const userHistories = {};
 
 
 
-// ===============================
+
+
+// =====================================
 // RECHERCHE INTERNET TAVILY
-// ===============================
+// =====================================
 
 
 async function searchInternet(query){
@@ -87,17 +192,8 @@ async function searchInternet(query){
     try{
 
 
-        console.log(
-            "🔎 Recherche Tavily :",
-            query
-        );
-
-
         if(!TAVILY_KEY){
 
-            console.log(
-                "❌ Pas de clé Tavily"
-            );
 
             return "Recherche internet indisponible.";
 
@@ -105,78 +201,83 @@ async function searchInternet(query){
 
 
 
-        const response = await fetch(
+        const response =
+        await fetch(
 
-            "https://api.tavily.com/search",
+        "https://api.tavily.com/search",
 
-            {
+        {
 
-                method:"POST",
+            method:"POST",
 
-                headers:{
-
-                    "Content-Type":"application/json",
-
-                    "Authorization":
-                    `Bearer ${TAVILY_KEY}`
-
-                },
+            headers:{
 
 
-                body:JSON.stringify({
-
-                    query:query,
-
-                    search_depth:"advanced",
-
-                    max_results:5
-
-                })
-
-            }
-
-        );
+                "Content-Type":
+                "application/json",
 
 
-
-        const data = await response.json();
-
-
-
-        console.log(
-            "TAVILY OK"
-        );
+                "Authorization":
+                `Bearer ${TAVILY_KEY}`
 
 
+            },
 
-        if(!data.results || data.results.length===0){
+
+            body:JSON.stringify({
 
 
-            return "Aucune information trouvée.";
+                query,
+
+
+                search_depth:
+                "advanced",
+
+
+                max_results:5
+
+
+            })
+
+
+        });
+
+
+
+        const data =
+        await response.json();
+
+
+
+
+        if(!data.results){
+
+
+            return "Aucun résultat trouvé.";
 
         }
 
 
 
-
-        let results = "";
-
+        let text="";
 
 
-        data.results.forEach((item,index)=>{
+
+        data.results.forEach(
+        (item,index)=>{
 
 
-            results += `
+            text += `
 
-RESULTAT ${index + 1}
+SOURCE ${index+1}
 
 Titre :
 ${item.title}
 
-Information :
+Résumé :
 ${item.content}
 
-Source :
+Lien :
 ${item.url}
 
 
@@ -186,7 +287,7 @@ ${item.url}
 
 
 
-        return results;
+        return text;
 
 
 
@@ -194,12 +295,12 @@ ${item.url}
 
 
         console.log(
-            "TAVILY ERROR =>",
+            "TAVILY ERROR",
             error
         );
 
 
-        return "Recherche internet impossible.";
+        return "Recherche impossible.";
 
     }
 
@@ -209,69 +310,53 @@ ${item.url}
 
 
 
-// ===============================
-// DETECTION BESOIN INTERNET
-// ===============================
+
+// =====================================
+// DETECTION RECHERCHE
+// =====================================
 
 
 function needsInternet(text){
 
 
-    const lower = text.toLowerCase();
+    const words=[
 
-
-
-    const words = [
 
         "actualité",
-        "actu",
         "news",
-        "aujourd",
+        "aujourd'hui",
         "hier",
         "demain",
-        "président",
-        "présidente",
-        "politique",
-        "gouvernement",
-        "ministre",
-        "qui est",
-        "où",
-        "quand",
         "prix",
-        "coût",
         "météo",
-        "temps",
-        "match",
         "score",
+        "match",
         "résultat",
-        "résultats",
-        "gagné",
-        "gagner",
-        "perdu",
-        "classement",
-        "dernier",
-        "dernière",
+        "politique",
+        "président",
         "2025",
-        "2026",
-        "2027"
+        "2026"
+
 
     ];
 
 
 
-    return words.some(word =>
+    const lower =
+    text.toLowerCase();
+
+
+
+    return words.some(
+        word =>
         lower.includes(word)
     );
 
 
 }
-
-
-
-
-// ===============================
-// CHAT GROQ
-// ===============================
+// =====================================
+// CHAT NOVAAI
+// =====================================
 
 
 app.post("/chat", async(req,res)=>{
@@ -280,11 +365,12 @@ app.post("/chat", async(req,res)=>{
 try{
 
 
-const message = req.body.message;
+const message =
+req.body.message;
 
 
 const userId =
-req.body.userId || "default";
+req.body.userId || "guest";
 
 
 
@@ -293,7 +379,7 @@ if(!message){
 
 return res.json({
 
-reply:"Écris un message 🙂"
+reply:"Écris-moi un message 🙂"
 
 });
 
@@ -302,7 +388,8 @@ reply:"Écris un message 🙂"
 
 
 
-let webInfo = "";
+
+let webInfo="";
 
 
 
@@ -310,7 +397,7 @@ if(needsInternet(message)){
 
 
 console.log(
-"🌍 RECHERCHE ACTIVE"
+"🌍 Recherche internet activée"
 );
 
 
@@ -323,12 +410,14 @@ await searchInternet(message);
 
 
 
+
 if(!userHistories[userId]){
 
 
 userHistories[userId]=[];
 
 }
+
 
 
 
@@ -347,7 +436,8 @@ content:message
 
 
 
-if(history.length > 12){
+
+if(history.length>15){
 
 history.shift();
 
@@ -356,44 +446,34 @@ history.shift();
 
 
 
-const messages = [
 
+const messages=[
 
 {
 
+
 role:"system",
 
-content:
 
-`
-Tu es NovaAI.
+content:`
 
-Tu réponds toujours en français.
+Tu es NovaAI 🚀.
 
-Tu es une intelligence artificielle utile.
+Tu es un assistant IA premium français.
 
-Si des informations internet sont fournies,
-elles sont prioritaires.
+Ton comportement :
 
-Utilise uniquement les informations fournies.
+- Réponds toujours en français.
+- Sois clair, utile et professionnel.
+- Explique simplement les sujets complexes.
+- Structure tes réponses avec des listes quand nécessaire.
+- Ne crée jamais de fausses informations.
+- Si tu n'es pas sûr, dis-le clairement.
+- Ne prétends jamais avoir fait une action impossible.
+- Aide l'utilisateur avec patience.
 
-Ne dis jamais que tu viens de faire une recherche.
+Tu représentes la marque NovaAI.
 
-Ne raconte pas que tu n'as pas accès à internet.
-
-Si une information manque,
-dis simplement que tu n'as pas trouvé.
-Tu dois privilégier la précision absolue.
-
-Ne complète jamais une information avec une supposition.
-
-Avant de répondre sur un sujet précis (jeux vidéo, programmation, sciences, personnes, entreprises), vérifie mentalement les informations.
-
-Si tu n'es pas certain d'un détail, dis "Je ne suis pas sûr de ce détail" au lieu d'inventer.
-
-Les noms propres, compétences, fonctionnalités et statistiques doivent être exacts.
-
-Réponds naturellement.
 `
 
 }
@@ -403,21 +483,24 @@ Réponds naturellement.
 
 
 
+
+
 if(webInfo){
+
 
 
 messages.push({
 
 role:"system",
 
-content:
+content:`
 
-`
-Informations trouvées sur internet :
+Informations provenant d'une recherche internet :
 
 ${webInfo}
 
-Analyse ces informations et réponds à l'utilisateur.
+Utilise uniquement ces informations.
+
 `
 
 });
@@ -427,11 +510,37 @@ Analyse ces informations et réponds à l'utilisateur.
 
 
 
-messages.push(...history);
+
+
+messages.push(
+...history
+);
 
 
 
-const response = await fetch(
+
+
+
+
+if(!GROQ_KEY){
+
+
+return res.json({
+
+reply:
+"Clé IA Groq manquante."
+
+});
+
+
+}
+
+
+
+
+
+const response =
+await fetch(
 
 "https://api.groq.com/openai/v1/chat/completions",
 
@@ -444,7 +553,8 @@ method:"POST",
 headers:{
 
 
-"Content-Type":"application/json",
+"Content-Type":
+"application/json",
 
 
 Authorization:
@@ -456,9 +566,16 @@ Authorization:
 
 body:JSON.stringify({
 
-model:"llama-3.3-70b-versatile",
 
-messages:messages
+model:
+"llama-3.3-70b-versatile",
+
+
+messages,
+
+
+temperature:0.7
+
 
 })
 
@@ -469,14 +586,11 @@ messages:messages
 
 
 
+
+
 const data =
 await response.json();
 
-
-
-console.log(
-"GROQ OK"
-);
 
 
 
@@ -490,6 +604,8 @@ data?.choices?.[0]?.message?.content
 
 
 
+
+
 history.push({
 
 role:"assistant",
@@ -500,11 +616,15 @@ content:reply
 
 
 
+
+
 res.json({
 
-reply:reply
+reply
 
 });
+
+
 
 
 
@@ -512,14 +632,16 @@ reply:reply
 
 
 console.log(
-"CHAT ERROR =>",
+"CHAT ERROR",
 error
 );
 
 
+
 res.json({
 
-reply:"Erreur serveur chat."
+reply:
+"Erreur serveur NovaAI."
 
 });
 
@@ -527,10 +649,20 @@ reply:"Erreur serveur chat."
 }
 
 
+
 });
-// ===============================
+
+
+
+
+
+
+
+
+
+// =====================================
 // ANALYSE IMAGE GEMINI
-// ===============================
+// =====================================
 
 
 app.post("/vision", async(req,res)=>{
@@ -539,7 +671,14 @@ app.post("/vision", async(req,res)=>{
 try{
 
 
-let image = req.body.image;
+const image =
+req.body.image;
+
+
+const mimeType =
+req.body.mimeType ||
+"image/jpeg";
+
 
 
 
@@ -548,7 +687,8 @@ if(!image){
 
 return res.json({
 
-reply:"Aucune image reçue."
+reply:
+"Aucune image reçue."
 
 });
 
@@ -558,24 +698,11 @@ reply:"Aucune image reçue."
 
 
 
-image = image.replace(
-"data:image/jpeg;base64,",
-""
-);
+const model =
+genAI.getGenerativeModel({
 
-
-image = image.replace(
-"data:image/png;base64,",
-""
-);
-
-
-
-
-
-const model = genAI.getGenerativeModel({
-
-model:"gemini-2.5-flash"
+model:
+"gemini-2.5-flash"
 
 });
 
@@ -583,37 +710,49 @@ model:"gemini-2.5-flash"
 
 
 
-const result = await model.generateContent([
+
+const result =
+await model.generateContent([
+
 
 
 {
 
 inlineData:{
 
+
 data:image,
 
-mimeType:"image/jpeg"
+
+mimeType:mimeType
+
 
 }
+
 
 },
 
 
 
 `
+
 Analyse cette image.
 
 Réponds en français.
 
-Décris les éléments visibles.
+Décris ce que tu vois.
 
 Lis les textes présents.
 
-Explique les objets, personnes ou détails importants.
+Explique les éléments importants.
 
 `
 
+
+
+
 ]);
+
 
 
 
@@ -639,8 +778,9 @@ reply:text
 }catch(error){
 
 
+
 console.log(
-"GEMINI ERROR =>",
+"GEMINI ERROR",
 error
 );
 
@@ -648,9 +788,11 @@ error
 
 res.json({
 
-reply:"Erreur analyse image."
+reply:
+"Impossible d'analyser cette image."
 
 });
+
 
 
 }
@@ -664,9 +806,12 @@ reply:"Erreur analyse image."
 
 
 
-// ===============================
-// GENERATION IMAGE HUGGING FACE
-// ===============================
+
+
+
+// =====================================
+// CREATION IMAGE HUGGING FACE
+// =====================================
 
 
 app.post("/generate-image", async(req,res)=>{
@@ -680,12 +825,14 @@ req.body.prompt;
 
 
 
+
 if(!prompt){
 
 
 return res.json({
 
-error:"Description image manquante."
+error:
+"Description manquante."
 
 });
 
@@ -701,7 +848,8 @@ if(!HF_KEY){
 
 return res.json({
 
-error:"Clé Hugging Face manquante."
+error:
+"Clé image manquante."
 
 });
 
@@ -713,11 +861,10 @@ error:"Clé Hugging Face manquante."
 
 
 
-const response = await fetch(
-
+const response =
+await fetch(
 
 "https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-schnell",
-
 
 {
 
@@ -728,7 +875,7 @@ method:"POST",
 headers:{
 
 
-"Authorization":
+Authorization:
 `Bearer ${HF_KEY}`,
 
 
@@ -749,7 +896,6 @@ inputs:prompt
 
 }
 
-
 );
 
 
@@ -760,30 +906,28 @@ inputs:prompt
 if(!response.ok){
 
 
-const errorText =
+
+const error =
 await response.text();
 
 
 
 console.log(
-
-"HF ERROR =>",
-
-errorText
-
+"HF ERROR",
+error
 );
 
 
 
 return res.json({
 
-error:errorText
+error:
+"Erreur création image."
 
 });
 
 
 }
-
 
 
 
@@ -795,9 +939,10 @@ await response.arrayBuffer();
 
 
 
-const imageBase64 =
+const base64 =
 Buffer.from(buffer)
 .toString("base64");
+
 
 
 
@@ -807,10 +952,16 @@ res.json({
 
 image:
 
-"data:image/png;base64," +
-imageBase64
+"data:image/png;base64,"+
+base64,
+
+
+message:
+"Image créée avec succès 🚀"
+
 
 });
+
 
 
 
@@ -819,26 +970,27 @@ imageBase64
 }catch(error){
 
 
+
 console.log(
-
-"IMAGE ERROR =>",
-
+"IMAGE ERROR",
 error
-
 );
 
 
 
 res.json({
 
-error:"Erreur génération image."
+error:
+"Erreur génération image."
 
 });
+
 
 
 }
 
 
+
 });
 
 
@@ -846,9 +998,14 @@ error:"Erreur génération image."
 
 
 
-// ===============================
-// TEST SERVEUR
-// ===============================
+
+
+
+
+// =====================================
+// TESTS
+// =====================================
+
 
 
 app.get("/test",(req,res)=>{
@@ -856,7 +1013,29 @@ app.get("/test",(req,res)=>{
 
 res.json({
 
-status:"NovaAI fonctionne 🚀"
+status:
+"NovaAI fonctionne 🚀"
+
+});
+
+
+});
+
+
+
+
+
+app.get("/health",(req,res)=>{
+
+
+res.status(200).json({
+
+status:
+"online",
+
+service:
+"NovaAI"
+
 
 });
 
@@ -869,13 +1048,9 @@ status:"NovaAI fonctionne 🚀"
 
 
 
-// ===============================
-// START RENDER
-// ===============================
-
-
-const PORT =
-process.env.PORT || 3000;
+// =====================================
+// DEMARRAGE
+// =====================================
 
 
 
@@ -890,7 +1065,7 @@ app.listen(PORT,()=>{
 
 console.log(
 
-`✅ NovaAI lancé sur le port ${PORT}`
+`✅ NovaAI lancé sur port ${PORT}`
 
 );
 
