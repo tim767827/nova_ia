@@ -27,9 +27,7 @@ async function searchInternet(query){
 
     try{
 
-        const results = await search(query, {
-            safeSearch:false
-        });
+        const results = await search(query);
 
 
         if(!results.results || results.results.length === 0){
