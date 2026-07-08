@@ -101,45 +101,39 @@ const userHistories = {};
 
 function needsInternet(text){
 
-
-    return /
-
-
-    qui|
-    quel|
-    quelle|
-    combien|
-    résultat|
-    score|
-    match|
-    actualité|
-    news|
-    aujourd'hui|
-    hier|
-    demain|
-    président|
-    ministre|
-    prix|
-    météo|
-    cours|
-    crypto|
-    bourse|
-    dernier|
-    dernière|
-    2025|
-    2026|
-    récent|
-    récente|
-    maintenant
+    const message = text.toLowerCase();
 
 
-    /ix.test(text);
+    const useless = [
+        "bonjour",
+        "salut",
+        "hello",
+        "coucou",
+        "merci",
+        "merci beaucoup",
+        "stp",
+        "svp",
+        "s'il te plait",
+        "bonne nuit",
+        "bonne journée",
+        "ça va",
+        "comment vas tu",
+        "qui es tu"
+    ];
+
+
+    if(useless.includes(message.trim())){
+
+        return false;
+
+    }
+
+
+
+    return /(qui|quel|quelle|combien|résultat|score|match|actualité|news|aujourd'hui|hier|maintenant|récent|dernière|dernier|président|ministre|gouvernement|prix|météo|cours|crypto|bourse|2025|2026)/i.test(message);
 
 
 }
-
-
-
 
 
 // ===============================
