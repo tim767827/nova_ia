@@ -821,3 +821,52 @@ box-shadow:0 10px 30px rgba(0,0,0,.15);
 
 
 }
+.tagline{
+
+font-size:12px;
+color:#888;
+margin-top:8px;
+
+}
+
+
+.suggestions{
+
+display:flex;
+gap:10px;
+justify-content:center;
+flex-wrap:wrap;
+margin-top:25px;
+
+}
+
+
+.suggestions button{
+
+padding:12px 18px;
+border-radius:20px;
+border:none;
+background:white;
+box-shadow:0 5px 20px #0001;
+cursor:pointer;
+transition:.2s;
+
+}
+
+
+.suggestions button:hover{
+
+transform:translateY(-3px);
+
+background:#2563eb;
+color:white;
+
+}
+
+
+body.dark .suggestions button{
+
+background:#18181b;
+color:white;
+
+}
