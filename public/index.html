@@ -261,17 +261,47 @@ OUTILS
 <div class="fileZone" id="dropZone">
 
 
-📎 Déposer un fichier ou une image
+📎 Ajouter un fichier
+
+
+<input
+type="file"
+id="fileInput"
+accept=".txt,.pdf,.docx"
+>
+
+
+
+<button onclick="sendFile()">
+
+📄 Analyser fichier
+
+</button>
+
+
+</div>
+
+
+
+
+
+
+<div class="imageZone">
+
+
+📷 Analyser une image
 
 
 <input
 type="file"
 id="imageUpload"
 accept="image/*"
-onchange="analyzeImage()">
+onchange="analyzeImage()"
+>
 
 
 </div>
+
 
 
 
@@ -300,6 +330,7 @@ placeholder="Décris l'image à créer..."
 >
 
 
+
 <button
 onclick="generateImage()">
 
@@ -315,6 +346,7 @@ onclick="generateImage()">
 
 
 </div>
+
 
 
 
@@ -342,6 +374,7 @@ sendMessage()
 "
 
 >
+
 
 
 

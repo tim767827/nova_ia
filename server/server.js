@@ -11,6 +11,9 @@ const cors = require("cors");
 const path = require("path");
 const fetch = require("node-fetch");
 const rateLimit = require("express-rate-limit");
+const multer = require("multer");
+const pdfParse = require("pdf-parse");
+const mammoth = require("mammoth");
 
 require("dotenv").config();
 
@@ -83,6 +86,25 @@ app.use(express.json({
 limit:"20mb"
 
 }));
+// =====================================
+// UPLOAD FICHIERS
+// =====================================
+
+
+const upload =
+multer({
+
+storage:
+multer.memoryStorage(),
+
+limits:{
+
+fileSize:
+10 * 1024 * 1024
+
+}
+
+});
 
 
 
@@ -1035,6 +1057,335 @@ res.json({
 
 error:
 "Erreur création image."
+
+});
+
+
+}
+
+
+});
+// =====================================
+// ANALYSE FICHIERS IA
+// =====================================
+
+
+app.post(
+"/upload",
+upload.single("file"),
+async(req,res)=>{
+
+
+try{
+
+
+if(!req.file){
+
+
+return res.json({
+
+reply:
+"Aucun fichier reçu."
+
+});
+
+
+}
+
+
+
+let text="";
+
+
+
+const file =
+req.file;
+
+
+
+const type =
+file.mimetype;
+
+
+
+
+
+// TXT
+
+if(
+type==="text/plain"
+){
+
+
+text =
+file.buffer.toString(
+"utf-8"
+);
+
+
+}
+
+
+
+
+
+
+
+// PDF
+
+else if(
+type==="application/pdf"
+){
+
+
+const data =
+await pdfParse(
+file.buffer
+);
+
+
+text =
+data.text;
+
+
+}
+
+
+
+
+
+
+
+// WORD
+
+else if(
+type.includes(
+"wordprocessingml"
+)){
+
+
+const result =
+await mammoth.extractRawText({
+
+buffer:
+file.buffer
+
+});
+
+
+text =
+result.value;
+
+
+}
+
+
+
+
+
+
+else{
+
+
+return res.json({
+
+reply:
+"Format non supporté. Utilise TXT, PDF ou DOCX."
+
+});
+
+
+}
+
+
+
+
+
+
+
+if(!text.trim()){
+
+
+return res.json({
+
+reply:
+"Le fichier est vide."
+
+});
+
+
+}
+
+
+
+
+
+
+// Limite pour éviter trop gros prompt
+
+text =
+text.substring(
+0,
+15000
+);
+
+
+
+
+
+
+const response =
+await fetch(
+
+"https://api.groq.com/openai/v1/chat/completions",
+
+{
+
+
+method:"POST",
+
+
+headers:{
+
+
+"Content-Type":
+"application/json",
+
+
+Authorization:
+`Bearer ${GROQ_KEY}`
+
+
+},
+
+
+body:JSON.stringify({
+
+
+model:
+"llama-3.3-70b-versatile",
+
+
+messages:[
+
+
+{
+
+
+role:"system",
+
+content:
+
+`
+
+Tu es NovaAI.
+
+Analyse les documents.
+
+Fais des résumés clairs.
+
+Utilise Markdown.
+
+Explique les points importants.
+
+`
+
+},
+
+
+
+{
+
+
+role:"user",
+
+content:
+
+`
+
+Analyse ce document :
+
+${text}
+
+Fais :
+
+- résumé
+- points importants
+- informations utiles
+
+`
+
+}
+
+
+],
+
+
+temperature:0.4
+
+
+})
+
+
+}
+
+);
+
+
+
+
+
+
+
+const data =
+await response.json();
+
+
+
+
+
+const reply =
+
+data?.choices?.[0]?.message?.content
+
+||
+
+"Impossible d'analyser le fichier.";
+
+
+
+
+
+
+res.json({
+
+reply
+
+});
+
+
+
+
+
+
+
+}catch(error){
+
+
+console.log(
+
+"UPLOAD ERROR",
+
+error
+
+);
+
+
+
+res.json({
+
+reply:
+"Erreur analyse fichier."
 
 });
 
