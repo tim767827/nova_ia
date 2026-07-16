@@ -719,130 +719,78 @@ loading.textContent =
 
 
 
-    try{
+   try{
 
 
-        const response =
-        await fetch(
-            "/chat",
-            {
+    const response =
+    await fetch(
+        "/chat",
+        {
 
-                method:"POST",
+            method:"POST",
 
-                headers:{
+            headers:{
+                "Content-Type":
+                "application/json"
+            },
 
-                    "Content-Type":
-                    "application/json"
+            body:JSON.stringify({
 
-                },
+                message:text,
 
+                userId:userId
 
-                body:JSON.stringify({
+            })
 
-                    message:text,
-
-                    userId:userId
-
-                })
-
-
-            }
-
-        );
+        }
+    );
 
 
-
-const data = await response.json();
-
-
-if(data.image){
-
-
-    let imageLoading =
-    document.createElement("div");
-
-
-    imageLoading.className =
-    "msg bot";
-
-
-    imageLoading.id =
-    "imageLoading";
-
-
-    imageLoading.textContent =
-    "🖼️ Image en cours de création...";
-
-
-    document
-    .getElementById("messages")
-    .appendChild(imageLoading);
+    const data =
+    await response.json();
 
 
 
-    smartScroll();
+    if(data.image){
+
+
+        let imageLoading =
+        document.createElement("div");
+
+
+        imageLoading.className =
+        "msg bot";
+
+
+        imageLoading.textContent =
+        "🖼️ Image en cours de création...";
+
+
+        document
+        .getElementById("messages")
+        .appendChild(imageLoading);
 
 
 
-    setTimeout(()=>{
+        smartScroll();
 
-
-        imageLoading.remove();
 
 
         addImage(data.image);
 
 
-    },500);
 
-
-
-}
-else{
-
-
-    addMessage(data.reply,"bot");
-
-
-}
-
-
-
-}
-
-        loading.remove();
-
-
-
-        typeWriter(
-
-            data.reply ||
-            "Pas de réponse."
-
-        );
-
+        imageLoading.remove();
 
 
 
     }
-
-
-    catch(error){
-
-
-        console.log(error);
-
-
-        loading.remove();
-
+    else{
 
 
         addMessage(
-
-            "❌ Erreur serveur",
-
+            data.reply,
             "bot"
-
         );
 
 
@@ -853,6 +801,23 @@ else{
 }
 
 
+catch(error){
+
+
+    console.log(error);
+
+
+    loading.remove();
+
+
+
+    addMessage(
+        "❌ Erreur serveur",
+        "bot"
+    );
+
+
+}
 
 
 window.sendMessage =
