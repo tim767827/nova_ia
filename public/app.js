@@ -877,15 +877,13 @@ img.className="generatedImage";
 
 
 let title =
-document.createElement("p");
-
-title.textContent =
-"✅ Image créée :";
-
+document.createElement("div");
 
 title.className =
 "msg bot";
 
+title.textContent =
+"✅ Image créée :";
 
 box.appendChild(title);
 
