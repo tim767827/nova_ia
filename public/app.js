@@ -1196,13 +1196,7 @@ reader.readAsDataURL(file);
 
 
 
-// ======================
-// FICHIER
-// ======================
-
-
-function sendFile(){
-
+async function sendFile(){
 
 
 let file =
@@ -1211,12 +1205,9 @@ document
 .files[0];
 
 
-
 if(!file){
 
-alert(
-"Choisis un fichier"
-);
+alert("Choisis un fichier");
 
 return;
 
@@ -1224,21 +1215,65 @@ return;
 
 
 
-
-
 addMessage(
-
 "📄 Fichier envoyé : "+file.name,
-
 "user"
-
 );
 
 
 
 addMessage(
+"⏳ Analyse du fichier en cours...",
+"bot"
+);
 
-"Analyse fichier bientôt disponible.",
+
+
+
+try{
+
+
+let formData =
+new FormData();
+
+
+
+formData.append(
+"file",
+file
+);
+
+
+
+
+let response =
+await fetch(
+"/upload",
+{
+
+method:"POST",
+
+body:formData
+
+}
+
+);
+
+
+
+
+
+let data =
+await response.json();
+
+
+
+
+
+addMessage(
+
+data.reply ||
+"Impossible d'analyser le fichier.",
 
 "bot"
 
@@ -1246,11 +1281,33 @@ addMessage(
 
 
 
+
+
+}
+catch(error){
+
+
+console.log(
+"FILE ERROR",
+error
+);
+
+
+
+addMessage(
+
+"❌ Erreur pendant l'analyse du fichier.",
+
+"bot"
+
+);
+
+
 }
 
 
 
-
+}
 
 
 
