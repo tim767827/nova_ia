@@ -778,34 +778,31 @@ messages.push(
 
 if(intent==="image"){
 
-const imageResponse =
-await fetch(
-"http://localhost:"+PORT+"/generate-image",
-{
-method:"POST",
-headers:{
-"Content-Type":"application/json"
-},
-body:JSON.stringify({
-prompt:message
-})
-}
-);
+const imagePrompt = message;
 
 
-const imageData =
-await imageResponse.json();
+const imageURL =
+
+"https://image.pollinations.ai/prompt/"
+
++
+
+encodeURIComponent(imagePrompt)
+
++
+
+"?model=flux&width=1024&height=1024&nologo=true";
+
 
 
 return res.json({
 
-image:imageData.image,
-
 reply:
-"🎨 Voilà ton image."
+"🎨 Image créée !",
+
+image:imageURL
 
 });
-
 
 }
 if(!GROQ_KEY){
