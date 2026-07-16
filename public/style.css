@@ -23,7 +23,13 @@ color:#111827;
 transition:.3s;
 
 }
-
+.overlay{
+display:none;
+position:fixed;
+inset:0;
+background:rgba(0,0,0,.45);
+z-index:15;
+}
 
 
 button{
@@ -890,21 +896,17 @@ box-shadow:
 position:fixed;
 
 top:0;
-left:-320px;
+left:-310px;
 
-height:100dvh;
+height:100vh;
 
-width:300px;
+width:290px;
 
-transition:.35s cubic-bezier(.4,0,.2,1);
-
-box-shadow:
-15px 0 40px rgba(0,0,0,.2);
+transition:.3s ease;
 
 z-index:30;
 
 }
-
 
 
 .sidebar.open{
@@ -914,15 +916,50 @@ left:0;
 }
 
 
+/* affiche le fond derrière */
 
-.sidebar.open + .overlay{
+body:has(.sidebar.open) .overlay{
 
 display:block;
 
 }
 
 
+.mobileMenu{
 
+display:flex;
+
+position:fixed;
+
+top:15px;
+
+left:15px;
+
+z-index:50;
+
+width:45px;
+
+height:45px;
+
+align-items:center;
+
+justify-content:center;
+
+border:none;
+
+border-radius:12px;
+
+background:#2563eb;
+
+color:white;
+
+font-size:22px;
+
+}
+
+
+
+}
 /* CHAT */
 
 
