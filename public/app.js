@@ -132,6 +132,9 @@ chat.title;
 title.onclick=()=>{
 
 loadChat(chat.id);
+   document
+.getElementById("sidebar")
+?.classList.remove("open");
 
 };
 
@@ -588,6 +591,9 @@ if(!text)return;
 if(!currentChat){
 
 newChat();
+   document
+.getElementById("sidebar")
+?.classList.remove("open");
 
 }
 
