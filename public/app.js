@@ -754,8 +754,18 @@ async function sendMessage(){
 
 
 
-        const data =
-        await response.json();
+const data = await response.json();
+
+
+addMessage(data.reply,"bot");
+
+
+
+if(data.image){
+
+    addImage(data.image);
+
+}
 
 
 
@@ -810,7 +820,30 @@ sendMessage;
 
 
 
+function addImage(url){
 
+
+const box=document.querySelector(".messages");
+
+
+const img=document.createElement("img");
+
+
+img.src=url;
+
+
+img.className="generatedImage";
+
+
+box.appendChild(img);
+
+
+
+box.scrollTop =
+box.scrollHeight;
+
+
+}
 
 
 
