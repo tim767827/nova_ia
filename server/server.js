@@ -776,11 +776,8 @@ mimeType
 
 
 const models=[
-
-
-"gemini-2.0-flash",
-"gemini-1.5-flash"
-
+"gemini-2.5-flash",
+"gemini-2.0-flash-lite"
 ];
 
 
@@ -861,9 +858,7 @@ error.status
 
 
 await new Promise(
-
-r=>setTimeout(r,3000)
-
+r=>setTimeout(r,10000)
 );
 
 
@@ -1034,7 +1029,7 @@ error:
 const response =
 await fetch(
 
-"https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0",
+"https://router.huggingface.co/hf-inference/models/stabilityai/stable-diffusion-xl-base-1.0",
 
 {
 
