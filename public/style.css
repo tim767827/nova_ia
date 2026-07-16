@@ -812,64 +812,96 @@ color:white;
 
 
 
-/* =====================
- MOBILE
-===================== */
+/* ================================
+   MOBILE PREMIUM
+================================ */
 
 
-.mobileMenu{
-
+.overlay{
 display:none;
-
+position:fixed;
+inset:0;
+background:rgba(0,0,0,.45);
+z-index:15;
+backdrop-filter:blur(4px);
 }
-
-
 
 
 
 @media(max-width:768px){
 
 
+body{
+height:100dvh;
+}
+
+
+.app{
+height:100dvh;
+}
+
+
+
+/* MENU */
+
+
 .mobileMenu{
 
-display:block;
+display:flex;
+
+align-items:center;
+justify-content:center;
 
 position:fixed;
 
-top:12px;
-
-left:12px;
-
-z-index:50;
+top:15px;
+left:15px;
 
 width:45px;
-
 height:45px;
 
-border:0;
+border-radius:14px;
 
-border-radius:12px;
+border:none;
 
-background:#2563eb;
+background:
+linear-gradient(
+135deg,
+#2563eb,
+#9333ea
+);
 
 color:white;
 
 font-size:22px;
 
+box-shadow:
+0 10px 25px rgba(0,0,0,.25);
+
 }
 
 
+
+/* SIDEBAR */
 
 
 .sidebar{
 
 position:fixed;
 
-left:-300px;
+top:0;
+left:-320px;
 
-height:100vh;
+height:100dvh;
 
-transition:.3s;
+width:300px;
+
+transition:.35s cubic-bezier(.4,0,.2,1);
+
+box-shadow:
+15px 0 40px rgba(0,0,0,.2);
+
+z-index:30;
 
 }
 
@@ -883,65 +915,18 @@ left:0;
 
 
 
-.topbar{
+.sidebar.open + .overlay{
 
-padding-left:70px;
-
-}
-
-
-
-.messages{
-
-padding:15px;
+display:block;
 
 }
 
 
 
-.welcome h1{
-
-font-size:30px;
-
-}
+/* CHAT */
 
 
-
-.msg{
-
-max-width:95%;
-
-}
-
-
-
-.tools{
-
-flex-direction:column;
-
-align-items:stretch;
-
-}
-
-
-
-.imageCreator{
-
-flex-direction:column;
-
-}
-
-
-
-.suggestions{
-
-flex-direction:column;
-
-}
-
-
-
-.suggestions button{
+.chat{
 
 width:100%;
 
@@ -949,9 +934,138 @@ width:100%;
 
 
 
-.inputBar{
+.topbar{
+
+height:70px;
+
+padding-left:75px;
+
+}
+
+
+
+/* WELCOME */
+
+
+.welcome{
+
+padding:20px;
+
+}
+
+
+.welcome h1{
+
+font-size:28px;
+
+line-height:1.2;
+
+}
+
+
+
+.welcome p{
+
+font-size:14px;
+
+}
+
+
+
+/* MESSAGES */
+
+
+.messages{
+
+padding:
+80px 15px 15px;
+
+gap:12px;
+
+}
+
+
+
+.msg{
+
+max-width:92%;
+
+font-size:15px;
+
+padding:13px 15px;
+
+border-radius:18px;
+
+}
+
+
+
+/* OUTILS */
+
+
+.tools{
+
+position:relative;
 
 padding:10px;
+
+gap:8px;
+
+overflow-x:auto;
+
+display:flex;
+
+}
+
+
+
+.fileZone,
+.imageZone{
+
+min-width:max-content;
+
+}
+
+
+
+/* CREATE IMAGE */
+
+
+.imageCreator{
+
+min-width:100%;
+
+}
+
+
+
+.imageCreator input{
+
+height:48px;
+
+}
+
+
+
+/* INPUT */
+
+
+.inputBar{
+
+padding:
+10px;
+
+gap:8px;
+
+}
+
+
+
+.inputBar input{
+
+height:50px;
+
+font-size:15px;
 
 }
 
@@ -959,9 +1073,23 @@ padding:10px;
 
 .sendBtn{
 
-width:48px;
+width:50px;
 
-height:48px;
+height:50px;
+
+}
+
+
+
+/* SETTINGS */
+
+
+.settings{
+
+width:
+90%;
+
+max-width:340px;
 
 }
 
