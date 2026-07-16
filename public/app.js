@@ -40,6 +40,7 @@ localStorage.getItem("novaChats")
 
 
 let currentChat = null;
+let autoScroll = true;
 
 
 
@@ -500,6 +501,27 @@ box.scrollTop =
 box.scrollHeight;
 
 }
+
+
+}
+const messageBox =
+document.getElementById("messages");
+
+
+if(messageBox){
+
+messageBox.addEventListener(
+"scroll",
+()=>{
+
+
+autoScroll =
+messageBox.scrollTop + messageBox.clientHeight
+>=
+messageBox.scrollHeight - 80;
+
+
+});
 
 
 }
