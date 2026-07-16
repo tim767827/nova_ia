@@ -522,7 +522,77 @@ width:100%;
 align-self:center;
 
 }
+.msg{
 
+white-space:normal;
+
+word-break:break-word;
+
+font-size:16px;
+
+line-height:1.8;
+
+}.msg h1{
+
+margin:20px 0 10px;
+
+font-size:34px;
+
+}
+
+.msg h2{
+
+margin:18px 0 8px;
+
+font-size:28px;
+
+}
+
+.msg h3{
+
+margin:15px 0 6px;
+
+font-size:22px;
+
+}
+
+.msg p{
+
+margin:12px 0;
+
+}
+
+.msg ul{
+
+margin:15px 25px;
+
+}
+
+.msg li{
+
+margin:8px 0;
+
+}
+
+.msg pre{
+
+padding:15px;
+
+border-radius:15px;
+
+overflow:auto;
+
+background:#111827;
+
+color:white;
+
+}
+
+.msg code{
+
+font-family:Consolas,monospace;
+
+}
 
 .user{
 
