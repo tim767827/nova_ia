@@ -65,8 +65,11 @@ JSON.stringify(chats)
 
 function toggleSidebar(){
 
-let sidebar =
+const sidebar =
 document.getElementById("sidebar");
+
+const overlay =
+document.querySelector(".overlay");
 
 
 if(sidebar){
@@ -75,10 +78,17 @@ sidebar.classList.toggle("open");
 
 }
 
+
+if(overlay){
+
+overlay.style.display =
+sidebar.classList.contains("open")
+? "block"
+: "none";
+
 }
 
-
-
+}
 window.toggleSidebar = toggleSidebar;
 
 
