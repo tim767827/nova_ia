@@ -973,19 +973,18 @@ reply:
 
 
 // =====================================
-// GENERATION IMAGE HUGGING FACE
+// GENERATION IMAGE NOVAAI V7
 // =====================================
 
 
+app.post("/generate-image", async(req,res)=>{
 
-app.post("/generate-image",async(req,res)=>{
+
+try{
 
 
 req.setTimeout(120000);
 
-
-
-try{
 
 
 const prompt =
@@ -1008,92 +1007,60 @@ error:
 
 
 
-if(!HF_KEY){
-
-
-return res.json({
-
-error:
-"Clé Hugging Face absente."
-
-});
-
-
-}
-
-
-
-
-// Nouveau modèle compatible
-
-const response =
-await fetch(
-
-"https://router.huggingface.co/hf-inference/models/stabilityai/stable-diffusion-xl-base-1.0",
-
-{
-
-
-method:"POST",
-
-
-headers:{
-
-
-Authorization:
-`Bearer ${HF_KEY}`,
-
-
-"Content-Type":
-"application/json"
-
-
-},
-
-
-body:JSON.stringify({
-
-inputs:prompt
-
-})
-
-
-}
-
-
-);
-
-
-
-
-
-
-if(!response.ok){
-
-
-const error =
-await response.text();
 
 
 console.log(
-
-"HF ERROR",
-
-error
-
+"🎨 Génération image:",
+prompt
 );
 
+
+
+
+
+const imageURL =
+
+"https://image.pollinations.ai/prompt/" +
+
+encodeURIComponent(prompt)
+
++
+
+"?width=1024&height=1024&nologo=true";
+
+
+
+
+
+
+
+// Vérification que l'image existe
+
+
+const check =
+await fetch(imageURL);
+
+
+
+if(!check.ok){
+
+
+console.log(
+"IMAGE API ERROR",
+check.status
+);
 
 
 return res.json({
 
 error:
-"Erreur génération image."
+"Le générateur image est indisponible."
 
 });
 
 
 }
+
 
 
 
@@ -1101,7 +1068,8 @@ error:
 
 
 const buffer =
-await response.arrayBuffer();
+await check.arrayBuffer();
+
 
 
 
@@ -1112,14 +1080,18 @@ Buffer.from(buffer)
 
 
 
+
+
 res.json({
 
 image:
-"data:image/png;base64,"+base64,
+
+"data:image/jpeg;base64,"+base64,
 
 
 message:
-"Image créée 🚀"
+
+"Image créée avec succès 🚀"
 
 
 });
@@ -1127,9 +1099,11 @@ message:
 
 
 
+
 }
 
 catch(error){
+
 
 
 console.log(
@@ -1145,9 +1119,10 @@ error
 res.json({
 
 error:
-"Erreur création image."
+"Erreur génération image."
 
 });
+
 
 
 }
@@ -1155,7 +1130,6 @@ error:
 
 
 });
-
 
 
 
