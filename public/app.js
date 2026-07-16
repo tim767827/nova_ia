@@ -755,10 +755,6 @@ loading.textContent =
 const data = await response.json();
 
 
-addMessage(data.reply,"bot");
-
-
-
 if(data.image){
 
 
@@ -788,15 +784,27 @@ if(data.image){
 
 
 
-    // affiche l'image après réception
-
-    addImage(data.image);
+    setTimeout(()=>{
 
 
+        imageLoading.remove();
 
-    // enlève le texte de chargement
 
-    imageLoading.remove();
+        addImage(data.image);
+
+
+    },500);
+
+
+
+}
+else{
+
+
+    addMessage(data.reply,"bot");
+
+
+}
 
 
 
