@@ -517,30 +517,9 @@ box.scrollHeight;
 
 function cleanMarkdown(text){
 
+return marked.parse(text);
 
-return text
-
-.replace(
-/```([\s\S]*?)```/g,
-"<pre><code>$1</code></pre>"
-)
-
-.replace(
-/\*\*(.*?)\*\*/g,
-"<b>$1</b>"
-)
-
-.replace(
-/\*(.*?)\*/g,
-"<i>$1</i>"
-)
-
-.replace(
-/\n/g,
-"<br>"
-);
-
-
+}
 }/* =====================================
    NOVA AI V6
    APP.JS PARTIE 2/2
