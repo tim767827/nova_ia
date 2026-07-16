@@ -172,22 +172,12 @@ __dirname,
 // =====================================
 
 
-const upload =
-multer({
-
-storage:
-multer.memoryStorage(),
-
-
-limits:{
-
-fileSize:
-50 * 1024 * 1024
-
-}
-
+const upload = multer({
+    storage: multer.memoryStorage(),
+    limits:{
+        fileSize:50 * 1024 * 1024
+    }
 });
-
 
 
 
@@ -1230,93 +1220,159 @@ error:
 
 
 
-// =====================================
-// ANALYSE DOCUMENTS
-// =====================================
-
-
 app.post(
 "/upload",
 upload.single("file"),
 async(req,res)=>{
-
 
 try{
 
 
 if(!req.file){
 
-
 return res.json({
-
-reply:
-"Aucun fichier reçu."
-
+reply:"Aucun fichier reçu."
 });
-
 
 }
 
 
 
-console.log(
-"📄 Fichier:",
-req.file.originalname
-);
+let text="";
+
+const file=req.file;
+
+const name=file.originalname.toLowerCase();
 
 
 
+// PDF
 
-let text =
-await extractText(
-req.file
-);
+if(name.endsWith(".pdf")){
 
+const data =
+await pdfParse(file.buffer);
 
-
-
-
-if(!text || !text.trim()){
-
-
-return res.json({
-
-reply:
-"Impossible de lire ce fichier."
-
-});
-
+text=data.text;
 
 }
 
 
 
+// TXT
 
-
-// limite pour éviter surcharge IA
+else if(name.endsWith(".txt")){
 
 text =
-text.substring(
-0,
-50000
+file.buffer.toString("utf8");
+
+}
+
+
+
+// DOCX
+
+else if(name.endsWith(".docx")){
+
+
+const result =
+await mammoth.extractRawText({
+
+buffer:file.buffer
+
+});
+
+
+text=result.value;
+
+
+}
+
+
+
+// Excel
+
+else if(
+name.endsWith(".xlsx")
+||
+name.endsWith(".xls")
+){
+
+
+const workbook =
+XLSX.read(
+file.buffer,
+{
+type:"buffer"
+}
 );
 
 
+workbook.SheetNames.forEach(sheet=>{
 
 
+text +=
 
-if(!GROQ_KEY){
+XLSX.utils.sheet_to_csv(
+workbook.Sheets[sheet]
+);
 
-
-return res.json({
-
-reply:
-"⚠️ GROQ_KEY absente."
 
 });
 
 
 }
+
+
+
+// CSV
+
+else if(name.endsWith(".csv")){
+
+
+text =
+file.buffer.toString("utf8");
+
+
+}
+
+
+
+
+else{
+
+
+return res.json({
+
+reply:
+"Format non supporté. Utilise PDF TXT DOCX XLSX CSV."
+
+});
+
+
+}
+
+
+
+
+
+if(!text.trim()){
+
+
+return res.json({
+
+reply:
+"Le fichier est vide."
+
+});
+
+
+}
+
+
+
+
+text=text.substring(0,30000);
 
 
 
@@ -1331,11 +1387,9 @@ await fetch(
 
 method:"POST",
 
-
 headers:{
 
-"Content-Type":
-"application/json",
+"Content-Type":"application/json",
 
 Authorization:
 `Bearer ${GROQ_KEY}`
@@ -1351,7 +1405,6 @@ model:
 
 messages:[
 
-
 {
 
 role:"system",
@@ -1359,27 +1412,22 @@ role:"system",
 content:
 
 `
-
 Tu es NovaAI.
 
-Tu analyses des documents.
+Analyse les documents.
 
 Réponds en français.
 
-Fais:
+Donne :
 
-- résumé complet
+- résumé
 - points importants
-- données importantes
-- explication simple
+- explications
 - conclusion
-
-Utilise Markdown.
 
 `
 
 },
-
 
 
 {
@@ -1389,8 +1437,7 @@ role:"user",
 content:
 
 `
-
-Analyse ce document :
+Voici le document :
 
 ${text}
 
@@ -1398,21 +1445,16 @@ ${text}
 
 }
 
-
 ],
 
-
-temperature:
-0.4
+temperature:0.3
 
 
 })
 
-
 }
 
 );
-
 
 
 
@@ -1425,31 +1467,21 @@ await response.json();
 
 
 
-const reply =
-data?.choices?.[0]?.message?.content
-||
-"Analyse impossible.";
-
-
-
-
-
 res.json({
 
-filename:
-req.file.originalname,
+reply:
 
+data?.choices?.[0]?.message?.content
+||
+"Erreur analyse."
 
-reply
 
 });
 
 
 
 
-
 }
-
 catch(error){
 
 
@@ -1459,11 +1491,10 @@ error
 );
 
 
-
 res.json({
 
 reply:
-"Erreur analyse document."
+"Erreur pendant l'analyse du fichier."
 
 });
 
@@ -1472,8 +1503,6 @@ reply:
 
 
 });
-
-
 
 
 
