@@ -810,8 +810,11 @@ text.substring(0,i)
 
 
 
+if(autoScroll){
+
 scroll();
 
+}
 
 
 i++;
