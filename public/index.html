@@ -21,16 +21,22 @@
 
 
 
-<!-- =========================
-SIDEBAR
-========================= -->
+<!-- MOBILE MENU -->
+
+<button class="mobileMenu" onclick="toggleSidebar()">
+☰
+</button>
 
 
-<aside class="sidebar">
+
+
+
+<!-- SIDEBAR -->
+
+<aside class="sidebar" id="sidebar">
 
 
 <div class="brand">
-
 
 <div class="logo">
 🚀 NovaAI
@@ -42,9 +48,9 @@ Assistant IA nouvelle génération
 </div>
 
 
-<div class="tagline">
+<p class="tagline">
 Discutez, créez et analysez sans limite.
-</div>
+</p>
 
 
 </div>
@@ -53,9 +59,7 @@ Discutez, créez et analysez sans limite.
 
 
 
-<button 
-class="newChat"
-onclick="newChat()">
+<button class="newChat" onclick="newChat()">
 
 ＋ Nouveau chat
 
@@ -65,25 +69,22 @@ onclick="newChat()">
 
 
 
-
 <div class="historySearch">
 
-
-<input
+<input 
 id="searchHistory"
-placeholder="🔎 Rechercher une conversation">
+placeholder="🔎 Rechercher..."
+>
+
 
 </div>
 
 
 
 
-
-<div class="historyTitle">
-
+<h3 class="historyTitle">
 Historique
-
-</div>
+</h3>
 
 
 
@@ -97,12 +98,11 @@ class="history">
 
 
 
+
 <div class="bottom">
 
 
-<button
-class="settingsBtn"
-onclick="toggleSettings()">
+<button onclick="toggleSettings()">
 
 ⚙️ Paramètres
 
@@ -110,9 +110,7 @@ onclick="toggleSettings()">
 
 
 
-<button
-class="exportBtn"
-onclick="exportChat()">
+<button onclick="exportChat()">
 
 📥 Exporter
 
@@ -123,7 +121,6 @@ onclick="exportChat()">
 </div>
 
 
-
 </aside>
 
 
@@ -132,32 +129,26 @@ onclick="exportChat()">
 
 
 
-
-
-
-<!-- =========================
-ZONE CHAT
-========================= -->
-
+<!-- CHAT -->
 
 <main class="chat">
-
-
 
 
 
 <header class="topbar">
 
 
+<div>
+
 <h2>
 NovaAI
 </h2>
 
 
-
-<div class="status">
-
+<span class="status">
 🟢 En ligne
+</span>
+
 
 </div>
 
@@ -173,12 +164,11 @@ NovaAI
 
 
 
+<!-- MESSAGES -->
+
 <div 
 id="messages"
 class="messages">
-
-
-
 
 
 <div class="welcome">
@@ -192,12 +182,11 @@ Bienvenue sur NovaAI 🚀
 
 <p>
 
-Votre assistant IA pour discuter,
+Ton assistant IA pour discuter,
 créer des images,
-analyser vos fichiers et vous aider.
+analyser des fichiers et apprendre.
 
 </p>
-
 
 
 
@@ -223,7 +212,7 @@ analyser vos fichiers et vous aider.
 
 <button onclick="sendQuick('Donne moi une idée de projet')">
 
-🚀 Trouve une idée
+🚀 Idée projet
 
 </button>
 
@@ -232,6 +221,8 @@ analyser vos fichiers et vous aider.
 </div>
 
 
+</div>
+
 
 </div>
 
@@ -239,42 +230,38 @@ analyser vos fichiers et vous aider.
 
 
 
-</div>
 
 
 
 
-
-
-
-
-
-<!-- =========================
-OUTILS
-========================= -->
+<!-- OUTILS -->
 
 
 <div class="tools">
 
 
 
-<div class="fileZone" id="dropZone">
+<!-- FICHIER -->
+
+<div class="fileZone">
 
 
-📎 Ajouter un fichier
+<label>
 
+📎 Fichier
 
-<input
+<input 
 type="file"
 id="fileInput"
 accept=".txt,.pdf,.docx"
 >
 
+</label>
 
 
 <button onclick="sendFile()">
 
-📄 Analyser fichier
+Analyser
 
 </button>
 
@@ -286,18 +273,31 @@ accept=".txt,.pdf,.docx"
 
 
 
+
+<!-- IMAGE ANALYSE -->
+
+
 <div class="imageZone">
 
 
-📷 Analyser une image
+<label>
 
+📷 Image
 
 <input
+
 type="file"
+
 id="imageUpload"
+
 accept="image/*"
-onchange="analyzeImage()"
+
+onchange="previewImage(event);analyzeImage()"
+
 >
+
+
+</label>
 
 
 </div>
@@ -307,15 +307,20 @@ onchange="analyzeImage()"
 
 
 
-
-<img
+<img 
 id="previewImage"
-class="preview hidden">
+class="preview hidden"
+>
 
 
 
 
 
+
+
+
+
+<!-- CREATION IMAGE -->
 
 
 <div class="imageCreator">
@@ -325,16 +330,15 @@ class="preview hidden">
 
 id="imagePrompt"
 
-placeholder="Décris l'image à créer..."
+placeholder="🎨 Décris une image..."
 
 >
 
 
 
-<button
-onclick="generateImage()">
+<button onclick="generateImage()">
 
-🎨 Créer
+Créer
 
 </button>
 
@@ -344,7 +348,6 @@ onclick="generateImage()">
 
 
 
-
 </div>
 
 
@@ -353,9 +356,9 @@ onclick="generateImage()">
 
 
 
-<!-- =========================
-BARRE MESSAGE
-========================= -->
+
+
+<!-- INPUT MESSAGE -->
 
 
 <div class="inputBar">
@@ -366,11 +369,14 @@ BARRE MESSAGE
 
 id="input"
 
-placeholder="Écris ton message à NovaAI..."
+placeholder="Écris à NovaAI..."
+
+autocomplete="off"
 
 onkeydown="
-if(event.key==='Enter')
+if(event.key==='Enter'){
 sendMessage()
+}
 "
 
 >
@@ -402,9 +408,7 @@ onclick="sendMessage()"
 
 
 
-<!-- =========================
-PARAMETRES
-========================= -->
+<!-- SETTINGS -->
 
 
 <div
@@ -416,12 +420,9 @@ class="settings hidden"
 >
 
 
-
 <h3>
-Paramètres
+⚙️ Paramètres
 </h3>
-
-
 
 
 
@@ -434,14 +435,11 @@ Paramètres
 
 
 
-
 <button onclick="clearHistory()">
 
-🗑️ Supprimer historique
+🗑️ Effacer historique
 
 </button>
-
-
 
 
 
@@ -459,11 +457,6 @@ Fermer
 
 
 
-
-
-
-
-
 </main>
 
 
@@ -476,15 +469,7 @@ Fermer
 
 
 
-
-
-<!-- =========================
-SCRIPTS
-========================= -->
-
-
 <script src="app.js"></script>
-
 
 
 </body>
