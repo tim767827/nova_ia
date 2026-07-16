@@ -236,134 +236,47 @@ analyser des fichiers et apprendre.
 
 
 
-<!-- OUTILS -->
+<!-- BARRE OUTILS CHAT -->
+
+<div class="chatTools">
 
 
-<div class="tools">
+<button 
+class="attachBtn"
+onclick="openFileMenu()">
++
+</button>
 
 
-
-<!-- FICHIER -->
-
-<div class="fileZone">
+<div 
+class="fileMenu hidden"
+id="fileMenu">
 
 
 <label>
-
-📎 Fichier
+📄 Document
 
 <input 
 type="file"
 id="fileInput"
-accept=".txt,.pdf,.docx"
->
-
+accept=".pdf,.txt,.docx,.xlsx"
+onchange="handleFile()">
 </label>
 
-
-<button onclick="sendFile()">
-
-Analyser
-
-</button>
-
-
-</div>
-
-
-
-
-
-
-
-<!-- IMAGE ANALYSE -->
-
-
-<div class="imageZone">
 
 
 <label>
+🖼️ Image
 
-📷 Image
-
-<input
-
+<input 
 type="file"
-
 id="imageUpload"
-
 accept="image/*"
-
-onchange="previewImage(event);analyzeImage()"
-
->
-
-
+onchange="handleImage()">
 </label>
 
 
 </div>
-
-
-
-
-
-
-<img 
-id="previewImage"
-class="preview hidden"
->
-
-
-
-
-
-
-
-
-
-<!-- CREATION IMAGE -->
-
-
-<div class="imageCreator">
-
-
-<input
-
-id="imagePrompt"
-
-placeholder="🎨 Décris une image..."
-
->
-
-
-
-<button onclick="generateImage()">
-
-Créer
-
-</button>
-
-
-</div>
-
-
-
-
-</div>
-
-
-
-
-
-
-
-
-
-<!-- INPUT MESSAGE -->
-
-
-<div class="inputBar">
 
 
 
@@ -385,31 +298,18 @@ sendMessage()
 
 
 
-
 <button
 
 class="sendBtn"
 
-onclick="sendMessage()"
-
->
+onclick="sendMessage()">
 
 ➤
 
 </button>
 
 
-
 </div>
-
-
-
-
-
-
-
-
-
 <!-- SETTINGS -->
 
 
