@@ -778,17 +778,36 @@ messages.push(
 
 if(intent==="image"){
 
+const imageResponse =
+await fetch(
+"http://localhost:"+PORT+"/generate-image",
+{
+method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
+body:JSON.stringify({
+prompt:message
+})
+}
+);
+
+
+const imageData =
+await imageResponse.json();
+
+
 return res.json({
 
+image:imageData.image,
+
 reply:
-"🎨 Je vais créer cette image pour toi."
+"🎨 Voilà ton image."
 
 });
 
+
 }
-
-
-
 if(!GROQ_KEY){
 
 
