@@ -1,10 +1,12 @@
 // =====================================
-// NOVA AI SERVER V6
+// NOVA AI SERVER V7
 // PARTIE 1/3
 // =====================================
 
 
+// =====================================
 // IMPORTS
+// =====================================
 
 const express = require("express");
 const cors = require("cors");
@@ -25,7 +27,7 @@ const {
 
 
 // =====================================
-// CONFIGURATION
+// CONFIG
 // =====================================
 
 
@@ -37,39 +39,58 @@ process.env.PORT || 3000;
 
 
 
+// API KEYS
+
 const GROQ_KEY =
-process.env.API_KEY;
+process.env.GROQ_KEY || process.env.API_KEY;
 
 
 const GEMINI_KEY =
 process.env.GEMINI_KEY;
 
 
-const TAVILY_KEY =
-process.env.TAVILY_KEY;
-
-
 const HF_KEY =
 process.env.HF_API_KEY;
 
 
+const TAVILY_KEY =
+process.env.TAVILY_KEY;
+
+
+
+console.log("🚀 NovaAI V7 démarrage");
+
 
 console.log(
-"🚀 NovaAI démarrage..."
-);
-
-
-console.log(
-"GROQ :",
+"GROQ:",
 GROQ_KEY ? "OK" : "ABSENTE"
 );
 
 
+console.log(
+"GEMINI:",
+GEMINI_KEY ? "OK" : "ABSENTE"
+);
 
-const genAI =
+
+console.log(
+"HUGGING FACE:",
+HF_KEY ? "OK" : "ABSENTE"
+);
+
+
+
+let genAI = null;
+
+
+if(GEMINI_KEY){
+
+genAI =
 new GoogleGenerativeAI(
 GEMINI_KEY
 );
+
+}
 
 
 
@@ -83,36 +104,22 @@ app.use(cors());
 
 app.use(express.json({
 
-limit:"20mb"
+limit:"25mb"
 
 }));
-// =====================================
-// UPLOAD FICHIERS
-// =====================================
-
-
-const upload =
-multer({
-
-storage:
-multer.memoryStorage(),
-
-limits:{
-
-fileSize:
-10 * 1024 * 1024
-
-}
-
-});
 
 
 
-const limiter = rateLimit({
+const limiter =
+rateLimit({
 
-windowMs:60 * 1000,
+windowMs:
+60 * 1000,
 
-max:50,
+
+max:
+60,
+
 
 message:{
 
@@ -125,6 +132,7 @@ error:
 
 
 app.use(limiter);
+
 
 
 
@@ -164,8 +172,34 @@ __dirname,
 
 
 
+
 // =====================================
-// MEMOIRE NOVAAI V6
+// UPLOAD
+// =====================================
+
+
+const upload =
+multer({
+
+storage:
+multer.memoryStorage(),
+
+
+limits:{
+
+fileSize:
+15 * 1024 * 1024
+
+}
+
+});
+
+
+
+
+
+// =====================================
+// MEMOIRE NOVAAI
 // =====================================
 
 
@@ -179,8 +213,7 @@ function getHistory(userId){
 if(!userHistories[userId]){
 
 
-userHistories[userId] = [];
-
+userHistories[userId]=[];
 
 }
 
@@ -207,20 +240,19 @@ getHistory(userId);
 
 history.push({
 
-role:role,
-
-content:content
+role,
+content
 
 });
 
 
 
-if(history.length > 30){
+if(history.length > 40){
 
 
 history.splice(
 0,
-history.length - 30
+history.length-40
 );
 
 
@@ -232,16 +264,11 @@ history.length - 30
 
 
 
-
 function getRecentHistory(userId){
 
 
-const history =
-getHistory(userId);
-
-
-
-return history.slice(-20);
+return getHistory(userId)
+.slice(-20);
 
 
 }
@@ -249,8 +276,9 @@ return history.slice(-20);
 
 
 
+
 // =====================================
-// RECHERCHE INTERNET
+// RECHERCHE INTERNET TAVILY
 // =====================================
 
 
@@ -261,7 +289,6 @@ try{
 
 
 if(!TAVILY_KEY){
-
 
 return "";
 
@@ -276,31 +303,32 @@ await fetch(
 
 {
 
-
 method:"POST",
 
 
 headers:{
 
-
 "Content-Type":
 "application/json",
 
 
-"Authorization":
+Authorization:
 `Bearer ${TAVILY_KEY}`
-
 
 },
 
 
 body:JSON.stringify({
 
-query:query,
+query,
 
-search_depth:"advanced",
 
-max_results:5
+search_depth:
+"advanced",
+
+
+max_results:
+5
 
 })
 
@@ -311,13 +339,15 @@ max_results:5
 
 
 
+
+
 const data =
 await response.json();
 
 
 
-if(!data.results){
 
+if(!data.results){
 
 return "";
 
@@ -325,31 +355,28 @@ return "";
 
 
 
-return data.results.map(
 
-item =>
+return data.results.map(item=>`
 
-`
-
-Titre :
+Titre:
 ${item.title}
 
 
-Résumé :
+Résumé:
 ${item.content}
 
 
-Lien :
+Source:
 ${item.url}
 
 
-`
-
-).join("\n");
+`).join("\n");
 
 
 
-}catch(error){
+}
+
+catch(error){
 
 
 console.log(
@@ -371,7 +398,7 @@ return "";
 
 
 // =====================================
-// DETECTION RECHERCHE
+// DETECTION INTERNET
 // =====================================
 
 
@@ -384,17 +411,14 @@ const words=[
 "actualité",
 "news",
 "aujourd'hui",
-"hier",
-"demain",
 "prix",
 "météo",
 "score",
 "match",
 "résultat",
-"politique",
 "président",
-"2025",
-"2026"
+"2026",
+"2025"
 
 
 ];
@@ -408,19 +432,32 @@ text.toLowerCase();
 
 return words.some(
 
-word =>
-lower.includes(word)
+w=>
+lower.includes(w)
 
 );
 
 
 }
+
+
+
+
 // =====================================
-// CHAT IA NOVAAI V6
+// FIN PARTIE 1
+// =====================================// =====================================
+// NOVA AI SERVER V7
+// PARTIE 2/3
 // =====================================
 
 
-app.post("/chat",async(req,res)=>{
+
+// =====================================
+// CHAT NOVAAI
+// =====================================
+
+
+app.post("/chat", async(req,res)=>{
 
 
 try{
@@ -451,8 +488,6 @@ reply:
 
 
 
-// Sauvegarde message utilisateur
-
 saveMessage(
 userId,
 "user",
@@ -469,7 +504,7 @@ if(needsInternet(message)){
 
 
 console.log(
-"🌍 Recherche internet activée"
+"🌍 Recherche internet"
 );
 
 
@@ -485,52 +520,42 @@ await searchInternet(message);
 const messages=[
 
 
+
 {
 
+
 role:"system",
+
 
 content:`
 
 Tu es NovaAI 🚀.
 
-Tu es un assistant IA premium français.
+Assistant IA français premium.
 
-Règles :
+Réponds toujours en français.
 
-- Réponds toujours en français.
-- Sois professionnel et naturel.
-- Utilise Markdown proprement.
-- Utilise des titres ## si nécessaire.
-- Utilise des listes pour organiser.
-- Explique simplement les sujets complexes.
-- Donne des exemples utiles.
-- Ne mets jamais de **** autour des mots.
-- Ne crée jamais de fausses informations.
-- Si tu ne sais pas, dis-le.
-- Ne prétends jamais avoir réalisé une action impossible.
+Style:
+- professionnel
+- clair
+- naturel
+- moderne
 
-Style :
+Utilise Markdown propre.
 
-- Clair.
-- Moderne.
-- Amical.
-- Expert.
+Aide pour:
+programmation,
+création de projets,
+apprentissage,
+rédaction,
+analyse.
 
-Tu aides pour :
-
-- programmation
-- création de projets
-- rédaction
-- apprentissage
-- analyse
-- idées
-- organisation
-
-Tu représentes NovaAI 🚀.
+Ne fabrique jamais d'informations.
 
 `
 
 }
+
 
 
 ];
@@ -546,15 +571,14 @@ messages.push({
 
 role:"system",
 
-content:`
+content:
 
-Informations trouvées sur internet :
+`
+Informations internet:
 
 ${webInfo}
 
-
-Utilise uniquement ces informations.
-
+Utilise uniquement ces données.
 `
 
 });
@@ -628,7 +652,8 @@ model:
 messages,
 
 
-temperature:0.5
+temperature:
+0.5
 
 
 })
@@ -642,10 +667,8 @@ temperature:0.5
 
 
 
-
 const data =
 await response.json();
-
 
 
 
@@ -659,11 +682,10 @@ data.error
 );
 
 
-
 return res.json({
 
 reply:
-"⚠️ Le service IA est momentanément indisponible."
+"⚠️ IA indisponible actuellement."
 
 });
 
@@ -674,20 +696,12 @@ reply:
 
 
 
-
 let reply =
-
 data?.choices?.[0]?.message?.content
-
 ||
-
-"Je n'ai pas trouvé de réponse.";
-
+"Pas de réponse.";
 
 
-
-
-// Nettoyage réponse
 
 reply =
 reply
@@ -696,10 +710,6 @@ reply
 
 
 
-
-
-
-// Sauvegarde IA
 
 saveMessage(
 
@@ -713,12 +723,9 @@ reply
 
 
 
-
-
-
 res.json({
 
-reply:reply
+reply
 
 });
 
@@ -726,16 +733,14 @@ reply:reply
 
 
 
+}
 
-}catch(error){
+catch(error){
 
 
 console.log(
-
 "CHAT ERROR",
-
 error
-
 );
 
 
@@ -743,7 +748,7 @@ error
 res.json({
 
 reply:
-"❌ Erreur serveur NovaAI."
+"❌ Erreur NovaAI."
 
 });
 
@@ -757,9 +762,127 @@ reply:
 
 
 
+
 // =====================================
-// VISION IMAGE
+// GEMINI VISION
 // =====================================
+
+
+
+async function askGeminiVision(
+image,
+mimeType
+){
+
+
+const models=[
+
+
+"gemini-2.0-flash",
+"gemini-1.5-flash"
+
+];
+
+
+
+for(const modelName of models){
+
+
+try{
+
+
+const model =
+genAI.getGenerativeModel({
+
+model:
+modelName
+
+});
+
+
+
+
+const result =
+await model.generateContent([
+
+
+{
+
+
+inlineData:{
+
+
+data:image,
+
+
+mimeType
+
+}
+
+
+},
+
+
+
+`
+Analyse cette image.
+
+Réponds en français.
+
+Décris:
+- objets
+- textes visibles
+- informations importantes
+
+`
+
+]);
+
+
+
+
+return result.response.text();
+
+
+
+}
+
+catch(error){
+
+
+console.log(
+
+"GEMINI RETRY:",
+modelName,
+
+error.status
+
+);
+
+
+await new Promise(
+
+r=>setTimeout(r,3000)
+
+);
+
+
+}
+
+
+
+}
+
+
+
+throw new Error(
+"Gemini indisponible"
+);
+
+
+}
+
+
 
 
 app.post("/vision",async(req,res)=>{
@@ -768,15 +891,28 @@ app.post("/vision",async(req,res)=>{
 try{
 
 
+if(!genAI){
+
+
+return res.json({
+
+reply:
+"Clé Gemini absente."
+
+});
+
+
+}
+
+
+
 const image =
 req.body.image;
-
 
 
 const mimeType =
 req.body.mimeType ||
 "image/jpeg";
-
 
 
 
@@ -795,87 +931,30 @@ reply:
 
 
 
-
-
-
-const model =
-genAI.getGenerativeModel({
-
-model:
-"gemini-2.5-flash"
-
-});
-
-
-
-
-
-
-const result =
-await model.generateContent([
-
-
-
-{
-
-inlineData:{
-
-
-data:image,
-
-
-mimeType:mimeType
-
-
-}
-
-
-},
-
-
-
-`
-
-Analyse cette image.
-
-Réponds en français.
-
-Décris les éléments importants.
-
-Lis les textes visibles.
-
-Explique clairement.
-
-`
-
-]);
-
-
-
+const reply =
+await askGeminiVision(
+image,
+mimeType
+);
 
 
 
 res.json({
 
-reply:
-result.response.text()
+reply
 
 });
 
 
 
+}
 
-
-
-}catch(error){
+catch(error){
 
 
 console.log(
-
 "VISION ERROR",
-
 error
-
 );
 
 
@@ -883,7 +962,7 @@ error
 res.json({
 
 reply:
-"Impossible d'analyser cette image."
+"Impossible d'analyser cette image actuellement."
 
 });
 
@@ -892,12 +971,23 @@ reply:
 
 
 });
+
+
+
+
+
+
 // =====================================
 // GENERATION IMAGE HUGGING FACE
 // =====================================
 
 
+
 app.post("/generate-image",async(req,res)=>{
+
+
+req.setTimeout(120000);
+
 
 
 try{
@@ -923,14 +1013,13 @@ error:
 
 
 
-
 if(!HF_KEY){
 
 
 return res.json({
 
 error:
-"Clé image absente."
+"Clé Hugging Face absente."
 
 });
 
@@ -940,12 +1029,12 @@ error:
 
 
 
-
+// Nouveau modèle compatible
 
 const response =
 await fetch(
 
-"https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-schnell",
+"https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0",
 
 {
 
@@ -976,6 +1065,7 @@ inputs:prompt
 
 }
 
+
 );
 
 
@@ -991,8 +1081,11 @@ await response.text();
 
 
 console.log(
+
 "HF ERROR",
+
 error
+
 );
 
 
@@ -1024,7 +1117,6 @@ Buffer.from(buffer)
 
 
 
-
 res.json({
 
 image:
@@ -1032,15 +1124,17 @@ image:
 
 
 message:
-"Image créée avec succès 🚀"
+"Image créée 🚀"
+
 
 });
 
 
 
 
+}
 
-}catch(error){
+catch(error){
 
 
 console.log(
@@ -1064,9 +1158,23 @@ error:
 }
 
 
+
 });
+
+
+
+
 // =====================================
-// ANALYSE FICHIERS IA
+// FIN PARTIE 2
+// =====================================// =====================================
+// NOVA AI SERVER V7
+// PARTIE 3/3
+// =====================================
+
+
+
+// =====================================
+// ANALYSE DOCUMENTS
 // =====================================
 
 
@@ -1094,8 +1202,8 @@ reply:
 
 
 
-let text="";
 
+let text="";
 
 
 const file =
@@ -1105,7 +1213,6 @@ req.file;
 
 const type =
 file.mimetype;
-
 
 
 
@@ -1124,9 +1231,6 @@ file.buffer.toString(
 
 
 }
-
-
-
 
 
 
@@ -1154,9 +1258,7 @@ data.text;
 
 
 
-
-
-// WORD
+// DOCX
 
 else if(
 type.includes(
@@ -1178,7 +1280,6 @@ result.value;
 
 
 }
-
 
 
 
@@ -1221,13 +1322,32 @@ reply:
 
 
 
-// Limite pour éviter trop gros prompt
+// Protection taille
 
 text =
 text.substring(
 0,
 15000
 );
+
+
+
+
+
+
+
+if(!GROQ_KEY){
+
+
+return res.json({
+
+reply:
+"Clé Groq absente."
+
+});
+
+
+}
 
 
 
@@ -1282,11 +1402,11 @@ Tu es NovaAI.
 
 Analyse les documents.
 
-Fais des résumés clairs.
+Fais des résumés propres.
 
 Utilise Markdown.
 
-Explique les points importants.
+Explique simplement.
 
 `
 
@@ -1307,7 +1427,8 @@ Analyse ce document :
 
 ${text}
 
-Fais :
+
+Donne:
 
 - résumé
 - points importants
@@ -1321,7 +1442,8 @@ Fais :
 ],
 
 
-temperature:0.4
+temperature:
+0.4
 
 
 })
@@ -1335,8 +1457,6 @@ temperature:0.4
 
 
 
-
-
 const data =
 await response.json();
 
@@ -1345,11 +1465,8 @@ await response.json();
 
 
 const reply =
-
 data?.choices?.[0]?.message?.content
-
 ||
-
 "Impossible d'analyser le fichier.";
 
 
@@ -1367,9 +1484,9 @@ reply
 
 
 
+}
 
-
-}catch(error){
+catch(error){
 
 
 console.log(
@@ -1393,7 +1510,11 @@ reply:
 }
 
 
+
 });
+
+
+
 
 
 
@@ -1404,18 +1525,20 @@ reply:
 // =====================================
 
 
+
 app.get("/test",(req,res)=>{
 
 
 res.json({
 
 status:
-"NovaAI V6 fonctionne 🚀"
+"NovaAI V7 fonctionne 🚀"
 
 });
 
 
 });
+
 
 
 
@@ -1432,12 +1555,18 @@ status:
 
 
 version:
-"V6"
+"V7",
+
+
+time:
+new Date()
 
 });
 
 
 });
+
+
 
 
 
@@ -1445,7 +1574,7 @@ version:
 
 
 // =====================================
-// ERREUR FAVICON
+// FAVICON
 // =====================================
 
 
@@ -1462,19 +1591,58 @@ res.status(204).end();
 
 
 
+
+
 // =====================================
-// DEMARRAGE
+// ERREURS GENERALES
 // =====================================
 
 
-app.listen(PORT,()=>{
+
+app.use((err,req,res,next)=>{
+
+
+console.log(
+"SERVER ERROR",
+err
+);
+
+
+
+res.status(500).json({
+
+error:
+"Erreur serveur NovaAI."
+
+});
+
+
+});
+
+
+
+
+
+
+
+
+// =====================================
+// START SERVER RENDER
+// =====================================
+
+
+
+app.listen(
+PORT,
+()=>{
 
 
 console.log(
 
-`🚀 NovaAI V6 lancé sur le port ${PORT}`
+`🚀 NovaAI V7 lancé sur le port ${PORT}`
 
 );
 
 
-});
+}
+);
