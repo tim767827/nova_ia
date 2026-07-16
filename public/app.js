@@ -1,7 +1,7 @@
 /* ==========================================
-   NOVA AI V8 PREMIUM
+   NOVA AI V10 PREMIUM
    APP.JS PARTIE 1/3
-   CHAT UNIQUE
+   BASE + HISTORIQUE + AFFICHAGE
 ========================================== */
 
 
@@ -26,9 +26,8 @@ if(!userId){
 
 
 
-
 // ===============================
-// HISTORIQUE
+// VARIABLES
 // ===============================
 
 
@@ -42,6 +41,12 @@ JSON.parse(
 let currentChat = null;
 
 
+
+
+
+// ===============================
+// SAUVEGARDE
+// ===============================
 
 
 function saveChats(){
@@ -58,7 +63,7 @@ function saveChats(){
 
 
 // ===============================
-// SIDEBAR MOBILE
+// SIDEBAR
 // ===============================
 
 
@@ -68,9 +73,57 @@ function toggleSidebar(){
     document.getElementById("sidebar");
 
 
+    const overlay =
+    document.querySelector(".overlay");
+
+
     if(sidebar){
 
         sidebar.classList.toggle("open");
+
+    }
+
+
+    if(overlay){
+
+        overlay.classList.toggle("active");
+
+    }
+
+
+}
+
+
+window.toggleSidebar =
+toggleSidebar;
+
+
+
+
+
+
+function closeSidebar(){
+
+
+    const sidebar =
+    document.getElementById("sidebar");
+
+
+    const overlay =
+    document.querySelector(".overlay");
+
+
+
+    if(sidebar){
+
+        sidebar.classList.remove("open");
+
+    }
+
+
+    if(overlay){
+
+        overlay.classList.remove("active");
 
     }
 
@@ -79,16 +132,12 @@ function toggleSidebar(){
 
 
 
-window.toggleSidebar = toggleSidebar;
-
-
-
 
 
 
 
 // ===============================
-// HISTORIQUE AFFICHAGE
+// HISTORIQUE
 // ===============================
 
 
@@ -103,14 +152,14 @@ function renderHistory(){
 
 
 
-    history.innerHTML = "";
+    history.innerHTML="";
 
 
 
     chats.forEach(chat=>{
 
 
-        let item =
+        const item =
         document.createElement("div");
 
 
@@ -118,7 +167,7 @@ function renderHistory(){
 
 
 
-        let title =
+        const title =
         document.createElement("span");
 
 
@@ -142,17 +191,19 @@ function renderHistory(){
 
 
 
-        let actions =
+        const actions =
         document.createElement("div");
 
 
-        actions.className="chatActions";
+        actions.className =
+        "chatActions";
 
 
 
 
 
-        let edit =
+
+        const edit =
         document.createElement("button");
 
 
@@ -190,7 +241,6 @@ function renderHistory(){
             }
 
 
-
         };
 
 
@@ -198,8 +248,7 @@ function renderHistory(){
 
 
 
-
-        let del =
+        const del =
         document.createElement("button");
 
 
@@ -228,14 +277,7 @@ function renderHistory(){
 
                 if(currentChat?.id===chat.id){
 
-
                     currentChat=null;
-
-
-                    document
-                    .getElementById("messages")
-                    .innerHTML="";
-
 
                 }
 
@@ -246,13 +288,10 @@ function renderHistory(){
                 renderHistory();
 
 
-
             }
 
 
         };
-
-
 
 
 
@@ -286,37 +325,10 @@ function renderHistory(){
 
 
 
-// ===============================
-// SIDEBAR FERMETURE MOBILE
-// ===============================
-
-
-function closeSidebar(){
-
-
-    let sidebar =
-    document.getElementById("sidebar");
-
-
-    if(sidebar){
-
-        sidebar.classList.remove("open");
-
-    }
-
-
-}
-
-
-
-
-
-
 
 // ===============================
 // NOUVEAU CHAT
 // ===============================
-
 
 
 function newChat(){
@@ -343,6 +355,7 @@ function newChat(){
     );
 
 
+
     saveChats();
 
 
@@ -350,9 +363,9 @@ function newChat(){
 
 
 
-
-    let box =
+    const box =
     document.getElementById("messages");
+
 
 
     if(box){
@@ -363,7 +376,6 @@ function newChat(){
 
 
 }
-
 
 
 window.newChat =
@@ -382,7 +394,6 @@ newChat;
 // ===============================
 
 
-
 function loadChat(id){
 
 
@@ -397,7 +408,7 @@ function loadChat(id){
 
 
 
-    let box =
+    const box =
     document.getElementById("messages");
 
 
@@ -412,21 +423,10 @@ function loadChat(id){
         if(msg.type==="image"){
 
 
-
-            let img =
-            document.createElement("img");
-
-
-            img.src =
-            msg.text;
-
-
-            img.className =
-            "generatedImage";
-
-
-            box.appendChild(img);
-
+            addImage(
+                msg.text,
+                false
+            );
 
 
         }
@@ -444,9 +444,7 @@ function loadChat(id){
         }
 
 
-
     });
-
 
 
 }
@@ -458,11 +456,9 @@ function loadChat(id){
 
 
 
-
 // ===============================
-// MESSAGE AFFICHAGE
+// AFFICHER MESSAGE
 // ===============================
-
 
 
 function addMessage(
@@ -472,8 +468,7 @@ scroll=true
 ){
 
 
-
-    let box =
+    const box =
     document.getElementById("messages");
 
 
@@ -482,7 +477,7 @@ scroll=true
 
 
 
-    let welcome =
+    const welcome =
     document.querySelector(".welcome");
 
 
@@ -496,7 +491,7 @@ scroll=true
 
 
 
-    let div =
+    const div =
     document.createElement("div");
 
 
@@ -545,10 +540,12 @@ scroll=true
 
 
 
+
+
+
 // ===============================
 // MARKDOWN
 // ===============================
-
 
 
 function cleanMarkdown(text){
@@ -556,16 +553,15 @@ function cleanMarkdown(text){
 
     if(window.marked){
 
-
         return marked.parse(text);
-
 
     }
 
 
-    return text
-    .replace(/\n/g,"<br>");
-
+    return text.replace(
+        /\n/g,
+        "<br>"
+    );
 
 
 }
@@ -575,50 +571,36 @@ function cleanMarkdown(text){
 
 
 
-// ===============================
-// SCROLL INTELLIGENT
-// ===============================
 
+
+// ===============================
+// SCROLL
+// ===============================
 
 
 function smartScroll(){
 
 
-    let box =
+    const box =
     document.getElementById("messages");
+
 
 
     if(!box)return;
 
 
 
-    let distance =
-    box.scrollHeight -
-    box.scrollTop -
-    box.clientHeight;
+    box.scrollTo({
 
+        top:box.scrollHeight,
 
+        behavior:"smooth"
 
-    // seulement si l'utilisateur est déjà en bas
-
-    if(distance < 150){
-
-
-        box.scrollTo({
-
-            top:box.scrollHeight,
-
-            behavior:"smooth"
-
-        });
-
-
-    }
-
+    });
 
 
 }/* ==========================================
-   NOVA AI V8 PREMIUM
+   NOVA AI V10 PREMIUM
    APP.JS PARTIE 2/3
    CHAT + IMAGE + DOCUMENT
 ========================================== */
@@ -626,23 +608,23 @@ function smartScroll(){
 
 
 // ===============================
-// ENVOI MESSAGE IA
+// ENVOI MESSAGE
 // ===============================
 
 
 async function sendMessage(){
 
 
-    const input =
+    const chatInput =
     document.getElementById("input");
 
 
-    if(!input)return;
+    if(!chatInput)return;
 
 
 
     const text =
-    input.value.trim();
+    chatInput.value.trim();
 
 
 
@@ -675,7 +657,10 @@ async function sendMessage(){
 
 
 
-    if(currentChat.title==="Nouvelle conversation"){
+    if(
+        currentChat.title ===
+        "Nouvelle conversation"
+    ){
 
 
         currentChat.title =
@@ -693,22 +678,30 @@ async function sendMessage(){
 
 
 
-    input.value="";
+    chatInput.value="";
 
 
 
 
-
-let loading =
-document.createElement("div");
+    // MESSAGE CHARGEMENT IA
 
 
-loading.className =
-"msg bot";
+    let loading =
+    document.createElement("div");
 
 
-loading.textContent =
-"Nova réfléchit...";
+
+    loading.className =
+    "msg bot";
+
+
+
+    loading.id =
+    "novaLoading";
+
+
+    loading.textContent =
+    "Nova réfléchit...";
 
 
 
@@ -718,78 +711,125 @@ loading.textContent =
 
 
 
+    smartScroll();
 
-   try{
 
 
-    const response =
-    await fetch(
-        "/chat",
-        {
 
-            method:"POST",
+    try{
 
-            headers:{
-                "Content-Type":
-                "application/json"
-            },
 
-            body:JSON.stringify({
+        const response =
+        await fetch(
+            "/chat",
+            {
 
-                message:text,
+                method:"POST",
 
-                userId:userId
+                headers:{
 
-            })
+                    "Content-Type":
+                    "application/json"
+
+                },
+
+
+                body:JSON.stringify({
+
+                    message:text,
+
+                    userId:userId
+
+                })
+
+            }
+
+        );
+
+
+
+        const data =
+        await response.json();
+
+
+
+
+        loading.remove();
+
+
+
+
+        // ==========================
+        // IMAGE
+        // ==========================
+
+
+        if(data.image){
+
+
+            showImageLoading();
+
+
+
+            setTimeout(()=>{
+
+
+                removeImageLoading();
+
+
+
+                addImage(
+                    data.image
+                );
+
+
+            },500);
+
+
 
         }
-    );
-
-
-    const data =
-    await response.json();
 
 
 
-    if(data.image){
+        // ==========================
+        // TEXTE NORMAL
+        // ==========================
 
 
-        let imageLoading =
-        document.createElement("div");
+        else{
 
 
-        imageLoading.className =
-        "msg bot";
+            typeWriter(
+                data.reply ||
+                "Pas de réponse."
+            );
 
 
-        imageLoading.textContent =
-        "🖼️ Image en cours de création...";
-
-
-        document
-        .getElementById("messages")
-        .appendChild(imageLoading);
-
-
-
-        smartScroll();
-
-
-
-        addImage(data.image);
-
-
-
-        imageLoading.remove();
+        }
 
 
 
     }
-    else{
+
+
+
+    catch(error){
+
+
+        console.log(error);
+
+
+
+        if(loading){
+
+            loading.remove();
+
+        }
+
 
 
         addMessage(
-            data.reply,
+            "❌ Erreur serveur",
             "bot"
         );
 
@@ -801,80 +841,201 @@ loading.textContent =
 }
 
 
-catch(error){
-
-
-    console.log(error);
-
-
-    loading.remove();
-
-
-
-    addMessage(
-        "❌ Erreur serveur",
-        "bot"
-    );
-
-
-}
-
-
 window.sendMessage =
 sendMessage;
 
 
 
 
-function addImage(url){
-
-
-const box=document.querySelector(".messages");
-
-
-const img=document.createElement("img");
-
-
-img.src=url;
-
-
-img.className="generatedImage";
-
-
-let title =
-document.createElement("div");
-
-title.className =
-"msg bot";
-
-title.textContent =
-"✅ Image créée :";
-
-box.appendChild(title);
-
-box.appendChild(img);
 
 
 
-box.scrollTop =
-box.scrollHeight;
+
+
+// ===============================
+// IMAGE EN CREATION
+// ===============================
+
+
+function showImageLoading(){
+
+
+    const box =
+    document.getElementById("messages");
+
+
+
+    if(!box)return;
+
+
+
+    const div =
+    document.createElement("div");
+
+
+
+    div.className =
+    "msg bot";
+
+
+    div.id =
+    "imageLoading";
+
+
+
+    div.textContent =
+    "🖼️ Image en cours de création...";
+
+
+
+    box.appendChild(div);
+
+
+
+    smartScroll();
 
 
 }
 
 
 
+
+
+
+function removeImageLoading(){
+
+
+    const loading =
+    document.getElementById(
+        "imageLoading"
+    );
+
+
+
+    if(loading){
+
+        loading.remove();
+
+    }
+
+
+}
+
+
+
+
+
+
+
+
 // ===============================
-// ECRITURE IA FLUIDE
+// AJOUT IMAGE
 // ===============================
 
+
+function addImage(
+url,
+save=true
+){
+
+
+    const box =
+    document.getElementById("messages");
+
+
+
+    if(!box)return;
+
+
+
+
+    const title =
+    document.createElement("div");
+
+
+
+    title.className =
+    "msg bot";
+
+
+
+    title.textContent =
+    "✅ Image créée :";
+
+
+
+    box.appendChild(title);
+
+
+
+
+
+
+
+    const img =
+    document.createElement("img");
+
+
+
+    img.src=url;
+
+
+
+    img.className =
+    "generatedImage";
+
+
+
+    box.appendChild(img);
+
+
+
+
+    if(
+        save &&
+        currentChat
+    ){
+
+
+        currentChat.messages.push({
+
+            text:url,
+
+            type:"image"
+
+        });
+
+
+        saveChats();
+
+
+    }
+
+
+
+    smartScroll();
+
+
+}
+
+
+
+
+
+
+
+
+
+// ===============================
+// ECRITURE IA
+// ===============================
 
 
 function typeWriter(text){
 
 
 
-    let div =
+    const div =
     document.createElement("div");
 
 
@@ -895,7 +1056,7 @@ function typeWriter(text){
 
 
 
-    let timer =
+    const timer =
     setInterval(()=>{
 
 
@@ -910,33 +1071,39 @@ function typeWriter(text){
 
 
 
+        index++;
+
+
+
         smartScroll();
 
-
-
-        index++;
 
 
 
         if(index > text.length){
 
 
-
             clearInterval(timer);
 
 
 
-            currentChat.messages.push({
-
-                text:text,
-
-                type:"bot"
-
-            });
+            if(currentChat){
 
 
+                currentChat.messages.push({
 
-            saveChats();
+                    text:text,
+
+                    type:"bot"
+
+                });
+
+
+
+                saveChats();
+
+
+            }
 
 
 
@@ -947,8 +1114,8 @@ function typeWriter(text){
     },15);
 
 
-
 }
+
 
 
 
@@ -962,12 +1129,12 @@ function typeWriter(text){
 // ===============================
 
 
-
 function openFileMenu(){
 
 
     const menu =
     document.getElementById("fileMenu");
+
 
 
     if(menu){
@@ -992,10 +1159,11 @@ openFileMenu;
 
 
 
+
+
 // ===============================
 // IMAGE UPLOAD
 // ===============================
-
 
 
 async function handleImage(){
@@ -1012,16 +1180,10 @@ async function handleImage(){
 
 
 
-
     addMessage(
-
         "🖼️ Image envoyée",
-
         "user"
-
     );
-
-
 
 
 
@@ -1030,18 +1192,10 @@ async function handleImage(){
 
 
 
-
-    reader.onload = async()=>{
-
-
-        const base64 =
-        reader.result.split(",")[1];
-
-
+    reader.onload=async()=>{
 
 
         try{
-
 
 
             const response =
@@ -1061,12 +1215,12 @@ async function handleImage(){
 
                     body:JSON.stringify({
 
-                        image:base64,
+                        image:
+                        reader.result.split(",")[1],
 
                         mimeType:file.type
 
                     })
-
 
                 }
 
@@ -1074,10 +1228,8 @@ async function handleImage(){
 
 
 
-
             const data =
             await response.json();
-
 
 
 
@@ -1095,30 +1247,23 @@ async function handleImage(){
         }
 
 
-
         catch(e){
 
 
             addMessage(
-
                 "❌ Erreur analyse image",
-
                 "bot"
-
             );
 
 
         }
 
 
-
     };
 
 
 
-
     reader.readAsDataURL(file);
-
 
 
 }
@@ -1135,12 +1280,9 @@ handleImage;
 
 
 
-
-
 // ===============================
-// DOCUMENT UPLOAD
+// DOCUMENT
 // ===============================
-
 
 
 async function handleFile(){
@@ -1157,10 +1299,10 @@ async function handleFile(){
 
 
 
-
     addMessage(
 
-        "📄 Document envoyé : "+file.name,
+        "📄 Document envoyé : "
+        +file.name,
 
         "user"
 
@@ -1168,20 +1310,15 @@ async function handleFile(){
 
 
 
-
-    const formData =
+    const form =
     new FormData();
 
 
 
-    formData.append(
-
+    form.append(
         "file",
-
         file
-
     );
-
 
 
 
@@ -1190,14 +1327,12 @@ async function handleFile(){
 
         const response =
         await fetch(
-
             "/upload",
-
             {
 
                 method:"POST",
 
-                body:formData
+                body:form
 
             }
 
@@ -1205,12 +1340,8 @@ async function handleFile(){
 
 
 
-
-
         const data =
         await response.json();
-
-
 
 
 
@@ -1228,21 +1359,16 @@ async function handleFile(){
     }
 
 
-
     catch(e){
 
 
         addMessage(
-
             "❌ Erreur document",
-
             "bot"
-
         );
 
 
     }
-
 
 
 }
@@ -1260,23 +1386,22 @@ handleFile;
 
 
 // ===============================
-// ENVOI RAPIDE
+// REPONSES RAPIDES
 // ===============================
-
 
 
 function sendQuick(text){
 
 
-    const input =
+    const chatInput =
     document.getElementById("input");
 
 
 
-    if(input){
+    if(chatInput){
 
 
-        input.value=text;
+        chatInput.value=text;
 
 
         sendMessage();
@@ -1285,14 +1410,13 @@ function sendQuick(text){
     }
 
 
-
 }
 
 
 
 window.sendQuick =
 sendQuick;/* ==========================================
-   NOVA AI V8 PREMIUM
+   NOVA AI V10 PREMIUM
    APP.JS PARTIE 3/3
    OPTIONS + START
 ========================================== */
@@ -1300,7 +1424,7 @@ sendQuick;/* ==========================================
 
 
 // ===============================
-// THEME SOMBRE
+// MODE SOMBRE
 // ===============================
 
 
@@ -1327,9 +1451,9 @@ function toggleTheme(){
 }
 
 
-
 window.toggleTheme =
 toggleTheme;
+
 
 
 
@@ -1361,20 +1485,23 @@ if(
 // ===============================
 
 
-
 function toggleSettings(){
 
 
-    const box =
-    document.getElementById("settings");
+    const settings =
+    document.getElementById(
+        "settings"
+    );
 
 
 
-    if(box){
+    if(settings){
 
-        box.classList.toggle(
+
+        settings.classList.toggle(
             "hidden"
         );
+
 
     }
 
@@ -1395,18 +1522,23 @@ toggleSettings;
 
 
 // ===============================
-// SUPPRIMER HISTORIQUE
+// EFFACER HISTORIQUE
 // ===============================
-
 
 
 function clearHistory(){
 
 
 
-    if(!confirm(
-        "Supprimer tout l'historique ?"
-    ))return;
+    if(
+        !confirm(
+            "Supprimer tout l'historique ?"
+        )
+    ){
+
+        return;
+
+    }
 
 
 
@@ -1425,7 +1557,9 @@ function clearHistory(){
 
 
     const box =
-    document.getElementById("messages");
+    document.getElementById(
+        "messages"
+    );
 
 
 
@@ -1461,7 +1595,6 @@ clearHistory;
 // ===============================
 
 
-
 function exportChat(){
 
 
@@ -1483,14 +1616,17 @@ function exportChat(){
 
     let text =
     currentChat.messages
-    .map(m=>{
+    .map(message=>{
 
 
         return (
 
-            m.type.toUpperCase()
-            +" : "
-            +m.text
+            message.type
+            .toUpperCase()
+            +
+            " : "
+            +
+            message.text
 
         );
 
@@ -1502,33 +1638,42 @@ function exportChat(){
 
 
 
-    let blob =
+    const blob =
     new Blob(
+
         [text],
+
         {
-            type:"text/plain"
+            type:
+            "text/plain"
         }
+
     );
 
 
 
-    let link =
-    document.createElement("a");
+
+
+    const link =
+    document.createElement(
+        "a"
+    );
 
 
 
     link.href =
-    URL.createObjectURL(blob);
+    URL.createObjectURL(
+        blob
+    );
 
 
 
     link.download =
-    "NovaAI-conversation.txt";
+    "NovaAI-chat.txt";
 
 
 
     link.click();
-
 
 
 }
@@ -1551,19 +1696,18 @@ exportChat;
 // ===============================
 
 
-
-const search =
+const historySearch =
 document.getElementById(
     "searchHistory"
 );
 
 
 
-if(search){
+if(historySearch){
 
 
 
-    search.addEventListener(
+    historySearch.addEventListener(
 
         "input",
 
@@ -1571,14 +1715,16 @@ if(search){
 
 
             const value =
-            search.value
+            historySearch.value
             .toLowerCase();
 
 
 
 
             document
-            .querySelectorAll(".item")
+            .querySelectorAll(
+                ".item"
+            )
             .forEach(item=>{
 
 
@@ -1589,11 +1735,9 @@ if(search){
                 .toLowerCase()
                 .includes(value)
 
-
                 ?
 
                 "flex"
-
 
                 :
 
@@ -1606,7 +1750,6 @@ if(search){
 
 
         }
-
 
     );
 
@@ -1627,33 +1770,32 @@ if(search){
 // ===============================
 
 
-
-const input =
+const messageInput =
 document.getElementById(
     "input"
 );
 
 
 
-if(input){
+if(messageInput){
 
 
 
-    input.addEventListener(
+    messageInput.addEventListener(
 
         "keydown",
 
-        e=>{
+        event=>{
 
 
             if(
-                e.key==="Enter"
+                event.key==="Enter"
                 &&
-                !e.shiftKey
+                !event.shiftKey
             ){
 
 
-                e.preventDefault();
+                event.preventDefault();
 
 
                 sendMessage();
@@ -1662,10 +1804,11 @@ if(input){
             }
 
 
+
         }
 
-
     );
+
 
 
 }
@@ -1679,9 +1822,40 @@ if(input){
 
 
 // ===============================
-// START APPLICATION
+// FERMETURE MENU AVEC OVERLAY
 // ===============================
 
+
+const overlay =
+document.querySelector(
+    ".overlay"
+);
+
+
+
+if(overlay){
+
+
+    overlay.onclick=()=>{
+
+        closeSidebar();
+
+    };
+
+
+}
+
+
+
+
+
+
+
+
+
+// ===============================
+// DEMARRAGE APPLICATION
+// ===============================
 
 
 renderHistory();
@@ -1692,11 +1866,9 @@ renderHistory();
 if(chats.length){
 
 
-
     loadChat(
         chats[0].id
     );
-
 
 
 }
@@ -1706,12 +1878,7 @@ if(chats.length){
 
 
 
-// ===============================
-// VERIFICATION MARKDOWN
-// ===============================
-
-
 
 console.log(
-    "🚀 NovaAI V8 chargé"
+    "🚀 NovaAI V10 chargé"
 );
