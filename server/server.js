@@ -570,7 +570,42 @@ return "";
 // CHAT NOVAAI GROQ
 // =====================================
 
+function detectIntent(message){
 
+const text = message.toLowerCase();
+
+
+if(
+text.includes("image") ||
+text.includes("dessine") ||
+text.includes("crée une image") ||
+text.includes("génère")
+){
+
+return "image";
+
+}
+
+
+
+if(
+text.includes("analyse") ||
+text.includes("résume") ||
+text.includes("document") ||
+text.includes("pdf") ||
+text.includes("fichier")
+){
+
+return "document";
+
+}
+
+
+
+return "chat";
+
+
+}
 app.post("/chat", async(req,res)=>{
 
 
@@ -579,6 +614,8 @@ try{
 
 const message =
 req.body.message;
+
+const intent = detectIntent(message);
 
 
 const userId =
@@ -724,7 +761,16 @@ messages.push(
 );
 
 
+if(intent==="image"){
 
+return res.json({
+
+reply:
+"🎨 Je vais créer cette image pour toi."
+
+});
+
+}
 
 
 
