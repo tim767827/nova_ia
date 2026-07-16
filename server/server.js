@@ -1,6 +1,7 @@
 // =====================================
-// NOVA AI SERVER V7
+// NOVA AI SERVER V8
 // PARTIE 1/3
+// RENDER READY
 // =====================================
 
 
@@ -12,10 +13,13 @@ const express = require("express");
 const cors = require("cors");
 const path = require("path");
 const fetch = require("node-fetch");
-const rateLimit = require("express-rate-limit");
 const multer = require("multer");
+const rateLimit = require("express-rate-limit");
 const pdfParse = require("pdf-parse");
 const mammoth = require("mammoth");
+const XLSX = require("xlsx");
+const cheerio = require("cheerio");
+const Tesseract = require("tesseract.js");
 
 require("dotenv").config();
 
@@ -29,7 +33,6 @@ const {
 // =====================================
 // CONFIG
 // =====================================
-
 
 const app = express();
 
@@ -49,16 +52,12 @@ const GEMINI_KEY =
 process.env.GEMINI_KEY;
 
 
-const HF_KEY =
-process.env.HF_API_KEY;
-
-
 const TAVILY_KEY =
 process.env.TAVILY_KEY;
 
 
 
-console.log("🚀 NovaAI V7 démarrage");
+console.log("🚀 NovaAI V8 démarrage");
 
 
 console.log(
@@ -74,9 +73,10 @@ GEMINI_KEY ? "OK" : "ABSENTE"
 
 
 console.log(
-"HUGGING FACE:",
-HF_KEY ? "OK" : "ABSENTE"
+"TAVILY:",
+TAVILY_KEY ? "OK" : "ABSENTE"
 );
+
 
 
 
@@ -85,10 +85,10 @@ let genAI = null;
 
 if(GEMINI_KEY){
 
-genAI =
-new GoogleGenerativeAI(
-GEMINI_KEY
-);
+    genAI =
+    new GoogleGenerativeAI(
+        GEMINI_KEY
+    );
 
 }
 
@@ -102,31 +102,27 @@ GEMINI_KEY
 app.use(cors());
 
 
-app.use(express.json({
-
-limit:"25mb"
-
-}));
+app.use(
+express.json({
+    limit:"50mb"
+})
+);
 
 
 
 const limiter =
 rateLimit({
 
-windowMs:
-60 * 1000,
+    windowMs:
+    60 * 1000,
 
+    max:
+    80,
 
-max:
-60,
-
-
-message:{
-
-error:
-"Trop de requêtes."
-
-}
+    message:{
+        error:
+        "Trop de requêtes."
+    }
 
 });
 
@@ -155,7 +151,6 @@ __dirname,
 
 app.get("/",(req,res)=>{
 
-
 res.sendFile(
 
 path.join(
@@ -167,14 +162,13 @@ __dirname,
 
 );
 
-
 });
 
 
 
 
 // =====================================
-// UPLOAD
+// UPLOAD DOCUMENTS
 // =====================================
 
 
@@ -188,7 +182,7 @@ multer.memoryStorage(),
 limits:{
 
 fileSize:
-15 * 1024 * 1024
+50 * 1024 * 1024
 
 }
 
@@ -197,9 +191,8 @@ fileSize:
 
 
 
-
 // =====================================
-// MEMOIRE NOVAAI
+// MEMOIRE
 // =====================================
 
 
@@ -207,35 +200,28 @@ const userHistories = {};
 
 
 
-function getHistory(userId){
+function getHistory(id){
 
+if(!userHistories[id]){
 
-if(!userHistories[userId]){
-
-
-userHistories[userId]=[];
+userHistories[id]=[];
 
 }
 
-
-return userHistories[userId];
-
+return userHistories[id];
 
 }
-
 
 
 
 function saveMessage(
-userId,
+id,
 role,
 content
 ){
 
-
 const history =
-getHistory(userId);
-
+getHistory(id);
 
 
 history.push({
@@ -246,15 +232,9 @@ content
 });
 
 
+if(history.length > 50){
 
-if(history.length > 40){
-
-
-history.splice(
-0,
-history.length-40
-);
-
+history.shift();
 
 }
 
@@ -264,21 +244,19 @@ history.length-40
 
 
 
-function getRecentHistory(userId){
 
+function getRecentHistory(id){
 
-return getHistory(userId)
+return getHistory(id)
 .slice(-20);
 
-
 }
-
 
 
 
 
 // =====================================
-// RECHERCHE INTERNET TAVILY
+// RECHERCHE WEB TAVILY
 // =====================================
 
 
@@ -322,16 +300,13 @@ body:JSON.stringify({
 
 query,
 
-
 search_depth:
 "advanced",
-
 
 max_results:
 5
 
 })
-
 
 }
 
@@ -339,11 +314,8 @@ max_results:
 
 
 
-
-
 const data =
 await response.json();
-
 
 
 
@@ -355,44 +327,36 @@ return "";
 
 
 
-
-return data.results.map(item=>`
+return data.results.map(x=>`
 
 Titre:
-${item.title}
-
+${x.title}
 
 Résumé:
-${item.content}
+${x.content}
 
+Lien:
+${x.url}
 
-Source:
-${item.url}
-
-
-`).join("\n");
+`).join("\n\n");
 
 
 
 }
 
-catch(error){
-
+catch(e){
 
 console.log(
 "TAVILY ERROR",
-error
+e
 );
-
 
 return "";
 
-
 }
 
 
 }
-
 
 
 
@@ -407,33 +371,24 @@ function needsInternet(text){
 
 const words=[
 
-
 "actualité",
 "news",
-"aujourd'hui",
 "prix",
 "météo",
 "score",
 "match",
-"résultat",
-"président",
-"2026",
-"2025"
-
+"2025",
+"2026"
 
 ];
 
 
-
-const lower =
-text.toLowerCase();
-
-
-
 return words.some(
 
-w=>
-lower.includes(w)
+x =>
+text
+.toLowerCase()
+.includes(x)
 
 );
 
@@ -442,18 +397,187 @@ lower.includes(w)
 
 
 
+// =====================================
+// EXTRACTION DOCUMENTS
+// =====================================
+
+
+async function extractText(file){
+
+
+const type =
+file.mimetype;
+
+
+const name =
+file.originalname.toLowerCase();
+
+
+
+// TXT
+
+if(
+type==="text/plain"
+||
+name.endsWith(".txt")
+){
+
+return file.buffer.toString("utf8");
+
+}
+
+
+
+// PDF
+
+if(
+type==="application/pdf"
+||
+name.endsWith(".pdf")
+){
+
+const data =
+await pdfParse(
+file.buffer
+);
+
+return data.text;
+
+}
+
+
+
+
+// WORD
+
+if(
+name.endsWith(".docx")
+){
+
+const result =
+await mammoth.extractRawText({
+
+buffer:
+file.buffer
+
+});
+
+
+return result.value;
+
+}
+
+
+
+
+
+// EXCEL
+
+if(
+name.endsWith(".xlsx")
+||
+name.endsWith(".xls")
+){
+
+const workbook =
+XLSX.read(
+file.buffer,
+{
+type:"buffer"
+}
+);
+
+
+let text="";
+
+
+workbook.SheetNames.forEach(sheet=>{
+
+text +=
+XLSX.utils
+.sheet_to_csv(
+workbook.Sheets[sheet]
+);
+
+});
+
+
+return text;
+
+}
+
+
+
+
+
+// CSV
+
+if(
+name.endsWith(".csv")
+){
+
+return file.buffer.toString("utf8");
+
+}
+
+
+
+
+
+// JSON
+
+if(
+name.endsWith(".json")
+){
+
+return file.buffer.toString("utf8");
+
+}
+
+
+
+
+// HTML
+
+if(
+name.endsWith(".html")
+||
+name.endsWith(".htm")
+){
+
+const $ =
+cheerio.load(
+file.buffer.toString()
+);
+
+
+return $.text();
+
+}
+
+
+
+
+return "";
+
+}
+
+
+
+
 
 // =====================================
-// FIN PARTIE 1
+// FIN PARTIE 1/3
 // =====================================// =====================================
-// NOVA AI SERVER V7
+// NOVA AI SERVER V8
 // PARTIE 2/3
+// CHAT + VISION + IMAGE
 // =====================================
 
 
 
 // =====================================
-// CHAT NOVAAI
+// CHAT NOVAAI GROQ
 // =====================================
 
 
@@ -474,7 +598,6 @@ req.body.userId || "guest";
 
 if(!message){
 
-
 return res.json({
 
 reply:
@@ -482,9 +605,7 @@ reply:
 
 });
 
-
 }
-
 
 
 
@@ -503,11 +624,6 @@ let webInfo="";
 if(needsInternet(message)){
 
 
-console.log(
-"🌍 Recherche internet"
-);
-
-
 webInfo =
 await searchInternet(message);
 
@@ -520,18 +636,15 @@ await searchInternet(message);
 const messages=[
 
 
-
 {
-
 
 role:"system",
 
-
 content:`
 
-Tu es NovaAI 🚀.
+Tu es NovaAI V8 🚀.
 
-Assistant IA français premium.
+Assistant IA français.
 
 Réponds toujours en français.
 
@@ -539,23 +652,18 @@ Style:
 - professionnel
 - clair
 - naturel
-- moderne
 
-Utilise Markdown propre.
+Tu aides pour:
+- programmation
+- documents
+- apprentissage
+- analyse
+- création de projets
 
-Aide pour:
-programmation,
-création de projets,
-apprentissage,
-rédaction,
-analyse.
-
-Ne fabrique jamais d'informations.
-
+Ne mens jamais.
 `
 
 }
-
 
 
 ];
@@ -574,11 +682,11 @@ role:"system",
 content:
 
 `
-Informations internet:
+Informations trouvées sur internet:
 
 ${webInfo}
 
-Utilise uniquement ces données.
+Utilise uniquement ces informations.
 `
 
 });
@@ -600,18 +708,20 @@ messages.push(
 
 
 
+
 if(!GROQ_KEY){
 
 
 return res.json({
 
 reply:
-"⚠️ Clé Groq absente."
+"⚠️ GROQ_KEY absente."
 
 });
 
 
 }
+
 
 
 
@@ -624,12 +734,10 @@ await fetch(
 
 {
 
-
 method:"POST",
 
 
 headers:{
-
 
 "Content-Type":
 "application/json",
@@ -638,12 +746,10 @@ headers:{
 Authorization:
 `Bearer ${GROQ_KEY}`
 
-
 },
 
 
 body:JSON.stringify({
-
 
 model:
 "llama-3.3-70b-versatile",
@@ -655,14 +761,12 @@ messages,
 temperature:
 0.5
 
-
 })
 
 
 }
 
 );
-
 
 
 
@@ -675,7 +779,6 @@ await response.json();
 
 if(data.error){
 
-
 console.log(
 "GROQ ERROR",
 data.error
@@ -685,7 +788,7 @@ data.error
 return res.json({
 
 reply:
-"⚠️ IA indisponible actuellement."
+"Erreur IA Groq."
 
 });
 
@@ -696,17 +799,11 @@ reply:
 
 
 
-let reply =
+const reply =
 data?.choices?.[0]?.message?.content
 ||
 "Pas de réponse.";
 
-
-
-reply =
-reply
-.replace(/\*\*\*/g,"")
-.trim();
 
 
 
@@ -723,13 +820,13 @@ reply
 
 
 
+
+
 res.json({
 
 reply
 
 });
-
-
 
 
 
@@ -748,7 +845,7 @@ error
 res.json({
 
 reply:
-"❌ Erreur NovaAI."
+"Erreur NovaAI."
 
 });
 
@@ -757,6 +854,7 @@ reply:
 
 
 });
+
 
 
 
@@ -768,33 +866,31 @@ reply:
 // =====================================
 
 
-
-async function askGeminiVision(
+async function analyzeImage(
 image,
 mimeType
 ){
 
 
-const models=[
-"gemini-2.5-flash",
-"gemini-2.0-flash-lite"
-];
 
+if(!genAI){
 
+throw new Error(
+"Gemini absent"
+);
 
-for(const modelName of models){
+}
 
-
-try{
 
 
 const model =
 genAI.getGenerativeModel({
 
 model:
-modelName
+"gemini-2.5-flash"
 
 });
+
 
 
 
@@ -805,35 +901,35 @@ await model.generateContent([
 
 {
 
-
 inlineData:{
 
-
 data:image,
-
 
 mimeType
 
 }
-
 
 },
 
 
 
 `
+
 Analyse cette image.
 
 Réponds en français.
 
-Décris:
-- objets
-- textes visibles
+Donne:
+
+- objets visibles
+- texte présent
 - informations importantes
+- explication simple
 
 `
 
 ]);
+
 
 
 
@@ -844,38 +940,6 @@ return result.response.text();
 
 }
 
-catch(error){
-
-
-console.log(
-
-"GEMINI RETRY:",
-modelName,
-
-error.status
-
-);
-
-
-await new Promise(
-r=>setTimeout(r,10000)
-);
-
-
-}
-
-
-
-}
-
-
-
-throw new Error(
-"Gemini indisponible"
-);
-
-
-}
 
 
 
@@ -884,21 +948,6 @@ app.post("/vision",async(req,res)=>{
 
 
 try{
-
-
-if(!genAI){
-
-
-return res.json({
-
-reply:
-"Clé Gemini absente."
-
-});
-
-
-}
-
 
 
 const image =
@@ -911,26 +960,29 @@ req.body.mimeType ||
 
 
 
-if(!image){
 
+if(!image){
 
 return res.json({
 
 reply:
-"Aucune image reçue."
+"Aucune image."
 
 });
-
 
 }
 
 
 
+
+
 const reply =
-await askGeminiVision(
+await analyzeImage(
 image,
 mimeType
 );
+
+
 
 
 
@@ -944,12 +996,12 @@ reply
 
 }
 
-catch(error){
+catch(e){
 
 
 console.log(
 "VISION ERROR",
-error
+e
 );
 
 
@@ -957,7 +1009,7 @@ error
 res.json({
 
 reply:
-"Impossible d'analyser cette image actuellement."
+"Impossible d'analyser l'image."
 
 });
 
@@ -972,29 +1024,31 @@ reply:
 
 
 
+
 // =====================================
-// GENERATION IMAGE FLUX POLLINATIONS
+// GENERATION IMAGE FLUX
 // =====================================
 
 
-app.post("/generate-image", async(req,res)=>{
+
+app.post("/generate-image",async(req,res)=>{
 
 
 try{
 
 
-const userPrompt =
+const prompt =
 req.body.prompt;
 
 
 
-if(!userPrompt){
+if(!prompt){
 
 
 return res.json({
 
 error:
-"Description manquante."
+"Prompt manquant."
 
 });
 
@@ -1003,24 +1057,16 @@ error:
 
 
 
-
-console.log(
-"🎨 Prompt reçu:",
-userPrompt
-);
-
-
-
-
-
-// Amélioration du prompt avec Groq
-
 let finalPrompt =
-userPrompt;
+prompt;
 
+
+
+// amélioration avec Groq
 
 
 if(GROQ_KEY){
+
 
 
 try{
@@ -1034,6 +1080,7 @@ await fetch(
 {
 
 method:"POST",
+
 
 headers:{
 
@@ -1054,7 +1101,6 @@ model:
 
 messages:[
 
-
 {
 
 role:"system",
@@ -1062,19 +1108,15 @@ role:"system",
 content:
 
 `
-Tu es un expert en création de prompts image IA.
-
-Transforme une idée courte en prompt professionnel.
-
+Améliore ce prompt pour une image IA.
 Ajoute:
-- détails visuels
+- détails
 - lumière
 - caméra
 - style cinéma
-- textures
-- qualité élevée
+- qualité.
 
-Réponds uniquement avec le prompt final.
+Réponds uniquement avec le prompt.
 `
 
 },
@@ -1084,17 +1126,12 @@ Réponds uniquement avec le prompt final.
 
 role:"user",
 
-content:userPrompt
+content:prompt
 
 }
 
 
-],
-
-
-temperature:
-0.8
-
+]
 
 })
 
@@ -1102,7 +1139,6 @@ temperature:
 }
 
 );
-
 
 
 
@@ -1114,38 +1150,27 @@ await improve.json();
 finalPrompt =
 data?.choices?.[0]?.message?.content
 ||
-userPrompt;
+prompt;
 
 
 
 }
+
 catch(e){
 
 
 console.log(
-"PROMPT IA ERROR",
-e
+"PROMPT ERROR"
 );
 
 
 }
 
+
 }
 
 
 
-
-console.log(
-"✨ Prompt amélioré:",
-finalPrompt
-);
-
-
-
-
-
-
-// FLUX gratuit Pollinations
 
 const imageURL =
 
@@ -1163,44 +1188,25 @@ encodeURIComponent(finalPrompt)
 
 
 
-
 res.json({
 
 image:imageURL,
 
-
-prompt:finalPrompt,
-
-
-message:
-"Image générée avec FLUX 🚀"
-
+prompt:finalPrompt
 
 });
 
 
 
-
-
 }
 
-catch(error){
-
-
-console.log(
-
-"IMAGE ERROR",
-
-error
-
-);
-
+catch(e){
 
 
 res.json({
 
 error:
-"Erreur génération image."
+"Erreur image."
 
 });
 
@@ -1208,15 +1214,18 @@ error:
 }
 
 
-
 });
 
 
+
+
+
 // =====================================
-// FIN PARTIE 2
+// FIN PARTIE 2/3
 // =====================================// =====================================
-// NOVA AI SERVER V7
+// NOVA AI SERVER V8
 // PARTIE 3/3
+// DOCUMENTS + START SERVER
 // =====================================
 
 
@@ -1250,96 +1259,30 @@ reply:
 
 
 
-
-let text="";
-
-
-const file =
-req.file;
-
-
-
-const type =
-file.mimetype;
-
-
-
-
-// TXT
-
-if(
-type==="text/plain"
-){
-
-
-text =
-file.buffer.toString(
-"utf-8"
+console.log(
+"📄 Fichier:",
+req.file.originalname
 );
 
 
-}
 
 
-
-
-// PDF
-
-else if(
-type==="application/pdf"
-){
-
-
-const data =
-await pdfParse(
-file.buffer
+let text =
+await extractText(
+req.file
 );
 
 
-text =
-data.text;
-
-
-}
 
 
 
-
-
-// DOCX
-
-else if(
-type.includes(
-"wordprocessingml"
-)){
-
-
-const result =
-await mammoth.extractRawText({
-
-buffer:
-file.buffer
-
-});
-
-
-text =
-result.value;
-
-
-}
-
-
-
-
-
-else{
+if(!text || !text.trim()){
 
 
 return res.json({
 
 reply:
-"Format non supporté. Utilise TXT, PDF ou DOCX."
+"Impossible de lire ce fichier."
 
 });
 
@@ -1350,35 +1293,13 @@ reply:
 
 
 
-
-
-if(!text.trim()){
-
-
-return res.json({
-
-reply:
-"Le fichier est vide."
-
-});
-
-
-}
-
-
-
-
-
-
-// Protection taille
+// limite pour éviter surcharge IA
 
 text =
 text.substring(
 0,
-15000
+50000
 );
-
-
 
 
 
@@ -1390,13 +1311,12 @@ if(!GROQ_KEY){
 return res.json({
 
 reply:
-"Clé Groq absente."
+"⚠️ GROQ_KEY absente."
 
 });
 
 
 }
-
 
 
 
@@ -1409,26 +1329,21 @@ await fetch(
 
 {
 
-
 method:"POST",
 
 
 headers:{
 
-
 "Content-Type":
 "application/json",
 
-
 Authorization:
 `Bearer ${GROQ_KEY}`
-
 
 },
 
 
 body:JSON.stringify({
-
 
 model:
 "llama-3.3-70b-versatile",
@@ -1439,7 +1354,6 @@ messages:[
 
 {
 
-
 role:"system",
 
 content:
@@ -1448,13 +1362,19 @@ content:
 
 Tu es NovaAI.
 
-Analyse les documents.
+Tu analyses des documents.
 
-Fais des résumés propres.
+Réponds en français.
+
+Fais:
+
+- résumé complet
+- points importants
+- données importantes
+- explication simple
+- conclusion
 
 Utilise Markdown.
-
-Explique simplement.
 
 `
 
@@ -1463,7 +1383,6 @@ Explique simplement.
 
 
 {
-
 
 role:"user",
 
@@ -1474,13 +1393,6 @@ content:
 Analyse ce document :
 
 ${text}
-
-
-Donne:
-
-- résumé
-- points importants
-- informations utiles
 
 `
 
@@ -1505,6 +1417,7 @@ temperature:
 
 
 
+
 const data =
 await response.json();
 
@@ -1515,14 +1428,17 @@ await response.json();
 const reply =
 data?.choices?.[0]?.message?.content
 ||
-"Impossible d'analyser le fichier.";
-
+"Analyse impossible.";
 
 
 
 
 
 res.json({
+
+filename:
+req.file.originalname,
+
 
 reply
 
@@ -1538,11 +1454,8 @@ catch(error){
 
 
 console.log(
-
 "UPLOAD ERROR",
-
 error
-
 );
 
 
@@ -1550,13 +1463,207 @@ error
 res.json({
 
 reply:
-"Erreur analyse fichier."
+"Erreur analyse document."
 
 });
 
 
 }
 
+
+});
+
+
+
+
+
+
+
+
+// =====================================
+// OCR IMAGE DOCUMENT
+// =====================================
+
+
+app.post(
+"/ocr",
+upload.single("file"),
+async(req,res)=>{
+
+
+try{
+
+
+if(!req.file){
+
+
+return res.json({
+
+reply:
+"Aucune image."
+
+});
+
+
+}
+
+
+
+
+const result =
+await Tesseract.recognize(
+
+req.file.buffer,
+
+"fra"
+
+);
+
+
+
+const text =
+result.data.text;
+
+
+
+if(!text){
+
+
+return res.json({
+
+reply:
+"Aucun texte trouvé."
+
+});
+
+
+}
+
+
+
+
+
+if(!GROQ_KEY){
+
+
+return res.json({
+
+reply:
+"OCR OK mais IA absente."
+
+});
+
+
+}
+
+
+
+
+
+
+const response =
+await fetch(
+
+"https://api.groq.com/openai/v1/chat/completions",
+
+{
+
+method:"POST",
+
+
+headers:{
+
+"Content-Type":
+"application/json",
+
+Authorization:
+`Bearer ${GROQ_KEY}`
+
+},
+
+
+body:JSON.stringify({
+
+model:
+"llama-3.3-70b-versatile",
+
+
+messages:[
+
+
+{
+
+role:"system",
+
+content:
+
+`
+Analyse ce texte OCR.
+Résume et explique.
+`
+
+},
+
+
+{
+
+role:"user",
+
+content:text
+
+}
+
+
+]
+
+})
+
+
+}
+
+);
+
+
+
+
+
+const data =
+await response.json();
+
+
+
+res.json({
+
+reply:
+
+data?.choices?.[0]?.message?.content
+||
+text
+
+});
+
+
+
+}
+
+catch(e){
+
+
+console.log(
+"OCR ERROR",
+e
+);
+
+
+res.json({
+
+reply:
+"Erreur OCR."
+
+});
+
+
+}
 
 
 });
@@ -1573,20 +1680,18 @@ reply:
 // =====================================
 
 
-
 app.get("/test",(req,res)=>{
 
 
 res.json({
 
 status:
-"NovaAI V7 fonctionne 🚀"
+"NovaAI V8 fonctionne 🚀"
 
 });
 
 
 });
-
 
 
 
@@ -1603,7 +1708,7 @@ status:
 
 
 version:
-"V7",
+"V8",
 
 
 time:
@@ -1642,9 +1747,8 @@ res.status(204).end();
 
 
 // =====================================
-// ERREURS GENERALES
+// ERREUR GENERALE
 // =====================================
-
 
 
 app.use((err,req,res,next)=>{
@@ -1673,24 +1777,25 @@ error:
 
 
 
-
 // =====================================
-// START SERVER RENDER
+// START RENDER
 // =====================================
-
 
 
 app.listen(
+
 PORT,
+
 ()=>{
 
 
 console.log(
 
-`🚀 NovaAI V7 lancé sur le port ${PORT}`
+`🚀 NovaAI V8 lancé sur port ${PORT}`
 
 );
 
 
 }
+
 );
