@@ -973,7 +973,7 @@ reply:
 
 
 // =====================================
-// GENERATION IMAGE NOVAAI V7
+// GENERATION IMAGE FLUX POLLINATIONS
 // =====================================
 
 
@@ -983,16 +983,12 @@ app.post("/generate-image", async(req,res)=>{
 try{
 
 
-req.setTimeout(120000);
-
-
-
-const prompt =
+const userPrompt =
 req.body.prompt;
 
 
 
-if(!prompt){
+if(!userPrompt){
 
 
 return res.json({
@@ -1008,74 +1004,160 @@ error:
 
 
 
-
 console.log(
-"🎨 Génération image:",
-prompt
+"🎨 Prompt reçu:",
+userPrompt
 );
 
 
 
 
 
-const imageURL =
+// Amélioration du prompt avec Groq
 
-"https://image.pollinations.ai/prompt/" +
-
-encodeURIComponent(prompt)
-
-+
-
-"?width=1024&height=1024&nologo=true";
+let finalPrompt =
+userPrompt;
 
 
 
+if(GROQ_KEY){
 
 
+try{
 
 
-// Vérification que l'image existe
+const improve =
+await fetch(
+
+"https://api.groq.com/openai/v1/chat/completions",
+
+{
+
+method:"POST",
+
+headers:{
+
+"Content-Type":
+"application/json",
+
+Authorization:
+`Bearer ${GROQ_KEY}`
+
+},
 
 
-const check =
-await fetch(imageURL);
+body:JSON.stringify({
+
+model:
+"llama-3.3-70b-versatile",
 
 
+messages:[
 
-if(!check.ok){
+
+{
+
+role:"system",
+
+content:
+
+`
+Tu es un expert en création de prompts image IA.
+
+Transforme une idée courte en prompt professionnel.
+
+Ajoute:
+- détails visuels
+- lumière
+- caméra
+- style cinéma
+- textures
+- qualité élevée
+
+Réponds uniquement avec le prompt final.
+`
+
+},
 
 
-console.log(
-"IMAGE API ERROR",
-check.status
+{
+
+role:"user",
+
+content:userPrompt
+
+}
+
+
+],
+
+
+temperature:
+0.8
+
+
+})
+
+
+}
+
 );
 
 
-return res.json({
 
-error:
-"Le générateur image est indisponible."
 
-});
+const data =
+await improve.json();
 
+
+
+finalPrompt =
+data?.choices?.[0]?.message?.content
+||
+userPrompt;
+
+
+
+}
+catch(e){
+
+
+console.log(
+"PROMPT IA ERROR",
+e
+);
+
+
+}
 
 }
 
 
 
 
+console.log(
+"✨ Prompt amélioré:",
+finalPrompt
+);
 
 
 
-const buffer =
-await check.arrayBuffer();
 
 
 
+// FLUX gratuit Pollinations
 
-const base64 =
-Buffer.from(buffer)
-.toString("base64");
+const imageURL =
+
+"https://image.pollinations.ai/prompt/"
+
++
+
+encodeURIComponent(finalPrompt)
+
++
+
+"?model=flux&width=1024&height=1024&nologo=true";
 
 
 
@@ -1084,14 +1166,14 @@ Buffer.from(buffer)
 
 res.json({
 
-image:
+image:imageURL,
 
-"data:image/jpeg;base64,"+base64,
+
+prompt:finalPrompt,
 
 
 message:
-
-"Image créée avec succès 🚀"
+"Image générée avec FLUX 🚀"
 
 
 });
@@ -1103,7 +1185,6 @@ message:
 }
 
 catch(error){
-
 
 
 console.log(
@@ -1124,13 +1205,11 @@ error:
 });
 
 
-
 }
 
 
 
 });
-
 
 
 // =====================================
