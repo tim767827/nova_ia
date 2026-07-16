@@ -630,9 +630,9 @@ const messages=[
 
 role:"system",
 
-content:`
+content:
 
-Tu es NovaAI V8 🚀, un assistant IA premium.
+`Tu es NovaAI V8 🚀, un assistant IA premium.
 
 Tu réponds comme un assistant professionnel moderne.
 
@@ -1442,7 +1442,7 @@ role:"system",
 
 content:
 
-Tu es NovaAI, expert en analyse documentaire.
+`Tu es NovaAI, expert en analyse documentaire.
 
 Analyse le document fourni.
 
@@ -1464,7 +1464,7 @@ Explique les éléments importants.
 
 Donne une synthèse finale.
 
-Utilise un français professionnel et facile à comprendre.
+Utilise un français professionnel et facile à comprendre.`
 },
 
 
