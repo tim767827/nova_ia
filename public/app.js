@@ -699,18 +699,16 @@ async function sendMessage(){
 
 
 
-    let loading =
-    document.createElement("div");
+let loading =
+document.createElement("div");
 
 
-
-    loading.className =
-    "msg bot";
-
+loading.className =
+"msg bot";
 
 
-    loading.textContent =
-    "Nova réfléchit...";
+loading.textContent =
+"Nova réfléchit...";
 
 
 
@@ -763,11 +761,46 @@ addMessage(data.reply,"bot");
 
 if(data.image){
 
+
+    let imageLoading =
+    document.createElement("div");
+
+
+    imageLoading.className =
+    "msg bot";
+
+
+    imageLoading.id =
+    "imageLoading";
+
+
+    imageLoading.textContent =
+    "🖼️ Image en cours de création...";
+
+
+    document
+    .getElementById("messages")
+    .appendChild(imageLoading);
+
+
+
+    smartScroll();
+
+
+
+    // affiche l'image après réception
+
     addImage(data.image);
 
+
+
+    // enlève le texte de chargement
+
+    imageLoading.remove();
+
+
+
 }
-
-
 
         loading.remove();
 
@@ -834,6 +867,19 @@ img.src=url;
 
 img.className="generatedImage";
 
+
+let title =
+document.createElement("p");
+
+title.textContent =
+"✅ Image créée :";
+
+
+title.className =
+"msg bot";
+
+
+box.appendChild(title);
 
 box.appendChild(img);
 
