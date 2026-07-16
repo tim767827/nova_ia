@@ -540,15 +540,11 @@ align-self:center;
 
 .bot{
 
-    align-self:flex-start;
+width:100%;
 
-    background:#e5e7eb;
-
-    border-bottom-left-radius:5px;
+max-width:900px;
 
 }
-
-
 
 @keyframes show{
 
