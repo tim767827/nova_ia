@@ -575,29 +575,44 @@ function detectIntent(message){
 const text = message.toLowerCase();
 
 
-if(
-text.includes("image") ||
-text.includes("dessine") ||
-text.includes("crée une image") ||
-text.includes("génère")
-){
+const imageWords=[
+"image",
+"dessin",
+"dessine",
+"crée",
+"créé",
+"génère",
+"logo",
+"illustration",
+"photo",
+"portrait",
+"affiche",
+"fond d'écran",
+"visuel"
+];
 
+
+const documentWords=[
+"pdf",
+"document",
+"fichier",
+"analyse",
+"résume",
+"résumé",
+"extrais",
+"explique ce fichier"
+];
+
+
+
+if(imageWords.some(w=>text.includes(w))){
 return "image";
-
 }
 
 
 
-if(
-text.includes("analyse") ||
-text.includes("résume") ||
-text.includes("document") ||
-text.includes("pdf") ||
-text.includes("fichier")
-){
-
+if(documentWords.some(w=>text.includes(w))){
 return "document";
-
 }
 
 
