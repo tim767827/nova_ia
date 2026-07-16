@@ -1,20 +1,28 @@
 /* ==========================================
-   NOVA AI V7 PREMIUM
+   NOVA AI V8 PREMIUM
    STYLE.CSS PARTIE 1/2
+   DESIGN CHATGPT STYLE
 ========================================== */
 
 
-/* RESET */
+/* =========================
+   RESET
+========================= */
+
 
 *{
     margin:0;
     padding:0;
     box-sizing:border-box;
-    font-family:Inter,Arial,sans-serif;
+    font-family:
+    Inter,
+    Arial,
+    sans-serif;
 }
 
 
-html,body{
+html,
+body{
 
     width:100%;
     height:100%;
@@ -22,9 +30,11 @@ html,body{
 }
 
 
+
 body{
 
     background:#f8fafc;
+
     color:#111827;
 
     overflow:hidden;
@@ -36,15 +46,17 @@ body{
 
 
 
-button{
 
-    cursor:pointer;
+button{
 
     border:none;
 
-    transition:.25s;
+    cursor:pointer;
+
+    transition:.25s ease;
 
 }
+
 
 
 button:hover{
@@ -56,13 +68,28 @@ button:hover{
 
 
 
-/* ==========================================
-   APP
-========================================== */
+
+input{
+
+    outline:none;
+
+    font-family:inherit;
+
+}
+
+
+
+
+
+/* =========================
+   APPLICATION
+========================= */
 
 
 .app{
 
+    width:100%;
+
     height:100vh;
 
     display:flex;
@@ -72,32 +99,47 @@ button:hover{
 
 
 
-/* ==========================================
+
+
+
+/* =========================
    SIDEBAR PC
-========================================== */
+========================= */
 
 
 .sidebar{
 
-    width:300px;
+
+    width:310px;
+
 
     height:100vh;
 
+
     background:white;
 
-    border-right:1px solid #e5e7eb;
+
+    border-right:
+    1px solid #e5e7eb;
+
 
     padding:20px;
 
+
     display:flex;
+
 
     flex-direction:column;
 
+
     position:relative;
 
-    z-index:10;
+
+    z-index:30;
+
 
 }
+
 
 
 
@@ -105,9 +147,12 @@ button:hover{
 
 .logo{
 
+
     font-size:32px;
 
+
     font-weight:900;
+
 
     background:
     linear-gradient(
@@ -116,36 +161,55 @@ button:hover{
         #9333ea
     );
 
-    color:transparent;
 
     background-clip:text;
 
+
+    -webkit-background-clip:text;
+
+
+    color:transparent;
+
+
 }
+
+
 
 
 
 
 .version{
 
+
     margin-top:8px;
+
+
+    font-size:13px;
+
 
     color:#64748b;
 
-    font-size:13px;
 
 }
 
 
 
+
+
 .tagline{
+
 
     margin-top:10px;
 
-    color:#94a3b8;
 
     font-size:13px;
 
+
+    color:#94a3b8;
+
+
     line-height:1.5;
+
 
 }
 
@@ -155,17 +219,24 @@ button:hover{
 
 .newChat{
 
+
     margin-top:25px;
+
 
     padding:15px;
 
+
     border-radius:16px;
+
 
     color:white;
 
+
     font-weight:bold;
 
+
     font-size:15px;
+
 
     background:
     linear-gradient(
@@ -174,14 +245,19 @@ button:hover{
         #7c3aed
     );
 
+
 }
+
 
 
 
 .newChat:hover{
 
+
     box-shadow:
-    0 10px 25px rgba(37,99,235,.35);
+    0 15px 35px
+    rgba(37,99,235,.35);
+
 
 }
 
@@ -189,45 +265,63 @@ button:hover{
 
 
 
-/* RECHERCHE */
+
+/* =========================
+   HISTORIQUE
+========================= */
+
 
 
 .historySearch{
 
+
     margin-top:20px;
 
+
 }
+
 
 
 
 .historySearch input{
 
+
     width:100%;
 
-    padding:13px;
+
+    padding:13px 15px;
+
 
     border-radius:14px;
 
-    border:1px solid #e2e8f0;
 
-    outline:none;
+    border:
+    1px solid #e2e8f0;
+
 
     background:#f8fafc;
 
+
 }
+
 
 
 
 
 .historyTitle{
 
-    margin-top:20px;
+
+    margin-top:22px;
+
 
     margin-bottom:10px;
 
+
     font-size:13px;
 
+
     color:#64748b;
+
 
 }
 
@@ -237,9 +331,15 @@ button:hover{
 
 .history{
 
+
     flex:1;
 
+
     overflow-y:auto;
+
+
+    padding-right:5px;
+
 
 }
 
@@ -249,21 +349,33 @@ button:hover{
 
 .item{
 
+
     display:flex;
 
-    justify-content:space-between;
 
     align-items:center;
 
+
+    justify-content:space-between;
+
+
     gap:10px;
+
 
     padding:12px;
 
+
     margin-bottom:8px;
+
 
     border-radius:14px;
 
+
     background:#f1f5f9;
+
+
+    transition:.2s;
+
 
 }
 
@@ -272,25 +384,32 @@ button:hover{
 
 .item:hover{
 
+
     background:#e2e8f0;
+
 
 }
 
 
 
 
-
 .chatTitle{
+
 
     flex:1;
 
+
     overflow:hidden;
+
 
     white-space:nowrap;
 
+
     text-overflow:ellipsis;
 
+
     font-size:14px;
+
 
 }
 
@@ -300,77 +419,112 @@ button:hover{
 
 .chatActions{
 
+
     display:flex;
+
 
     gap:5px;
 
+
 }
+
 
 
 
 .chatActions button{
 
+
     width:28px;
+
 
     height:28px;
 
+
     border-radius:8px;
 
+
     background:#e5e7eb;
+
 
 }
 
 
 
 
-/* BAS SIDEBAR */
+
+
+/* =========================
+   BAS SIDEBAR
+========================= */
 
 
 .bottom{
 
+
     display:flex;
+
 
     flex-direction:column;
 
+
     gap:10px;
+
 
     margin-top:15px;
 
+
 }
+
+
 
 
 
 .bottom button{
 
+
     padding:13px;
+
 
     border-radius:14px;
 
+
     background:#2563eb;
+
 
     color:white;
 
+
     font-weight:bold;
+
 
 }
 
 
 
 
-/* ==========================================
-   CHAT
-========================================== */
+
+
+
+/* =========================
+   ZONE CHAT
+========================= */
+
 
 
 .chat{
 
+
     flex:1;
+
 
     height:100vh;
 
+
     display:flex;
 
+
     flex-direction:column;
+
 
 }
 
@@ -380,17 +534,25 @@ button:hover{
 
 .topbar{
 
+
     height:70px;
+
 
     background:white;
 
-    border-bottom:1px solid #e5e7eb;
+
+    border-bottom:
+    1px solid #e5e7eb;
+
 
     display:flex;
 
+
     align-items:center;
 
+
     padding:0 25px;
+
 
 }
 
@@ -399,18 +561,24 @@ button:hover{
 
 .topbar h2{
 
+
     font-size:23px;
 
+
 }
+
 
 
 
 
 .status{
 
+
     color:#22c55e;
 
+
     font-size:13px;
+
 
 }
 
@@ -419,59 +587,80 @@ button:hover{
 
 
 
-/* ==========================================
+/* =========================
    MESSAGES
-========================================== */
+========================= */
 
 
 .messages{
 
+
     flex:1;
+
 
     overflow-y:auto;
 
+
     padding:30px;
+
 
     display:flex;
 
+
     flex-direction:column;
 
-    gap:15px;
+
+    gap:18px;
+
 
 }
+
+
 
 
 
 
 .welcome{
 
+
     margin:auto;
+
+
+    max-width:750px;
+
 
     text-align:center;
 
-    max-width:700px;
 
 }
+
 
 
 
 
 .welcome h1{
 
-    font-size:44px;
+
+    font-size:45px;
+
 
     margin-bottom:15px;
+
 
 }
 
 
 
 
+
 .welcome p{
+
 
     color:#64748b;
 
+
     line-height:1.7;
+
 
 }
 
@@ -481,224 +670,396 @@ button:hover{
 
 .suggestions{
 
-    margin-top:30px;
 
     display:flex;
 
-    justify-content:center;
 
     flex-wrap:wrap;
 
+
+    justify-content:center;
+
+
     gap:12px;
 
+
+    margin-top:30px;
+
+
 }
+
 
 
 
 .suggestions button{
 
+
     padding:14px 18px;
+
 
     border-radius:15px;
 
+
     background:white;
 
-    border:1px solid #e5e7eb;
+
+    border:
+    1px solid #e5e7eb;
+
 
     box-shadow:
-    0 10px 30px rgba(0,0,0,.08);
+    0 10px 25px
+    rgba(0,0,0,.08);
+
 
 }
 
 
+
+
+
+/* =========================
+   MESSAGE IA
+========================= */
 
 
 .msg{
 
-max-width:900px;
 
-width:100%;
+    max-width:900px;
 
-align-self:center;
 
-}
-.msg{
+    width:fit-content;
 
-white-space:normal;
 
-word-break:break-word;
+    padding:18px 22px;
 
-font-size:16px;
 
-line-height:1.8;
+    border-radius:22px;
 
-}.msg h1{
 
-margin:20px 0 10px;
+    font-size:16px;
 
-font-size:34px;
 
-}
+    line-height:1.8;
 
-.msg h2{
 
-margin:18px 0 8px;
+    word-break:break-word;
 
-font-size:28px;
+
+    animation:
+    show .25s ease;
+
 
 }
 
-.msg h3{
-
-margin:15px 0 6px;
-
-font-size:22px;
-
-}
-
-.msg p{
-
-margin:12px 0;
-
-}
-
-.msg ul{
-
-margin:15px 25px;
-
-}
-
-.msg li{
-
-margin:8px 0;
-
-}
-
-.msg pre{
-
-padding:15px;
-
-border-radius:15px;
-
-overflow:auto;
-
-background:#111827;
-
-color:white;
-
-}
-
-.msg code{
-
-font-family:Consolas,monospace;
-
-}
-
-.user{
-
-    align-self:flex-end;
-
-    background:#2563eb;
-
-    color:white;
-
-    border-bottom-right-radius:5px;
-
-}
 
 
 
 .bot{
 
-width:100%;
 
-max-width:900px;
+    align-self:flex-start;
+
+
+    width:100%;
+
+
+    max-width:900px;
+
+
+    background:#ffffff;
+
+
+    border:
+    1px solid #e5e7eb;
+
 
 }
+
+
+
+
+
+.user{
+
+
+    align-self:flex-end;
+
+
+    max-width:70%;
+
+
+    background:#2563eb;
+
+
+    color:white;
+
+
+    border-bottom-right-radius:5px;
+
+
+}
+
+
+
+
+
+
+/* =========================
+   MARKDOWN
+========================= */
+
+
+.msg h1{
+
+
+    font-size:34px;
+
+
+    margin:
+    20px 0 10px;
+
+
+}
+
+
+
+
+.msg h2{
+
+
+    font-size:27px;
+
+
+    margin:
+    18px 0 10px;
+
+
+}
+
+
+
+
+
+.msg h3{
+
+
+    font-size:22px;
+
+
+    margin:
+    15px 0 8px;
+
+
+}
+
+
+
+
+
+.msg p{
+
+
+    margin:
+    12px 0;
+
+
+}
+
+
+
+
+
+.msg ul,
+.msg ol{
+
+
+    margin:
+    15px 30px;
+
+
+}
+
+
+
+
+
+.msg li{
+
+
+    margin:
+    8px 0;
+
+
+}
+
+
+
+
+
+.msg pre{
+
+
+    margin-top:15px;
+
+
+    padding:18px;
+
+
+    border-radius:16px;
+
+
+    overflow:auto;
+
+
+    background:#111827;
+
+
+    color:white;
+
+
+}
+
+
+
+
+
+.msg code{
+
+
+    font-family:
+    Consolas,
+    monospace;
+
+
+}
+
+
+
+
 
 @keyframes show{
 
-    from{
 
-        opacity:0;
-
-        transform:translateY(10px);
-
-    }
+from{
 
 
-    to{
+opacity:0;
 
-        opacity:1;
 
-        transform:none;
+transform:translateY(10px);
 
-    }
 
 }
 
 
+to{
+
+
+opacity:1;
+
+
+transform:none;
+
+
+}
+
+
+}
+
+
+
+
+
+
+/* IMAGES */
 
 
 .generatedImage{
 
-    max-width:450px;
 
     width:100%;
 
-    border-radius:20px;
+
+    max-width:500px;
+
+
+    border-radius:22px;
+
 
     box-shadow:
-    0 15px 40px rgba(0,0,0,.2);
+    0 20px 50px
+    rgba(0,0,0,.2);
+
 
 }/* ==========================================
-   NOVA AI V7 PREMIUM
+   NOVA AI V8 PREMIUM
    STYLE.CSS PARTIE 2/2
 ========================================== */
 
 
 
-/* ==========================================
+/* =========================
    OUTILS
-========================================== */
+========================= */
 
 
 .tools{
 
+
     display:flex;
+
 
     align-items:center;
 
+
     gap:10px;
+
 
     padding:12px 20px;
 
+
     background:white;
 
-    border-top:1px solid #e5e7eb;
+
+    border-top:
+    1px solid #e5e7eb;
+
 
 }
+
+
 
 
 
 .fileZone,
 .imageZone{
 
+
     display:flex;
+
 
     align-items:center;
 
-    gap:8px;
+
+    gap:10px;
+
 
     padding:10px 14px;
 
+
     background:#f1f5f9;
+
 
     border-radius:14px;
 
+
     font-size:14px;
 
+
 }
+
 
 
 
@@ -706,90 +1067,128 @@ max-width:900px;
 .fileZone input,
 .imageZone input{
 
+
     display:none;
 
+
 }
+
 
 
 
 .fileZone button{
 
-    padding:8px 12px;
+
+    padding:8px 14px;
+
 
     border-radius:10px;
 
+
     background:#2563eb;
+
 
     color:white;
 
+
 }
+
+
 
 
 
 
 .imageCreator{
 
+
     flex:1;
+
 
     display:flex;
 
+
     gap:10px;
 
+
 }
+
+
 
 
 
 .imageCreator input{
 
+
     flex:1;
+
 
     padding:14px;
 
+
     border-radius:15px;
 
-    border:1px solid #ddd;
 
-    outline:none;
+    border:
+    1px solid #ddd;
+
 
 }
+
+
 
 
 
 .imageCreator button{
 
+
     padding:14px 22px;
+
 
     border-radius:15px;
 
+
     background:#9333ea;
+
 
     color:white;
 
+
     font-weight:bold;
 
+
 }
+
+
 
 
 
 
 .preview{
 
-    width:50px;
 
-    height:50px;
+    width:55px;
+
+
+    height:55px;
+
 
     object-fit:cover;
 
-    border-radius:12px;
+
+    border-radius:14px;
+
 
 }
+
 
 
 
 
 .hidden{
 
+
     display:none!important;
+
 
 }
 
@@ -797,125 +1196,209 @@ max-width:900px;
 
 
 
-/* ==========================================
+
+
+
+/* =========================
    BARRE MESSAGE
-========================================== */
+========================= */
 
 
 
 .inputBar{
 
+
     display:flex;
+
 
     gap:12px;
 
+
     padding:15px 20px;
+
 
     background:white;
 
-    border-top:1px solid #e5e7eb;
+
+    border-top:
+    1px solid #e5e7eb;
+
 
 }
+
+
 
 
 
 .inputBar input{
 
+
     flex:1;
 
-    height:55px;
 
-    padding:0 18px;
+    height:58px;
 
-    border-radius:18px;
 
-    border:1px solid #ddd;
+    padding:
+    0 20px;
 
-    outline:none;
+
+    border-radius:20px;
+
+
+    border:
+    1px solid #d1d5db;
+
 
     font-size:16px;
 
+
+    background:#fff;
+
+
 }
+
+
+
+
+
+.inputBar input:focus{
+
+
+    border-color:#2563eb;
+
+
+    box-shadow:
+    0 0 0 3px
+    rgba(37,99,235,.15);
+
+
+}
+
+
+
 
 
 
 
 .sendBtn{
 
-    width:55px;
 
-    height:55px;
+    width:58px;
 
-    border-radius:18px;
+
+    height:58px;
+
+
+    border-radius:20px;
+
 
     background:#2563eb;
 
+
     color:white;
 
-    font-size:25px;
+
+    font-size:26px;
+
 
 }
 
 
 
 
-/* ==========================================
+
+
+.sendBtn:hover{
+
+
+    box-shadow:
+    0 10px 25px
+    rgba(37,99,235,.35);
+
+
+}
+
+
+
+
+
+
+
+
+/* =========================
    SETTINGS
-========================================== */
+========================= */
 
 
 .settings{
 
+
     position:fixed;
+
 
     top:50%;
 
+
     left:50%;
 
-    transform:translate(-50%,-50%);
+
+    transform:
+    translate(-50%,-50%);
 
 
-    width:330px;
-
-
-    background:white;
+    width:340px;
 
 
     padding:25px;
 
 
-    border-radius:22px;
+    border-radius:25px;
+
+
+    background:white;
 
 
     box-shadow:
-    0 20px 60px rgba(0,0,0,.3);
+    0 25px 70px
+    rgba(0,0,0,.3);
 
 
     display:flex;
 
+
     flex-direction:column;
+
 
     gap:12px;
 
 
     z-index:100;
 
+
 }
+
 
 
 
 
 .settings button{
 
-    padding:13px;
+
+    padding:14px;
+
 
     border-radius:14px;
 
+
     background:#2563eb;
+
 
     color:white;
 
+
     font-weight:bold;
+
 
 }
 
@@ -923,42 +1406,64 @@ max-width:900px;
 
 
 
-/* ==========================================
+
+
+
+
+/* =========================
    OVERLAY MOBILE
-========================================== */
+========================= */
 
 
 .overlay{
 
+
     display:none;
+
 
     position:fixed;
 
+
     inset:0;
 
-    background:rgba(0,0,0,.45);
 
-    backdrop-filter:blur(3px);
+    background:
+    rgba(0,0,0,.45);
 
-    z-index:20;
+
+    backdrop-filter:blur(4px);
+
+
+    z-index:40;
+
 
 }
 
 
 
 
-/* ==========================================
+
+
+
+
+/* =========================
    DARK MODE
-========================================== */
+========================= */
 
 
 body.dark{
 
+
     background:#09090b;
+
 
     color:white;
 
+
 }
+
+
+
 
 
 
@@ -968,37 +1473,64 @@ body.dark .tools,
 body.dark .inputBar,
 body.dark .settings{
 
+
     background:#111827;
+
 
     border-color:#27272a;
 
+
 }
+
+
+
 
 
 
 body.dark .item{
 
+
     background:#18181b;
 
+
+    color:white;
+
+
 }
+
+
 
 
 
 body.dark .bot{
 
-    background:#27272a;
+
+    background:#18181b;
+
+
+    border-color:#27272a;
+
 
     color:white;
 
+
 }
+
+
 
 
 
 body.dark input{
 
+
     background:#18181b;
 
+
     color:white;
+
+
+    border-color:#333;
+
 
 }
 
@@ -1006,15 +1538,37 @@ body.dark input{
 
 
 
-/* ==========================================
+body.dark .suggestions button{
+
+
+    background:#18181b;
+
+
+    color:white;
+
+
+    border-color:#333;
+
+
+}
+
+
+
+
+
+
+
+
+/* =========================
    BOUTON MOBILE
-   CACHE SUR PC
-========================================== */
+========================= */
 
 
 .mobileMenu{
 
+
     display:none;
+
 
 }
 
@@ -1024,9 +1578,9 @@ body.dark input{
 
 
 
-/* ==========================================
-   MOBILE UNIQUEMENT
-========================================== */
+/* =========================
+   MOBILE
+========================= */
 
 
 
@@ -1036,22 +1590,28 @@ body.dark input{
 
 body{
 
+
     height:100dvh;
 
+
 }
+
+
+
 
 
 
 .app{
 
+
     height:100dvh;
+
 
 }
 
 
 
 
-/* bouton menu */
 
 .mobileMenu{
 
@@ -1061,6 +1621,7 @@ body{
 
     align-items:center;
 
+
     justify-content:center;
 
 
@@ -1069,23 +1630,24 @@ body{
 
     top:15px;
 
+
     left:15px;
 
 
-    width:45px;
-
-    height:45px;
+    width:46px;
 
 
-    border-radius:14px;
+    height:46px;
+
+
+    border-radius:15px;
 
 
     background:
     linear-gradient(
-        135deg,
-        #2563eb,
-        #9333ea
-    );
+    135deg,
+    #2563eb,
+    #9333ea);
 
 
     color:white;
@@ -1094,7 +1656,7 @@ body{
     font-size:22px;
 
 
-    z-index:60;
+    z-index:80;
 
 
 }
@@ -1103,8 +1665,6 @@ body{
 
 
 
-
-/* sidebar mobile */
 
 
 .sidebar{
@@ -1116,26 +1676,26 @@ body{
     top:0;
 
 
-    left:-320px;
+    left:-330px;
 
 
-    width:300px;
+    width:310px;
 
 
     height:100dvh;
-
-
-    z-index:50;
 
 
     transition:.35s ease;
 
 
     box-shadow:
-    15px 0 40px rgba(0,0,0,.25);
+    15px 0 40px
+    rgba(0,0,0,.25);
 
 
 }
+
+
 
 
 
@@ -1164,9 +1724,6 @@ body:has(.sidebar.open) .overlay{
 
 
 
-/* chat */
-
-
 .topbar{
 
 
@@ -1177,15 +1734,17 @@ body:has(.sidebar.open) .overlay{
 
 
 
+
+
 .messages{
 
 
     padding:
-
-    80px 15px 15px;
+    75px 15px 15px;
 
 
 }
+
 
 
 
@@ -1193,10 +1752,11 @@ body:has(.sidebar.open) .overlay{
 .welcome h1{
 
 
-    font-size:30px;
+    font-size:32px;
 
 
 }
+
 
 
 
@@ -1204,7 +1764,7 @@ body:has(.sidebar.open) .overlay{
 .msg{
 
 
-    max-width:92%;
+    font-size:15px;
 
 
 }
@@ -1212,7 +1772,29 @@ body:has(.sidebar.open) .overlay{
 
 
 
-/* outils */
+
+.user{
+
+
+    max-width:90%;
+
+
+}
+
+
+
+
+
+.bot{
+
+
+    max-width:100%;
+
+
+}
+
+
+
 
 
 .tools{
@@ -1224,7 +1806,24 @@ body:has(.sidebar.open) .overlay{
     align-items:stretch;
 
 
+    padding:10px;
+
+
 }
+
+
+
+
+
+.fileZone,
+.imageZone{
+
+
+    width:100%;
+
+
+}
+
 
 
 
@@ -1240,7 +1839,59 @@ body:has(.sidebar.open) .overlay{
 
 
 
-/* suggestions */
+
+.inputBar{
+
+
+    padding:10px;
+
+
+}
+
+
+
+
+
+.inputBar input{
+
+
+    height:52px;
+
+
+}
+
+
+
+
+
+.sendBtn{
+
+
+    width:52px;
+
+
+    height:52px;
+
+
+    border-radius:17px;
+
+
+}
+
+
+
+
+
+.settings{
+
+
+    width:90%;
+
+
+}
+
+
+
 
 
 .suggestions{
@@ -1253,47 +1904,12 @@ body:has(.sidebar.open) .overlay{
 
 
 
+
+
 .suggestions button{
 
 
     width:100%;
-
-
-}
-
-
-
-
-
-/* input */
-
-
-.inputBar{
-
-
-    padding:10px;
-
-
-}
-
-
-
-.sendBtn{
-
-
-    width:50px;
-
-    height:50px;
-
-
-}
-
-
-
-.settings{
-
-
-    width:90%;
 
 
 }
