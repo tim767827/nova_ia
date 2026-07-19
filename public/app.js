@@ -1,65 +1,175 @@
 /* ==========================================
-   NOVA AI V10 PREMIUM
-   APP.JS PARTIE 1/3
-   BASE + HISTORIQUE + AFFICHAGE
+   NOVA AI V10 PREMIUM — app.js
+   + Connexion visiteurs (Supabase)
+   + Suivi d'événements pour le dashboard admin
 ========================================== */
 
 
 // ===============================
-// UTILISATEUR
+// SUPABASE
 // ===============================
 
-
-let userId = localStorage.getItem("novaUser");
-
-
-if(!userId){
-
-    userId = "user_" + Date.now();
-
-    localStorage.setItem(
-        "novaUser",
-        userId
-    );
-
-}
-
+const SUPABASE_URL = "https://fokziksapqquupnibjau.supabase.co";
+const SUPABASE_KEY = "sb_publishable_xdzZ4xtdJiv5koMxgZ8wzA_C1wCpV70";
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 
 // ===============================
-// VARIABLES
+// UTILISATEUR / VARIABLES
 // ===============================
 
-
-let chats =
-JSON.parse(
-    localStorage.getItem("novaChats")
-)
-|| [];
-
-
+let userId = null;      // id du compte connecté (Supabase), null tant que non connecté
+let chats = [];
 let currentChat = null;
-
-
-
+let authMode = "login"; // "login" ou "signup"
 
 
 // ===============================
-// SAUVEGARDE
+// SAUVEGARDE (une clé par utilisateur, pour ne pas mélanger les comptes sur un même appareil)
 // ===============================
-
 
 function saveChats(){
 
+    if(!userId) return;
+
     localStorage.setItem(
-        "novaChats",
+        "novaChats_" + userId,
         JSON.stringify(chats)
     );
 
 }
 
 
+// ===============================
+// ECRAN DE CONNEXION / INSCRIPTION
+// ===============================
 
+function toggleAuthMode(){
+
+    authMode = authMode === "login" ? "signup" : "login";
+
+    document.getElementById("authSubmitBtn").textContent =
+        authMode === "login" ? "Se connecter" : "Créer un compte";
+
+    document.getElementById("authSub").textContent =
+        authMode === "login"
+        ? "Connecte-toi pour retrouver tes conversations."
+        : "Crée un compte pour sauvegarder tes conversations.";
+
+    document.getElementById("authSwitchText").textContent =
+        authMode === "login" ? "Pas encore de compte ?" : "Déjà un compte ?";
+
+    document.getElementById("authSwitchBtn").textContent =
+        authMode === "login" ? "Créer un compte" : "Se connecter";
+
+    document.getElementById("authError").textContent = "";
+
+}
+window.toggleAuthMode = toggleAuthMode;
+
+
+async function submitAuth(){
+
+    const email = document.getElementById("authEmail").value.trim();
+    const password = document.getElementById("authPassword").value;
+    const errorBox = document.getElementById("authError");
+
+    errorBox.textContent = "";
+
+    if(!email || !password){
+        errorBox.textContent = "Remplis l'email et le mot de passe.";
+        return;
+    }
+
+    let result;
+
+    if(authMode === "login"){
+
+        result = await sb.auth.signInWithPassword({ email, password });
+
+    } else {
+
+        result = await sb.auth.signUp({ email, password });
+
+    }
+
+    if(result.error){
+        errorBox.textContent = result.error.message;
+        return;
+    }
+
+    if(authMode === "signup" && !result.data.session){
+        errorBox.textContent = "Compte créé ! Vérifie ta boîte mail pour confirmer ton adresse, puis connecte-toi.";
+        return;
+    }
+
+    onAuthenticated(result.data.session.user);
+
+}
+window.submitAuth = submitAuth;
+
+
+function logout(){
+
+    sb.auth.signOut().then(()=>{
+        location.reload();
+    });
+
+}
+window.logout = logout;
+
+
+async function onAuthenticated(user){
+
+    userId = user.id;
+
+    document.getElementById("authScreen").classList.add("hidden");
+    document.getElementById("appRoot").classList.remove("hidden");
+
+    chats = JSON.parse(
+        localStorage.getItem("novaChats_" + userId)
+    ) || [];
+
+    renderHistory();
+
+    if(chats.length){
+        loadChat(chats[0].id);
+    }
+
+    startHeartbeat();
+
+}
+
+
+// ===============================
+// "CONNECTÉ EN CE MOMENT" (dashboard admin)
+// ===============================
+
+function startHeartbeat(){
+    updateLastSeen();
+    setInterval(updateLastSeen, 30000); // toutes les 30 secondes tant que l'onglet est ouvert
+}
+
+async function updateLastSeen(){
+    if(!userId) return;
+    await sb.from("profiles")
+        .update({ last_seen: new Date().toISOString() })
+        .eq("id", userId);
+}
+
+
+// ===============================
+// EVENEMENTS (dashboard admin)
+// ===============================
+
+async function logEvent(type){
+    if(!userId) return;
+    try{
+        await sb.from("events").insert({ user_id: userId, type: type });
+    }catch(e){
+        console.log("Erreur log event :", e);
+    }
+}
 
 
 // ===============================
@@ -362,6 +472,9 @@ function newChat(){
     renderHistory();
 
 
+    logEvent("chat_created");
+
+
 
     const box =
     document.getElementById("messages");
@@ -599,12 +712,7 @@ function smartScroll(){
     });
 
 
-}/* ==========================================
-   NOVA AI V10 PREMIUM
-   APP.JS PARTIE 2/3
-   CHAT + IMAGE + DOCUMENT
-========================================== */
-
+}
 
 
 // ===============================
@@ -675,6 +783,8 @@ async function sendMessage(){
 
 
     saveChats();
+
+    logEvent("message_sent");
 
 
 
@@ -1007,6 +1117,8 @@ save=true
 
 
         saveChats();
+
+        logEvent("image_generated");
 
 
     }
@@ -1415,12 +1527,7 @@ function sendQuick(text){
 
 
 window.sendQuick =
-sendQuick;/* ==========================================
-   NOVA AI V10 PREMIUM
-   APP.JS PARTIE 3/3
-   OPTIONS + START
-========================================== */
-
+sendQuick;
 
 
 // ===============================
@@ -1551,7 +1658,7 @@ function clearHistory(){
 
 
     localStorage.removeItem(
-        "novaChats"
+        "novaChats_" + userId
     );
 
 
@@ -1855,28 +1962,19 @@ if(overlay){
 
 // ===============================
 // DEMARRAGE APPLICATION
+// (attend que la session Supabase soit vérifiée
+//  avant d'afficher quoi que ce soit)
 // ===============================
 
 
-renderHistory();
+sb.auth.getSession().then(({ data })=>{
 
+    if(data.session){
+        onAuthenticated(data.session.user);
+    }
+    // sinon : on reste sur l'écran de connexion (#authScreen), rien à faire ici
 
-
-
-if(chats.length){
-
-
-    loadChat(
-        chats[0].id
-    );
-
-
-}
-
-
-
-
-
+});
 
 
 console.log(
