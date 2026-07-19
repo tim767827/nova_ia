@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NovaAI — Admin</title>
+<link rel="stylesheet" href="auth.css">
+</head>
+<body class="admin">
+
+<!-- ECRAN DE CONNEXION ADMIN -->
+<div id="authScreen">
+  <div class="authBox">
+    <div class="logo">🚀 NovaAI</div>
+    <p class="sub">Espace admin — connexion requise.</p>
+
+    <div class="authError" id="authError"></div>
+
+    <input type="email" id="authEmail" placeholder="Ton email admin" autocomplete="email">
+    <input type="password" id="authPassword" placeholder="Mot de passe" autocomplete="current-password">
+
+    <button class="primary" onclick="submitAdminAuth()">Se connecter</button>
+  </div>
+</div>
+
+<!-- ACCES REFUSE -->
+<div id="deniedScreen" class="deniedBox hidden">
+  <h2>🚫 Accès refusé</h2>
+  <p>Ce compte n'est pas administrateur.</p>
+  <button class="primary" style="margin-top:16px" onclick="adminLogout()">Se déconnecter</button>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard" class="adminWrap hidden">
+
+  <div class="adminHeader">
+    <h1>📊 Dashboard NovaAI</h1>
+    <button onclick="adminLogout()">Se déconnecter</button>
+  </div>
+
+  <div class="statsGrid">
+    <div class="statCard">
+      <div class="num" id="statAccounts">–</div>
+      <div class="label">Comptes créés</div>
+    </div>
+    <div class="statCard">
+      <div class="num" id="statOnline">–</div>
+      <div class="label">Connectés en ce moment</div>
+    </div>
+    <div class="statCard">
+      <div class="num" id="statMessages">–</div>
+      <div class="label">Messages envoyés</div>
+    </div>
+    <div class="statCard">
+      <div class="num" id="statImages">–</div>
+      <div class="label">Images générées</div>
+    </div>
+  </div>
+
+  <div class="adminSection">
+    <h2>Activité récente</h2>
+    <div id="activityList">Chargement...</div>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="admin.js"></script>
+</body>
+</html>
