@@ -47,11 +47,14 @@ window.adminLogout = adminLogout;
 
 async function checkAdminAndLoad(user){
 
-    const { data: profile, error } = await sb
+  const { data: profile, error } = await sb
         .from("profiles")
-        .select("is_admin")
+        .select("id, email, is_admin")
         .eq("id", user.id)
         .single();
+
+console.log("PROFILE :", profile);
+console.log("ERROR :", error);
 
     if(error || !profile || !profile.is_admin){
         showOnly(deniedScreen);
