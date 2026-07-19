@@ -1,0 +1,190 @@
+/* =====================================================
+   NOVA AI — auth.css
+   Écran de connexion visiteurs + Dashboard admin
+   (fichier à part, n'entre pas en conflit avec style.css)
+===================================================== */
+
+#authScreen{
+  position:fixed;
+  inset:0;
+  z-index:500;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:#f8fafc;
+  padding:20px;
+}
+body.dark #authScreen{ background:#09090b; }
+
+.authBox{
+  width:100%;
+  max-width:380px;
+  background:#fff;
+  border-radius:22px;
+  padding:32px 26px;
+  box-shadow:0 20px 60px rgba(0,0,0,.12);
+}
+body.dark .authBox{ background:#111827; }
+
+.authBox .logo{
+  font-size:26px;
+  font-weight:900;
+  background:linear-gradient(135deg,#2563eb,#9333ea);
+  background-clip:text;
+  -webkit-background-clip:text;
+  color:transparent;
+  margin-bottom:6px;
+}
+
+.authBox p.sub{
+  color:#64748b;
+  font-size:13.5px;
+  margin-bottom:22px;
+}
+
+.authBox input{
+  width:100%;
+  height:48px;
+  padding:0 15px;
+  margin-bottom:12px;
+  border-radius:14px;
+  border:1px solid #e2e8f0;
+  background:#f8fafc;
+  font-size:16px;
+}
+body.dark .authBox input{
+  background:#18181b;
+  border-color:#333;
+  color:#fff;
+}
+.authBox input:focus{ border-color:#2563eb; }
+
+.authBox button.primary{
+  width:100%;
+  height:48px;
+  border-radius:14px;
+  background:linear-gradient(135deg,#2563eb,#7c3aed);
+  color:#fff;
+  font-weight:700;
+  font-size:15px;
+  margin-top:6px;
+}
+
+.authSwitch{
+  text-align:center;
+  margin-top:16px;
+  font-size:13.5px;
+  color:#64748b;
+}
+.authSwitch button{
+  color:#2563eb;
+  font-weight:700;
+  background:none;
+}
+
+.authError{
+  color:#dc2626;
+  font-size:13px;
+  margin:-4px 0 12px;
+  min-height:16px;
+}
+
+.hidden{ display:none!important; }
+
+/* =====================================================
+   DASHBOARD ADMIN (admin.html)
+===================================================== */
+
+body.admin{
+  background:#f8fafc;
+  color:#111827;
+  min-height:100vh;
+  padding:24px 16px calc(24px + env(safe-area-inset-bottom));
+}
+body.admin.dark{ background:#09090b; color:#fff; }
+
+.adminWrap{
+  max-width:960px;
+  margin:0 auto;
+}
+
+.adminHeader{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom:24px;
+  flex-wrap:wrap;
+  gap:12px;
+}
+.adminHeader h1{ font-size:22px; }
+.adminHeader button{
+  height:42px;
+  padding:0 16px;
+  border-radius:12px;
+  background:#f1f5f9;
+  font-weight:600;
+  font-size:14px;
+}
+body.admin.dark .adminHeader button{ background:#1f2937; color:#fff; }
+
+.statsGrid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:14px;
+  margin-bottom:28px;
+}
+@media(min-width:700px){
+  .statsGrid{ grid-template-columns:repeat(4,1fr); }
+}
+
+.statCard{
+  background:#fff;
+  border-radius:18px;
+  padding:20px;
+  box-shadow:0 8px 24px rgba(0,0,0,.06);
+}
+body.admin.dark .statCard{ background:#111827; }
+
+.statCard .num{
+  font-size:30px;
+  font-weight:800;
+  background:linear-gradient(135deg,#2563eb,#9333ea);
+  background-clip:text;
+  -webkit-background-clip:text;
+  color:transparent;
+}
+.statCard .label{
+  margin-top:6px;
+  color:#64748b;
+  font-size:13px;
+}
+
+.adminSection{
+  background:#fff;
+  border-radius:18px;
+  padding:20px;
+  margin-bottom:20px;
+  box-shadow:0 8px 24px rgba(0,0,0,.06);
+}
+body.admin.dark .adminSection{ background:#111827; }
+.adminSection h2{ font-size:16px; margin-bottom:14px; }
+
+.activityRow{
+  display:flex;
+  justify-content:space-between;
+  padding:10px 0;
+  border-bottom:1px solid #f1f5f9;
+  font-size:14px;
+}
+body.admin.dark .activityRow{ border-color:#27272a; }
+.activityRow:last-child{ border-bottom:none; }
+.activityRow .time{ color:#94a3b8; font-size:12.5px; }
+
+.deniedBox{
+  max-width:380px;
+  margin:80px auto;
+  text-align:center;
+  padding:30px;
+}
+.deniedBox h2{ margin-bottom:10px; }
+.deniedBox p{ color:#64748b; }
