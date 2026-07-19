@@ -1,382 +1,187 @@
 <!DOCTYPE html>
 <html lang="fr">
-
 <head>
-
 <meta charset="UTF-8">
-
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>NovaAI 🚀</title>
-
 <link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="auth.css">
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2799245573208926"
      crossorigin="anonymous"></script>
-
 </head>
-
-
 <body>
 
+<!-- ================= ECRAN DE CONNEXION ================= -->
+<div id="authScreen">
+  <div class="authBox">
+    <div class="logo">🚀 NovaAI</div>
+    <p class="sub" id="authSub">Connecte-toi pour retrouver tes conversations.</p>
 
-<div class="app">
+    <div class="authError" id="authError"></div>
+
+    <input type="email" id="authEmail" placeholder="Adresse email" autocomplete="email">
+    <input type="password" id="authPassword" placeholder="Mot de passe" autocomplete="current-password">
+
+    <button class="primary" id="authSubmitBtn" onclick="submitAuth()">Se connecter</button>
+
+    <div class="authSwitch">
+      <span id="authSwitchText">Pas encore de compte ?</span>
+      <button onclick="toggleAuthMode()" id="authSwitchBtn">Créer un compte</button>
+    </div>
+  </div>
+</div>
+
+<div class="app hidden" id="appRoot">
 <div class="overlay" onclick="toggleSidebar()"></div>
-
-
-
 <!-- MOBILE MENU -->
-
 <button class="mobileMenu" onclick="toggleSidebar()">
 ☰
 </button>
-<div class="overlay" onclick="toggleSidebar()"></div>
-
-
-
-
-
 <!-- SIDEBAR -->
-
 <aside class="sidebar" id="sidebar">
-
-
 <div class="brand">
-
 <div class="logo">
 🚀 NovaAI
 </div>
-
-
 <div class="version">
 Assistant IA nouvelle génération
 </div>
-
-
 <p class="tagline">
 Discutez, créez et analysez sans limite.
 </p>
-
-
 </div>
-
-
-
-
-
 <button class="newChat" onclick="newChat()">
-
 ＋ Nouveau chat
-
 </button>
-
-
-
-
-
 <div class="historySearch">
-
 <input 
 id="searchHistory"
 placeholder="🔎 Rechercher..."
 >
-
-
 </div>
-
-
-
-
 <h3 class="historyTitle">
 Historique
 </h3>
-
-
-
 <div 
 id="history"
 class="history">
-
 </div>
-
-
-
-
-
-
 <div class="bottom">
-
-
 <button onclick="toggleSettings()">
-
 ⚙️ Paramètres
-
 </button>
-
-
-
 <button onclick="exportChat()">
-
 📥 Exporter
-
 </button>
-
-
-
 </div>
-
-
 </aside>
-
-
-
-
-
-
-
 <!-- CHAT -->
-
 <main class="chat">
-
-
-
 <header class="topbar">
-
-
 <div>
-
 <h2>
 NovaAI
 </h2>
-
-
 <span class="status">
 🟢 En ligne
 </span>
-
-
 </div>
-
-
-
 </header>
-
-
-
-
-
-
-
-
-
 <!-- MESSAGES -->
-
 <div 
 id="messages"
 class="messages">
-
-
 <div class="welcome">
-
-
 <h1>
 Bienvenue sur NovaAI 🚀
 </h1>
-
-
-
 <p>
-
 Ton assistant IA pour discuter,
 créer des images,
 analyser des fichiers et apprendre.
-
 </p>
-
-
-
-
 <div class="suggestions">
-
-
 <button onclick="sendQuick('Explique moi une idée simplement')">
-
 💡 Explique une idée
-
 </button>
-
-
-
 <button onclick="sendQuick('Aide moi à écrire un texte professionnel')">
-
 ✍️ Écris un texte
-
 </button>
-
-
-
 <button onclick="sendQuick('Donne moi une idée de projet')">
-
 🚀 Idée projet
-
 </button>
-
-
-
 </div>
-
-
 </div>
-
-
 </div>
-
-
-
-
-
-
-
-
-
 <!-- BARRE OUTILS CHAT -->
-
 <div class="chatTools">
-
-
 <button 
 class="attachBtn"
 onclick="openFileMenu()">
 +
 </button>
-
-
 <div 
 class="fileMenu hidden"
 id="fileMenu">
-
-
 <label>
 📄 Document
-
 <input 
 type="file"
 id="fileInput"
 accept=".pdf,.txt,.docx,.xlsx"
 onchange="handleFile()">
 </label>
-
-
-
 <label>
 🖼️ Image
-
 <input 
 type="file"
 id="imageUpload"
 accept="image/*"
 onchange="handleImage()">
 </label>
-
-
 </div>
-
-
-
 <input
-
 id="input"
-
 placeholder="Écris à NovaAI..."
-
 autocomplete="off"
-
 onkeydown="
 if(event.key==='Enter'){
 sendMessage()
 }
 "
-
 >
-
-
-
 <button
-
 class="sendBtn"
-
 onclick="sendMessage()">
-
 ➤
-
 </button>
-
-
 </div>
 <!-- SETTINGS -->
-
-
 <div
-
 id="settings"
-
 class="settings hidden"
-
 >
-
-
 <h3>
 ⚙️ Paramètres
 </h3>
-
-
-
 <button onclick="toggleTheme()">
-
 🌗 Mode sombre
-
 </button>
-
-
-
-
 <button onclick="clearHistory()">
-
 🗑️ Effacer historique
-
 </button>
-
-
-
+<button onclick="logout()">
+🚪 Se déconnecter
+</button>
 <button onclick="toggleSettings()">
-
 Fermer
-
 </button>
-
-
-
 </div>
-
-
-
-
-
 </main>
-
-
-
 </div>
 
-
-
-
-
-
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script src="app.js"></script>
-
-
 </body>
-
-
 </html>
