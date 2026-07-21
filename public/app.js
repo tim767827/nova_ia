@@ -1,1982 +1,719 @@
 /* ==========================================
-   NOVA AI V10 PREMIUM — app.js
-   + Connexion visiteurs (Supabase)
-   + Suivi d'événements pour le dashboard admin
+   NOVA AI V11 — app.js
+   + Conversations et messages sauvegardés dans Supabase
+     (fini le localStorage : accessible depuis n'importe quel appareil)
+   + Réponses en streaming (effet "live", pas simulé)
+   + Bouton Stop + Régénérer
+   + Recherche dans les titres ET le contenu des messages
+   + PWA (installation mobile)
 ========================================== */
-
 
 // ===============================
 // SUPABASE
 // ===============================
-
 const SUPABASE_URL = "https://fokziksapqquupnibjau.supabase.co";
 const SUPABASE_KEY = "sb_publishable_xdzZ4xtdJiv5koMxgZ8wzA_C1wCpV70";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+// ===============================
+// ETAT
+// ===============================
+let userId = null;
+let conversations = [];       // liste { id, title, updated_at }
+let currentConversationId = null;
+let currentMessages = [];     // messages de la conversation ouverte
+let authMode = "login";
+let abortController = null;   // pour le bouton Stop
+let lastUserMessage = null;   // pour Régénérer
 
 // ===============================
-// UTILISATEUR / VARIABLES
+// ECRAN DE CONNEXION
 // ===============================
+function toggleAuthMode() {
+  authMode = authMode === "login" ? "signup" : "login";
 
-let userId = null;      // id du compte connecté (Supabase), null tant que non connecté
-let chats = [];
-let currentChat = null;
-let authMode = "login"; // "login" ou "signup"
-
-
-// ===============================
-// SAUVEGARDE (une clé par utilisateur, pour ne pas mélanger les comptes sur un même appareil)
-// ===============================
-
-function saveChats(){
-
-    if(!userId) return;
-
-    localStorage.setItem(
-        "novaChats_" + userId,
-        JSON.stringify(chats)
-    );
-
-}
-
-
-// ===============================
-// ECRAN DE CONNEXION / INSCRIPTION
-// ===============================
-
-function toggleAuthMode(){
-
-    authMode = authMode === "login" ? "signup" : "login";
-
-    document.getElementById("authSubmitBtn").textContent =
-        authMode === "login" ? "Se connecter" : "Créer un compte";
-
-    document.getElementById("authSub").textContent =
-        authMode === "login"
-        ? "Connecte-toi pour retrouver tes conversations."
-        : "Crée un compte pour sauvegarder tes conversations.";
-
-    document.getElementById("authSwitchText").textContent =
-        authMode === "login" ? "Pas encore de compte ?" : "Déjà un compte ?";
-
-    document.getElementById("authSwitchBtn").textContent =
-        authMode === "login" ? "Créer un compte" : "Se connecter";
-
-    document.getElementById("authError").textContent = "";
-
+  document.getElementById("authSubmitBtn").textContent =
+    authMode === "login" ? "Se connecter" : "Créer un compte";
+  document.getElementById("authSub").textContent =
+    authMode === "login"
+      ? "Connecte-toi pour retrouver tes conversations."
+      : "Crée un compte pour sauvegarder tes conversations.";
+  document.getElementById("authSwitchText").textContent =
+    authMode === "login" ? "Pas encore de compte ?" : "Déjà un compte ?";
+  document.getElementById("authSwitchBtn").textContent =
+    authMode === "login" ? "Créer un compte" : "Se connecter";
+  document.getElementById("authError").textContent = "";
 }
 window.toggleAuthMode = toggleAuthMode;
 
+async function submitAuth() {
+  const email = document.getElementById("authEmail").value.trim();
+  const password = document.getElementById("authPassword").value;
+  const errorBox = document.getElementById("authError");
+  errorBox.textContent = "";
 
-async function submitAuth(){
+  if (!email || !password) {
+    errorBox.textContent = "Remplis l'email et le mot de passe.";
+    return;
+  }
 
-    const email = document.getElementById("authEmail").value.trim();
-    const password = document.getElementById("authPassword").value;
-    const errorBox = document.getElementById("authError");
+  let result;
+  if (authMode === "login") {
+    result = await sb.auth.signInWithPassword({ email, password });
+  } else {
+    result = await sb.auth.signUp({ email, password });
+  }
 
-    errorBox.textContent = "";
+  if (result.error) {
+    errorBox.textContent = result.error.message;
+    return;
+  }
 
-    if(!email || !password){
-        errorBox.textContent = "Remplis l'email et le mot de passe.";
-        return;
-    }
+  if (authMode === "signup" && !result.data.session) {
+    errorBox.textContent = "Compte créé ! Vérifie ta boîte mail pour confirmer ton adresse, puis connecte-toi.";
+    return;
+  }
 
-    let result;
-
-    if(authMode === "login"){
-
-        result = await sb.auth.signInWithPassword({ email, password });
-
-    } else {
-
-        result = await sb.auth.signUp({ email, password });
-
-    }
-
-    if(result.error){
-        errorBox.textContent = result.error.message;
-        return;
-    }
-
-    if(authMode === "signup" && !result.data.session){
-        errorBox.textContent = "Compte créé ! Vérifie ta boîte mail pour confirmer ton adresse, puis connecte-toi.";
-        return;
-    }
-
-    onAuthenticated(result.data.session.user);
-
+  onAuthenticated(result.data.session.user);
 }
 window.submitAuth = submitAuth;
 
-
-function logout(){
-
-    sb.auth.signOut().then(()=>{
-        location.reload();
-    });
-
+function logout() {
+  sb.auth.signOut().then(() => location.reload());
 }
 window.logout = logout;
 
+async function onAuthenticated(user) {
+  userId = user.id;
 
-async function onAuthenticated(user){
+  document.getElementById("authScreen").classList.add("hidden");
+  document.getElementById("appRoot").classList.remove("hidden");
 
-    userId = user.id;
+  await loadConversations();
 
-    document.getElementById("authScreen").classList.add("hidden");
-    document.getElementById("appRoot").classList.remove("hidden");
+  if (conversations.length) {
+    await openConversation(conversations[0].id);
+  }
 
-    chats = JSON.parse(
-        localStorage.getItem("novaChats_" + userId)
-    ) || [];
-
-    renderHistory();
-
-    if(chats.length){
-        loadChat(chats[0].id);
-    }
-
-    startHeartbeat();
-
+  startHeartbeat();
 }
 
-
 // ===============================
-// "CONNECTÉ EN CE MOMENT" (dashboard admin)
+// PRESENCE ("connecté en ce moment" pour le dashboard admin)
 // ===============================
-
-function startHeartbeat(){
-    updateLastSeen();
-    setInterval(updateLastSeen, 30000); // toutes les 30 secondes tant que l'onglet est ouvert
+function startHeartbeat() {
+  updateLastSeen();
+  setInterval(updateLastSeen, 30000);
 }
 
-async function updateLastSeen(){
-    if(!userId) return;
-    await sb.from("profiles")
-        .update({ last_seen: new Date().toISOString() })
-        .eq("id", userId);
+async function updateLastSeen() {
+  if (!userId) return;
+  await sb.from("profiles").update({ last_seen: new Date().toISOString() }).eq("id", userId);
 }
 
-
-// ===============================
-// EVENEMENTS (dashboard admin)
-// ===============================
-
-async function logEvent(type){
-    if(!userId) return;
-    try{
-        await sb.from("events").insert({ user_id: userId, type: type });
-    }catch(e){
-        console.log("Erreur log event :", e);
-    }
+async function logEvent(type) {
+  if (!userId) return;
+  try {
+    await sb.from("events").insert({ user_id: userId, type });
+  } catch (e) {
+    console.log("Erreur log event :", e);
+  }
 }
-
 
 // ===============================
 // SIDEBAR
 // ===============================
+function toggleSidebar() {
+  document.getElementById("sidebar")?.classList.toggle("open");
+  document.querySelector(".overlay")?.classList.toggle("active");
+}
+window.toggleSidebar = toggleSidebar;
 
-
-function toggleSidebar(){
-
-    const sidebar =
-    document.getElementById("sidebar");
-
-
-    const overlay =
-    document.querySelector(".overlay");
-
-
-    if(sidebar){
-
-        sidebar.classList.toggle("open");
-
-    }
-
-
-    if(overlay){
-
-        overlay.classList.toggle("active");
-
-    }
-
-
+function closeSidebar() {
+  document.getElementById("sidebar")?.classList.remove("open");
+  document.querySelector(".overlay")?.classList.remove("active");
 }
 
+// ===============================
+// CONVERSATIONS (Supabase)
+// ===============================
+async function loadConversations() {
+  const { data, error } = await sb
+    .from("conversations")
+    .select("id, title, updated_at")
+    .order("updated_at", { ascending: false });
 
-window.toggleSidebar =
-toggleSidebar;
+  if (error) {
+    console.log("LOAD CONVERSATIONS ERROR", error);
+    conversations = [];
+  } else {
+    conversations = data || [];
+  }
 
-
-
-
-
-
-function closeSidebar(){
-
-
-    const sidebar =
-    document.getElementById("sidebar");
-
-
-    const overlay =
-    document.querySelector(".overlay");
-
-
-
-    if(sidebar){
-
-        sidebar.classList.remove("open");
-
-    }
-
-
-    if(overlay){
-
-        overlay.classList.remove("active");
-
-    }
-
-
+  renderHistory();
 }
 
-
-
-
-
-
-
-// ===============================
-// HISTORIQUE
-// ===============================
-
-
-function renderHistory(){
-
-
-    const history =
-    document.getElementById("history");
-
-
-    if(!history)return;
-
-
-
-    history.innerHTML="";
-
-
-
-    chats.forEach(chat=>{
-
-
-        const item =
-        document.createElement("div");
-
-
-        item.className="item";
-
-
-
-        const title =
-        document.createElement("span");
-
-
-        title.className="chatTitle";
-
-
-        title.textContent =
-        chat.title;
-
-
-
-        title.onclick=()=>{
-
-            loadChat(chat.id);
-
-            closeSidebar();
-
-        };
-
-
-
-
-
-        const actions =
-        document.createElement("div");
-
-
-        actions.className =
-        "chatActions";
-
-
-
-
-
-
-        const edit =
-        document.createElement("button");
-
-
-        edit.textContent="✏️";
-
-
-
-        edit.onclick=(e)=>{
-
-
-            e.stopPropagation();
-
-
-
-            let name =
-            prompt(
-                "Nouveau titre",
-                chat.title
-            );
-
-
-
-            if(name){
-
-
-                chat.title =
-                name.trim();
-
-
-                saveChats();
-
-                renderHistory();
-
-
-            }
-
-
-        };
-
-
-
-
-
-
-        const del =
-        document.createElement("button");
-
-
-        del.textContent="🗑️";
-
-
-
-        del.onclick=(e)=>{
-
-
-            e.stopPropagation();
-
-
-
-            if(confirm(
-                "Supprimer cette conversation ?"
-            )){
-
-
-                chats =
-                chats.filter(
-                    c=>c.id!==chat.id
-                );
-
-
-
-                if(currentChat?.id===chat.id){
-
-                    currentChat=null;
-
-                }
-
-
-
-                saveChats();
-
-                renderHistory();
-
-
-            }
-
-
-        };
-
-
-
-
-        actions.appendChild(edit);
-
-        actions.appendChild(del);
-
-
-
-        item.appendChild(title);
-
-        item.appendChild(actions);
-
-
-
-        history.appendChild(item);
-
-
-
-    });
-
-
-
-}
-
-
-
-
-
-
-
-
-
-// ===============================
-// NOUVEAU CHAT
-// ===============================
-
-
-function newChat(){
-
-
-    currentChat={
-
-
-        id:Date.now(),
-
-
-        title:"Nouvelle conversation",
-
-
-        messages:[]
-
-
+function renderHistory(list = conversations) {
+  const history = document.getElementById("history");
+  if (!history) return;
+
+  history.innerHTML = "";
+
+  if (!list.length) {
+    history.innerHTML = '<div class="item" style="justify-content:center;color:#94a3b8;">Aucune conversation</div>';
+    return;
+  }
+
+  list.forEach((conv) => {
+    const item = document.createElement("div");
+    item.className = "item";
+    if (conv.id === currentConversationId) item.style.background = "#dbeafe";
+
+    const title = document.createElement("span");
+    title.className = "chatTitle";
+    title.textContent = conv.title;
+    title.onclick = () => {
+      openConversation(conv.id);
+      closeSidebar();
     };
 
+    const actions = document.createElement("div");
+    actions.className = "chatActions";
 
+    const edit = document.createElement("button");
+    edit.textContent = "✏️";
+    edit.onclick = async (e) => {
+      e.stopPropagation();
+      const name = prompt("Nouveau titre", conv.title);
+      if (name && name.trim()) {
+        await sb.from("conversations").update({ title: name.trim() }).eq("id", conv.id);
+        conv.title = name.trim();
+        renderHistory(list);
+      }
+    };
 
-    chats.unshift(
-        currentChat
-    );
-
-
-
-    saveChats();
-
-
-    renderHistory();
-
-
-    logEvent("chat_created");
-
-
-
-    const box =
-    document.getElementById("messages");
-
-
-
-    if(box){
-
-        box.innerHTML="";
-
-    }
-
-
-}
-
-
-window.newChat =
-newChat;
-
-
-
-
-
-
-
-
-
-// ===============================
-// CHARGER CHAT
-// ===============================
-
-
-function loadChat(id){
-
-
-    currentChat =
-    chats.find(
-        c=>c.id===id
-    );
-
-
-
-    if(!currentChat)return;
-
-
-
-    const box =
-    document.getElementById("messages");
-
-
-
-    box.innerHTML="";
-
-
-
-    currentChat.messages.forEach(msg=>{
-
-
-        if(msg.type==="image"){
-
-
-            addImage(
-                msg.text,
-                false
-            );
-
-
+    const del = document.createElement("button");
+    del.textContent = "🗑️";
+    del.onclick = async (e) => {
+      e.stopPropagation();
+      if (confirm("Supprimer cette conversation ?")) {
+        await sb.from("conversations").delete().eq("id", conv.id);
+        conversations = conversations.filter((c) => c.id !== conv.id);
+        if (currentConversationId === conv.id) {
+          currentConversationId = null;
+          currentMessages = [];
+          document.getElementById("messages").innerHTML = "";
         }
-
-        else{
-
-
-            addMessage(
-                msg.text,
-                msg.type,
-                false
-            );
-
-
-        }
-
-
-    });
-
-
-}
-
-
-
-
-
-
-
-
-// ===============================
-// AFFICHER MESSAGE
-// ===============================
-
-
-function addMessage(
-text,
-type,
-scroll=true
-){
-
-
-    const box =
-    document.getElementById("messages");
-
-
-
-    if(!box)return;
-
-
-
-    const welcome =
-    document.querySelector(".welcome");
-
-
-
-    if(welcome){
-
-        welcome.remove();
-
-    }
-
-
-
-
-    const div =
-    document.createElement("div");
-
-
-
-    div.className =
-    "msg " + type;
-
-
-
-
-    if(type==="bot"){
-
-
-        div.innerHTML =
-        cleanMarkdown(text);
-
-
-    }
-
-    else{
-
-
-        div.textContent =
-        text;
-
-
-    }
-
-
-
-    box.appendChild(div);
-
-
-
-    if(scroll){
-
-        smartScroll();
-
-    }
-
-
-
-}
-
-
-
-
-
-
-
-
-// ===============================
-// MARKDOWN
-// ===============================
-
-
-function cleanMarkdown(text){
-
-
-    if(window.marked){
-
-        return marked.parse(text);
-
-    }
-
-
-    return text.replace(
-        /\n/g,
-        "<br>"
-    );
-
-
-}
-
-
-
-
-
-
-
-
-// ===============================
-// SCROLL
-// ===============================
-
-
-function smartScroll(){
-
-
-    const box =
-    document.getElementById("messages");
-
-
-
-    if(!box)return;
-
-
-
-    box.scrollTo({
-
-        top:box.scrollHeight,
-
-        behavior:"smooth"
-
-    });
-
-
-}
-
-
-// ===============================
-// ENVOI MESSAGE
-// ===============================
-
-
-async function sendMessage(){
-
-
-    const chatInput =
-    document.getElementById("input");
-
-
-    if(!chatInput)return;
-
-
-
-    const text =
-    chatInput.value.trim();
-
-
-
-    if(!text)return;
-
-
-
-    if(!currentChat){
-
-        newChat();
-
-    }
-
-
-
-    addMessage(
-        text,
-        "user"
-    );
-
-
-
-    currentChat.messages.push({
-
-        text:text,
-
-        type:"user"
-
-    });
-
-
-
-    if(
-        currentChat.title ===
-        "Nouvelle conversation"
-    ){
-
-
-        currentChat.title =
-        text.substring(0,35);
-
-
         renderHistory();
-
-
-    }
-
-
-
-    saveChats();
-
-    logEvent("message_sent");
-
-
-
-    chatInput.value="";
-
-
-
-
-    // MESSAGE CHARGEMENT IA
-
-
-    let loading =
-    document.createElement("div");
-
-
-
-    loading.className =
-    "msg bot";
-
-
-
-    loading.id =
-    "novaLoading";
-
-
-    loading.textContent =
-    "Nova réfléchit...";
-
-
-
-    document
-    .getElementById("messages")
-    .appendChild(loading);
-
-
-
-    smartScroll();
-
-
-
-
-    try{
-
-
-        const response =
-        await fetch(
-            "/chat",
-            {
-
-                method:"POST",
-
-                headers:{
-
-                    "Content-Type":
-                    "application/json"
-
-                },
-
-
-                body:JSON.stringify({
-
-                    message:text,
-
-                    userId:userId
-
-                })
-
-            }
-
-        );
-
-
-
-        const data =
-        await response.json();
-
-
-
-
-        loading.remove();
-
-
-
-
-        // ==========================
-        // IMAGE
-        // ==========================
-
-
-        if(data.image){
-
-
-            showImageLoading();
-
-
-
-            setTimeout(()=>{
-
-
-                removeImageLoading();
-
-
-
-                addImage(
-                    data.image
-                );
-
-
-            },500);
-
-
-
-        }
-
-
-
-        // ==========================
-        // TEXTE NORMAL
-        // ==========================
-
-
-        else{
-
-
-            typeWriter(
-                data.reply ||
-                "Pas de réponse."
-            );
-
-
-        }
-
-
-
-    }
-
-
-
-    catch(error){
-
-
-        console.log(error);
-
-
-
-        if(loading){
-
-            loading.remove();
-
-        }
-
-
-
-        addMessage(
-            "❌ Erreur serveur",
-            "bot"
-        );
-
-
-    }
-
-
-
-}
-
-
-window.sendMessage =
-sendMessage;
-
-
-
-
-
-
-
-
-
-// ===============================
-// IMAGE EN CREATION
-// ===============================
-
-
-function showImageLoading(){
-
-
-    const box =
-    document.getElementById("messages");
-
-
-
-    if(!box)return;
-
-
-
-    const div =
-    document.createElement("div");
-
-
-
-    div.className =
-    "msg bot";
-
-
-    div.id =
-    "imageLoading";
-
-
-
-    div.textContent =
-    "🖼️ Image en cours de création...";
-
-
-
-    box.appendChild(div);
-
-
-
-    smartScroll();
-
-
-}
-
-
-
-
-
-
-function removeImageLoading(){
-
-
-    const loading =
-    document.getElementById(
-        "imageLoading"
-    );
-
-
-
-    if(loading){
-
-        loading.remove();
-
-    }
-
-
-}
-
-
-
-
-
-
-
-
-// ===============================
-// AJOUT IMAGE
-// ===============================
-
-
-function addImage(
-url,
-save=true
-){
-
-
-    const box =
-    document.getElementById("messages");
-
-
-
-    if(!box)return;
-
-
-
-
-    const title =
-    document.createElement("div");
-
-
-
-    title.className =
-    "msg bot";
-
-
-
-    title.textContent =
-    "✅ Image créée :";
-
-
-
-    box.appendChild(title);
-
-
-
-
-
-
-
-    const img =
-    document.createElement("img");
-
-
-
-    img.src=url;
-
-
-
-    img.className =
-    "generatedImage";
-
-
-
-    box.appendChild(img);
-
-
-
-
-    if(
-        save &&
-        currentChat
-    ){
-
-
-        currentChat.messages.push({
-
-            text:url,
-
-            type:"image"
-
-        });
-
-
-        saveChats();
-
-        logEvent("image_generated");
-
-
-    }
-
-
-
-    smartScroll();
-
-
-}
-
-
-
-
-
-
-
-
-
-// ===============================
-// ECRITURE IA
-// ===============================
-
-
-function typeWriter(text){
-
-
-
-    const div =
-    document.createElement("div");
-
-
-
-    div.className =
-    "msg bot";
-
-
-
-    document
-    .getElementById("messages")
-    .appendChild(div);
-
-
-
-
-    let index=0;
-
-
-
-    const timer =
-    setInterval(()=>{
-
-
-
-        div.innerHTML =
-        cleanMarkdown(
-            text.substring(
-                0,
-                index
-            )
-        );
-
-
-
-        index++;
-
-
-
-        smartScroll();
-
-
-
-
-        if(index > text.length){
-
-
-            clearInterval(timer);
-
-
-
-            if(currentChat){
-
-
-                currentChat.messages.push({
-
-                    text:text,
-
-                    type:"bot"
-
-                });
-
-
-
-                saveChats();
-
-
-            }
-
-
-
-        }
-
-
-
-    },15);
-
-
-}
-
-
-
-
-
-
-
-
-
-// ===============================
-// MENU +
-// ===============================
-
-
-function openFileMenu(){
-
-
-    const menu =
-    document.getElementById("fileMenu");
-
-
-
-    if(menu){
-
-        menu.classList.toggle(
-            "hidden"
-        );
-
-    }
-
-
-}
-
-
-
-window.openFileMenu =
-openFileMenu;
-
-
-
-
-
-
-
-
-
-// ===============================
-// IMAGE UPLOAD
-// ===============================
-
-
-async function handleImage(){
-
-
-    const file =
-    document
-    .getElementById("imageUpload")
-    .files[0];
-
-
-
-    if(!file)return;
-
-
-
-    addMessage(
-        "🖼️ Image envoyée",
-        "user"
-    );
-
-
-
-    const reader =
-    new FileReader();
-
-
-
-    reader.onload=async()=>{
-
-
-        try{
-
-
-            const response =
-            await fetch(
-                "/vision",
-                {
-
-                    method:"POST",
-
-                    headers:{
-
-                        "Content-Type":
-                        "application/json"
-
-                    },
-
-
-                    body:JSON.stringify({
-
-                        image:
-                        reader.result.split(",")[1],
-
-                        mimeType:file.type
-
-                    })
-
-                }
-
-            );
-
-
-
-            const data =
-            await response.json();
-
-
-
-            addMessage(
-
-                data.reply ||
-                "Analyse terminée.",
-
-                "bot"
-
-            );
-
-
-
-        }
-
-
-        catch(e){
-
-
-            addMessage(
-                "❌ Erreur analyse image",
-                "bot"
-            );
-
-
-        }
-
-
+      }
     };
 
-
-
-    reader.readAsDataURL(file);
-
-
+    actions.appendChild(edit);
+    actions.appendChild(del);
+    item.appendChild(title);
+    item.appendChild(actions);
+    history.appendChild(item);
+  });
 }
 
+async function createConversation(firstMessageText) {
+  const title = firstMessageText.substring(0, 35) || "Nouvelle conversation";
 
+  const { data, error } = await sb
+    .from("conversations")
+    .insert({ user_id: userId, title })
+    .select()
+    .single();
 
-window.handleImage =
-handleImage;
+  if (error) {
+    console.log("CREATE CONVERSATION ERROR", error);
+    return null;
+  }
 
+  conversations.unshift(data);
+  currentConversationId = data.id;
+  currentMessages = [];
+  renderHistory();
+  logEvent("chat_created");
+  return data.id;
+}
 
+function newChat() {
+  currentConversationId = null;
+  currentMessages = [];
+  const box = document.getElementById("messages");
+  if (box) {
+    box.innerHTML = `
+      <div class="welcome">
+        <h1>Bienvenue sur NovaAI 🚀</h1>
+        <p>Ton assistant IA pour discuter, créer des images, analyser des fichiers et apprendre.</p>
+        <div class="suggestions">
+          <button onclick="sendQuick('Explique moi une idée simplement')">💡 Explique une idée</button>
+          <button onclick="sendQuick('Aide moi à écrire un texte professionnel')">✍️ Écris un texte</button>
+          <button onclick="sendQuick('Donne moi une idée de projet')">🚀 Idée projet</button>
+        </div>
+      </div>`;
+  }
+  renderHistory();
+}
+window.newChat = newChat;
 
+async function openConversation(id) {
+  currentConversationId = id;
 
+  const { data, error } = await sb
+    .from("messages")
+    .select("id, role, type, content, created_at")
+    .eq("conversation_id", id)
+    .order("created_at", { ascending: true });
 
+  if (error) {
+    console.log("LOAD MESSAGES ERROR", error);
+    currentMessages = [];
+  } else {
+    currentMessages = data || [];
+  }
 
+  const box = document.getElementById("messages");
+  box.innerHTML = "";
 
+  currentMessages.forEach((msg) => {
+    if (msg.type === "image") {
+      addImageToUI(msg.content);
+    } else {
+      addMessageToUI(msg.content, msg.role === "user" ? "user" : "bot");
+    }
+  });
+
+  renderHistory();
+}
 
 // ===============================
-// DOCUMENT
+// RECHERCHE (titres + contenu des messages)
 // ===============================
+let searchTimeout = null;
+function setupSearch() {
+  const input = document.getElementById("searchHistory");
+  if (!input) return;
 
+  input.addEventListener("input", () => {
+    clearTimeout(searchTimeout);
+    const value = input.value.trim();
 
-async function handleFile(){
+    searchTimeout = setTimeout(async () => {
+      if (!value) {
+        renderHistory();
+        return;
+      }
 
+      const byTitle = conversations.filter((c) =>
+        c.title.toLowerCase().includes(value.toLowerCase())
+      );
 
-    const file =
-    document
-    .getElementById("fileInput")
-    .files[0];
+      const { data: matches } = await sb
+        .from("messages")
+        .select("conversation_id")
+        .ilike("content", `%${value}%`)
+        .limit(50);
 
+      const idsFromContent = new Set((matches || []).map((m) => m.conversation_id));
+      const byContent = conversations.filter((c) => idsFromContent.has(c.id));
 
+      const merged = [...byTitle, ...byContent].filter(
+        (c, i, arr) => arr.findIndex((x) => x.id === c.id) === i
+      );
 
-    if(!file)return;
+      renderHistory(merged);
+    }, 300);
+  });
+}
 
+// ===============================
+// AFFICHAGE MESSAGES (UI seulement, pas de sauvegarde ici)
+// ===============================
+function addMessageToUI(text, type) {
+  const box = document.getElementById("messages");
+  if (!box) return;
 
+  document.querySelector(".welcome")?.remove();
 
-    addMessage(
+  const div = document.createElement("div");
+  div.className = "msg " + type;
+  div.innerHTML = type === "bot" ? cleanMarkdown(text) : escapeHtml(text);
 
-        "📄 Document envoyé : "
-        +file.name,
+  box.appendChild(div);
+  smartScroll();
+  return div;
+}
 
-        "user"
+function escapeHtml(text) {
+  const div = document.createElement("div");
+  div.textContent = text;
+  return div.innerHTML;
+}
 
-    );
+function cleanMarkdown(text) {
+  if (window.marked) return marked.parse(text);
+  return text.replace(/\n/g, "<br>");
+}
 
+function smartScroll() {
+  const box = document.getElementById("messages");
+  if (!box) return;
+  box.scrollTo({ top: box.scrollHeight, behavior: "smooth" });
+}
 
+// ===============================
+// SAUVEGARDE D'UN MESSAGE EN BASE
+// ===============================
+async function saveMessageToDB(conversationId, role, content, type = "text") {
+  await sb.from("messages").insert({
+    conversation_id: conversationId,
+    user_id: userId,
+    role,
+    type,
+    content,
+  });
+  await sb.from("conversations").update({ updated_at: new Date().toISOString() }).eq("id", conversationId);
+}
 
-    const form =
-    new FormData();
+// ===============================
+// ENVOI MESSAGE (avec streaming)
+// ===============================
+async function sendMessage() {
+  const chatInput = document.getElementById("input");
+  if (!chatInput) return;
 
+  const text = chatInput.value.trim();
+  if (!text) return;
 
+  chatInput.value = "";
+  lastUserMessage = text;
 
-    form.append(
-        "file",
-        file
-    );
+  if (!currentConversationId) {
+    const id = await createConversation(text);
+    if (!id) {
+      addMessageToUI("❌ Impossible de créer la conversation.", "bot");
+      return;
+    }
+  }
 
+  addMessageToUI(text, "user");
+  currentMessages.push({ role: "user", type: "text", content: text });
+  await saveMessageToDB(currentConversationId, "user", text, "text");
+  logEvent("message_sent");
 
+  await requestAIResponse(text);
+}
+window.sendMessage = sendMessage;
 
-    try{
+async function requestAIResponse(text) {
+  setStopButtonVisible(true);
 
+  const history = currentMessages
+    .filter((m) => m.type === "text")
+    .slice(-20)
+    .map((m) => ({ role: m.role, content: m.content }));
 
-        const response =
-        await fetch(
-            "/upload",
-            {
+  abortController = new AbortController();
 
-                method:"POST",
+  const box = document.getElementById("messages");
+  const botDiv = document.createElement("div");
+  botDiv.className = "msg bot";
+  botDiv.textContent = "Nova réfléchit...";
+  box.appendChild(botDiv);
+  smartScroll();
 
-                body:form
+  try {
+    const response = await fetch("/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: text, history }),
+      signal: abortController.signal,
+    });
 
+    const contentType = response.headers.get("content-type") || "";
+
+    // ---- Cas image (réponse JSON classique, pas de stream) ----
+    if (contentType.includes("application/json")) {
+      const data = await response.json();
+      botDiv.remove();
+
+      if (data.image) {
+        addImageAndSave(data.image);
+      } else {
+        addMessageToUI(data.reply || "Pas de réponse.", "bot");
+        currentMessages.push({ role: "assistant", type: "text", content: data.reply || "" });
+        await saveMessageToDB(currentConversationId, "assistant", data.reply || "", "text");
+      }
+      setStopButtonVisible(false);
+      return;
+    }
+
+    // ---- Cas streaming SSE ----
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let fullText = "";
+    let firstChunk = true;
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      const chunk = decoder.decode(value, { stream: true });
+      const lines = chunk.split("\n").filter((l) => l.startsWith("data: "));
+
+      for (const line of lines) {
+        const payload = line.replace("data: ", "").trim();
+        if (payload === "[DONE]") continue;
+
+        try {
+          const json = JSON.parse(payload);
+          if (json.error) {
+            fullText = "❌ " + json.error;
+            botDiv.innerHTML = fullText;
+            continue;
+          }
+          const delta = json.choices?.[0]?.delta?.content;
+          if (delta) {
+            if (firstChunk) {
+              botDiv.textContent = "";
+              firstChunk = false;
             }
-
-        );
-
-
-
-        const data =
-        await response.json();
-
-
-
-        addMessage(
-
-            data.reply ||
-            "Document analysé.",
-
-            "bot"
-
-        );
-
-
-
+            fullText += delta;
+            botDiv.innerHTML = cleanMarkdown(fullText);
+            smartScroll();
+          }
+        } catch (e) {
+          // ligne SSE incomplète, on ignore
+        }
+      }
     }
 
-
-    catch(e){
-
-
-        addMessage(
-            "❌ Erreur document",
-            "bot"
-        );
-
-
+    if (fullText) {
+      currentMessages.push({ role: "assistant", type: "text", content: fullText });
+      await saveMessageToDB(currentConversationId, "assistant", fullText, "text");
+      addRegenerateButton(botDiv, fullText);
     }
-
-
+  } catch (error) {
+    if (error.name === "AbortError") {
+      botDiv.innerHTML += "<br><em style='color:#94a3b8'>(arrêté)</em>";
+    } else {
+      console.log(error);
+      botDiv.remove();
+      addMessageToUI("❌ Erreur serveur", "bot");
+    }
+  } finally {
+    setStopButtonVisible(false);
+    abortController = null;
+  }
 }
 
-
-
-window.handleFile =
-handleFile;
-
-
-
-
-
-
-
-
-// ===============================
-// REPONSES RAPIDES
-// ===============================
-
-
-function sendQuick(text){
-
-
-    const chatInput =
-    document.getElementById("input");
-
-
-
-    if(chatInput){
-
-
-        chatInput.value=text;
-
-
-        sendMessage();
-
-
-    }
-
-
+function addRegenerateButton(botDiv, previousText) {
+  const btn = document.createElement("button");
+  btn.textContent = "🔄 Régénérer";
+  btn.className = "regenBtn";
+  btn.onclick = async () => {
+    btn.remove();
+    if (!lastUserMessage) return;
+    await requestAIResponse(lastUserMessage);
+  };
+  botDiv.after(btn);
 }
 
+function setStopButtonVisible(visible) {
+  const btn = document.getElementById("stopBtn");
+  if (!btn) return;
+  btn.classList.toggle("hidden", !visible);
+}
 
+function stopGeneration() {
+  if (abortController) abortController.abort();
+}
+window.stopGeneration = stopGeneration;
 
-window.sendQuick =
-sendQuick;
+async function addImageAndSave(url) {
+  addImageToUI(url);
+  currentMessages.push({ role: "assistant", type: "image", content: url });
+  await saveMessageToDB(currentConversationId, "assistant", url, "image");
+  logEvent("image_generated");
+}
 
+function addImageToUI(url) {
+  const box = document.getElementById("messages");
+  if (!box) return;
+
+  const title = document.createElement("div");
+  title.className = "msg bot";
+  title.textContent = "✅ Image créée :";
+  box.appendChild(title);
+
+  const img = document.createElement("img");
+  img.src = url;
+  img.className = "generatedImage";
+  box.appendChild(img);
+
+  smartScroll();
+}
+
+// ===============================
+// MENU + (fichier / image)
+// ===============================
+function openFileMenu() {
+  document.getElementById("fileMenu")?.classList.toggle("hidden");
+}
+window.openFileMenu = openFileMenu;
+
+async function handleImage() {
+  const file = document.getElementById("imageUpload").files[0];
+  if (!file) return;
+
+  if (!currentConversationId) await createConversation("Analyse d'image");
+
+  addMessageToUI("🖼️ Image envoyée", "user");
+  await saveMessageToDB(currentConversationId, "user", "🖼️ Image envoyée", "text");
+
+  const reader = new FileReader();
+  reader.onload = async () => {
+    try {
+      const response = await fetch("/vision", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          image: reader.result.split(",")[1],
+          mimeType: file.type,
+        }),
+      });
+      const data = await response.json();
+      const reply = data.reply || "Analyse terminée.";
+      addMessageToUI(reply, "bot");
+      await saveMessageToDB(currentConversationId, "assistant", reply, "text");
+    } catch (e) {
+      addMessageToUI("❌ Erreur analyse image", "bot");
+    }
+  };
+  reader.readAsDataURL(file);
+}
+window.handleImage = handleImage;
+
+async function handleFile() {
+  const file = document.getElementById("fileInput").files[0];
+  if (!file) return;
+
+  if (!currentConversationId) await createConversation("Analyse de document");
+
+  const label = "📄 Document envoyé : " + file.name;
+  addMessageToUI(label, "user");
+  await saveMessageToDB(currentConversationId, "user", label, "text");
+
+  const form = new FormData();
+  form.append("file", file);
+
+  try {
+    const response = await fetch("/upload", { method: "POST", body: form });
+    const data = await response.json();
+    const reply = data.reply || "Document analysé.";
+    addMessageToUI(reply, "bot");
+    await saveMessageToDB(currentConversationId, "assistant", reply, "text");
+  } catch (e) {
+    addMessageToUI("❌ Erreur document", "bot");
+  }
+}
+window.handleFile = handleFile;
+
+function sendQuick(text) {
+  const chatInput = document.getElementById("input");
+  if (chatInput) {
+    chatInput.value = text;
+    sendMessage();
+  }
+}
+window.sendQuick = sendQuick;
 
 // ===============================
 // MODE SOMBRE
 // ===============================
-
-
-function toggleTheme(){
-
-
-    document.body
-    .classList
-    .toggle("dark");
-
-
-
-    localStorage.setItem(
-
-        "novaDark",
-
-        document.body
-        .classList
-        .contains("dark")
-
-    );
-
-
+function toggleTheme() {
+  document.body.classList.toggle("dark");
+  localStorage.setItem("novaDark", document.body.classList.contains("dark"));
 }
+window.toggleTheme = toggleTheme;
 
-
-window.toggleTheme =
-toggleTheme;
-
-
-
-
-
-
-
-if(
-    localStorage.getItem("novaDark")
-    ==="true"
-){
-
-
-    document.body
-    .classList
-    .add("dark");
-
-
+if (localStorage.getItem("novaDark") === "true") {
+  document.body.classList.add("dark");
 }
-
-
-
-
-
-
-
 
 // ===============================
 // PARAMETRES
 // ===============================
-
-
-function toggleSettings(){
-
-
-    const settings =
-    document.getElementById(
-        "settings"
-    );
-
-
-
-    if(settings){
-
-
-        settings.classList.toggle(
-            "hidden"
-        );
-
-
-    }
-
-
+function toggleSettings() {
+  document.getElementById("settings")?.classList.toggle("hidden");
 }
+window.toggleSettings = toggleSettings;
 
+async function clearHistory() {
+  if (!confirm("Supprimer TOUTES tes conversations ? Cette action est définitive.")) return;
 
-
-window.toggleSettings =
-toggleSettings;
-
-
-
-
-
-
-
-
-
-// ===============================
-// EFFACER HISTORIQUE
-// ===============================
-
-
-function clearHistory(){
-
-
-
-    if(
-        !confirm(
-            "Supprimer tout l'historique ?"
-        )
-    ){
-
-        return;
-
-    }
-
-
-
-
-    chats=[];
-
-
-    currentChat=null;
-
-
-
-    localStorage.removeItem(
-        "novaChats_" + userId
-    );
-
-
-
-    const box =
-    document.getElementById(
-        "messages"
-    );
-
-
-
-    if(box){
-
-        box.innerHTML="";
-
-    }
-
-
-
-    renderHistory();
-
-
-
+  for (const conv of conversations) {
+    await sb.from("conversations").delete().eq("id", conv.id);
+  }
+  conversations = [];
+  currentConversationId = null;
+  currentMessages = [];
+  document.getElementById("messages").innerHTML = "";
+  renderHistory();
 }
-
-
-
-window.clearHistory =
-clearHistory;
-
-
-
-
-
-
-
-
+window.clearHistory = clearHistory;
 
 // ===============================
-// EXPORT CHAT
+// EXPORT
 // ===============================
+function exportChat() {
+  if (!currentMessages.length) {
+    alert("Aucune conversation à exporter.");
+    return;
+  }
 
-
-function exportChat(){
-
-
-
-    if(!currentChat){
-
-
-        alert(
-            "Aucune conversation"
-        );
-
-
-        return;
-
-    }
-
-
-
-
-    let text =
-    currentChat.messages
-    .map(message=>{
-
-
-        return (
-
-            message.type
-            .toUpperCase()
-            +
-            " : "
-            +
-            message.text
-
-        );
-
-
-    })
+  const text = currentMessages
+    .map((m) => m.role.toUpperCase() + " : " + m.content)
     .join("\n\n");
 
-
-
-
-
-    const blob =
-    new Blob(
-
-        [text],
-
-        {
-            type:
-            "text/plain"
-        }
-
-    );
-
-
-
-
-
-    const link =
-    document.createElement(
-        "a"
-    );
-
-
-
-    link.href =
-    URL.createObjectURL(
-        blob
-    );
-
-
-
-    link.download =
-    "NovaAI-chat.txt";
-
-
-
-    link.click();
-
-
+  const blob = new Blob([text], { type: "text/plain" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "NovaAI-chat.txt";
+  link.click();
 }
-
-
-
-window.exportChat =
-exportChat;
-
-
-
-
-
-
-
-
-
-// ===============================
-// RECHERCHE HISTORIQUE
-// ===============================
-
-
-const historySearch =
-document.getElementById(
-    "searchHistory"
-);
-
-
-
-if(historySearch){
-
-
-
-    historySearch.addEventListener(
-
-        "input",
-
-        ()=>{
-
-
-            const value =
-            historySearch.value
-            .toLowerCase();
-
-
-
-
-            document
-            .querySelectorAll(
-                ".item"
-            )
-            .forEach(item=>{
-
-
-
-                item.style.display =
-
-                item.textContent
-                .toLowerCase()
-                .includes(value)
-
-                ?
-
-                "flex"
-
-                :
-
-                "none";
-
-
-
-            });
-
-
-
-        }
-
-    );
-
-
-
-}
-
-
-
-
-
-
-
-
+window.exportChat = exportChat;
 
 // ===============================
 // ENTREE CLAVIER
 // ===============================
-
-
-const messageInput =
-document.getElementById(
-    "input"
-);
-
-
-
-if(messageInput){
-
-
-
-    messageInput.addEventListener(
-
-        "keydown",
-
-        event=>{
-
-
-            if(
-                event.key==="Enter"
-                &&
-                !event.shiftKey
-            ){
-
-
-                event.preventDefault();
-
-
-                sendMessage();
-
-
-            }
-
-
-
-        }
-
-    );
-
-
-
-}
-
-
-
-
-
-
-
-
-
-// ===============================
-// FERMETURE MENU AVEC OVERLAY
-// ===============================
-
-
-const overlay =
-document.querySelector(
-    ".overlay"
-);
-
-
-
-if(overlay){
-
-
-    overlay.onclick=()=>{
-
-        closeSidebar();
-
-    };
-
-
-}
-
-
-
-
-
-
-
-
-
-// ===============================
-// DEMARRAGE APPLICATION
-// (attend que la session Supabase soit vérifiée
-//  avant d'afficher quoi que ce soit)
-// ===============================
-
-
-sb.auth.getSession().then(({ data })=>{
-
-    if(data.session){
-        onAuthenticated(data.session.user);
-    }
-    // sinon : on reste sur l'écran de connexion (#authScreen), rien à faire ici
-
+document.getElementById("input")?.addEventListener("keydown", (event) => {
+  if (event.key === "Enter" && !event.shiftKey) {
+    event.preventDefault();
+    sendMessage();
+  }
 });
 
+document.querySelector(".overlay")?.addEventListener("click", closeSidebar);
 
-console.log(
-    "🚀 NovaAI V10 chargé"
-);
+// ===============================
+// PWA — enregistrement du service worker
+// ===============================
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/sw.js").catch((e) => console.log("SW ERROR", e));
+  });
+}
+
+// ===============================
+// DEMARRAGE
+// ===============================
+setupSearch();
+
+sb.auth.getSession().then(({ data }) => {
+  if (data.session) onAuthenticated(data.session.user);
+});
+
+console.log("🚀 NovaAI V11 chargé");
