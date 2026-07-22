@@ -11,6 +11,7 @@ const express = require("express");
 const cors = require("cors");
 const path = require("path");
 const fetch = require("node-fetch");
+const { InferenceClient } = require("@huggingface/inference");
 const multer = require("multer");
 const rateLimit = require("express-rate-limit");
 const pdfParse = require("pdf-parse");
@@ -160,35 +161,34 @@ async function analyzeImage(image, mimeType) {
 }
 
 // =====================================================
-// GENERATION IMAGE — Hugging Face (Flux.1-schnell)
-// Gemini a retiré la génération d'image du tier gratuit (juillet 2026),
-// donc on passe par Hugging Face qui reste gratuit avec juste un token.
-// Renvoie une data URI base64 (data:image/jpeg;base64,...)
+// GENERATION IMAGE — Hugging Face via SDK officiel
+// hf-inference ne sert plus les modèles d'image (CPU only depuis 2025),
+// Flux tourne maintenant chez des providers tiers (fal-ai, together, replicate)
+// routés par HF. Le SDK gère le bon format pour chacun, provider "auto"
+// choisit celui dispo avec ton compte gratuit.
+// Renvoie une data URI base64.
 // =====================================================
 async function generateImageHF(prompt) {
   if (!HF_KEY) throw new Error("HF_API_KEY absente sur le serveur");
 
-  const response = await fetch(
-    "https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.1-schnell",
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${HF_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ inputs: prompt }),
-    }
-  );
+  const client = new InferenceClient(HF_KEY);
 
-  if (!response.ok) {
-    const errText = await response.text().catch(() => "");
-    console.log("HF IMAGE ERROR RAW:", errText);
-    throw new Error(`Hugging Face a renvoyé ${response.status} : ${errText.slice(0, 200)}`);
+  let blob;
+  try {
+    blob = await client.textToImage({
+      model: "black-forest-labs/FLUX.1-schnell",
+      inputs: prompt,
+      provider: "auto",
+    });
+  } catch (e) {
+    console.log("HF IMAGE ERROR RAW:", e.message || e);
+    throw new Error(`Hugging Face : ${e.message || "erreur inconnue"}`);
   }
 
-  const arrayBuffer = await response.arrayBuffer();
+  const arrayBuffer = await blob.arrayBuffer();
   const base64 = Buffer.from(arrayBuffer).toString("base64");
-  return `data:image/jpeg;base64,${base64}`;
+  const mime = blob.type || "image/png";
+  return `data:${mime};base64,${base64}`;
 }
 
 // =====================================================
