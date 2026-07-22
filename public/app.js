@@ -25,7 +25,14 @@ let currentMessages = [];     // messages de la conversation ouverte
 let authMode = "login";
 let abortController = null;   // pour le bouton Stop
 let lastUserMessage = null;   // pour Régénérer
-
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker
+      .register("/sw.js")
+      .then(() => console.log("✅ Service worker enregistré"))
+      .catch((err) => console.warn("❌ Échec service worker:", err));
+  });
+}
 // ===============================
 // ECRAN DE CONNEXION
 // ===============================
