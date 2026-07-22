@@ -30,7 +30,7 @@ const PORT = process.env.PORT || 3000;
 const GROQ_KEY = process.env.GROQ_KEY;
 const GEMINI_KEY = process.env.GEMINI_KEY;
 const TAVILY_KEY = process.env.TAVILY_KEY;
-const HF_KEY = process.env.HF_KEY;
+const HF_KEY = process.env.HF_API_KEY;
 
 console.log("🚀 NovaAI V12 démarrage");
 console.log("GROQ:", GROQ_KEY ? "OK" : "ABSENTE");
@@ -166,14 +166,14 @@ async function analyzeImage(image, mimeType) {
 // Renvoie une data URI base64 (data:image/jpeg;base64,...)
 // =====================================================
 async function generateImageHF(prompt) {
-  if (!HF_KEY) throw new Error("HF_KEY absente sur le serveur");
+  if (!HF_API_KEY) throw new Error("HF_API_KEY absente sur le serveur");
 
   const response = await fetch(
     "https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell",
     {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${HF_KEY}`,
+        Authorization: `Bearer ${HF_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ inputs: prompt }),
