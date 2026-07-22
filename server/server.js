@@ -166,14 +166,14 @@ async function analyzeImage(image, mimeType) {
 // Renvoie une data URI base64 (data:image/jpeg;base64,...)
 // =====================================================
 async function generateImageHF(prompt) {
-  if (!HF_API_KEY) throw new Error("HF_API_KEY absente sur le serveur");
+  if (!HF_KEY) throw new Error("HF_API_KEY absente sur le serveur");
 
   const response = await fetch(
     "https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell",
     {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${HF_API_KEY}`,
+        Authorization: `Bearer ${HF_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ inputs: prompt }),
