@@ -30,11 +30,13 @@ const PORT = process.env.PORT || 3000;
 const GROQ_KEY = process.env.GROQ_KEY;
 const GEMINI_KEY = process.env.GEMINI_KEY;
 const TAVILY_KEY = process.env.TAVILY_KEY;
+const HF_KEY = process.env.HF_KEY;
 
 console.log("🚀 NovaAI V12 démarrage");
 console.log("GROQ:", GROQ_KEY ? "OK" : "ABSENTE");
 console.log("GEMINI:", GEMINI_KEY ? "OK" : "ABSENTE");
 console.log("TAVILY:", TAVILY_KEY ? "OK" : "ABSENTE");
+console.log("HF:", HF_KEY ? "OK" : "ABSENTE");
 
 let genAI = null;
 if (GEMINI_KEY) genAI = new GoogleGenerativeAI(GEMINI_KEY);
@@ -158,33 +160,35 @@ async function analyzeImage(image, mimeType) {
 }
 
 // =====================================================
-// GEMINI IMAGE (Nano Banana) — remplace Pollinations
-// Renvoie une data URI base64 (data:image/png;base64,...)
+// GENERATION IMAGE — Hugging Face (Flux.1-schnell)
+// Gemini a retiré la génération d'image du tier gratuit (juillet 2026),
+// donc on passe par Hugging Face qui reste gratuit avec juste un token.
+// Renvoie une data URI base64 (data:image/jpeg;base64,...)
 // =====================================================
-async function generateImageGemini(prompt) {
-  if (!genAI) throw new Error("GEMINI_KEY absente sur le serveur");
+async function generateImageHF(prompt) {
+  if (!HF_KEY) throw new Error("HF_KEY absente sur le serveur");
 
-  const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-image" });
+  const response = await fetch(
+    "https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell",
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${HF_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ inputs: prompt }),
+    }
+  );
 
-  const result = await model.generateContent(prompt);
-
-  // Log complet en cas de souci pour debug (on verra la vraie erreur Google dans Render)
-  const candidate = result?.response?.candidates?.[0];
-  if (!candidate) {
-    console.log("GEMINI IMAGE - réponse brute:", JSON.stringify(result?.response, null, 2));
-    throw new Error("Réponse Gemini vide (aucun candidate)");
+  if (!response.ok) {
+    const errText = await response.text().catch(() => "");
+    console.log("HF IMAGE ERROR RAW:", errText);
+    throw new Error(`Hugging Face a renvoyé ${response.status} : ${errText.slice(0, 200)}`);
   }
 
-  const parts = candidate.content?.parts || [];
-  const imagePart = parts.find((p) => p.inlineData);
-
-  if (!imagePart) {
-    console.log("GEMINI IMAGE - parts reçues:", JSON.stringify(parts, null, 2));
-    throw new Error("Gemini n'a renvoyé aucune image (voir logs Render pour le détail)");
-  }
-
-  const mime = imagePart.inlineData.mimeType || "image/png";
-  return `data:${mime};base64,${imagePart.inlineData.data}`;
+  const arrayBuffer = await response.arrayBuffer();
+  const base64 = Buffer.from(arrayBuffer).toString("base64");
+  return `data:image/jpeg;base64,${base64}`;
 }
 
 // =====================================================
@@ -206,12 +210,12 @@ app.post("/chat", async (req, res) => {
     // ---- Génération d'image : pas de streaming, réponse directe ----
     if (intent === "image") {
       try {
-        const imageURL = await generateImageGemini(message);
+        const imageURL = await generateImageHF(message);
         return res.json({ reply: "🎨 Image créée !", image: imageURL });
       } catch (e) {
         console.log("IMAGE ERROR", e.message || e);
         return res.json({
-          reply: "⚠️ Erreur génération image (Gemini) : " + (e.message || "inconnue"),
+          reply: "⚠️ Erreur génération image : " + (e.message || "inconnue"),
         });
       }
     }
@@ -347,11 +351,11 @@ app.post("/generate-image", async (req, res) => {
     }
 
     try {
-      const imageURL = await generateImageGemini(finalPrompt);
+      const imageURL = await generateImageHF(finalPrompt);
       res.json({ image: imageURL, prompt: finalPrompt });
     } catch (e) {
       console.log("IMAGE ERROR", e.message || e);
-      res.json({ error: "Erreur génération image (Gemini) : " + (e.message || "inconnue") });
+      res.json({ error: "Erreur génération image : " + (e.message || "inconnue") });
     }
   } catch (e) {
     res.json({ error: "Erreur image." });
