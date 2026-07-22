@@ -1,8 +1,9 @@
 // =====================================================
-// NOVA AI SERVER V11
+// NOVA AI SERVER V12
 // + Streaming des réponses (SSE) — plus de "typewriter" simulé
 // + Ne dépend plus de la mémoire RAM pour l'historique
 //   (le client envoie l'historique récent, qui vient de Supabase)
+// + Génération d'image via Gemini (Nano Banana) au lieu de Pollinations
 // + Toujours prêt pour Render
 // =====================================================
 
@@ -30,7 +31,7 @@ const GROQ_KEY = process.env.GROQ_KEY;
 const GEMINI_KEY = process.env.GEMINI_KEY;
 const TAVILY_KEY = process.env.TAVILY_KEY;
 
-console.log("🚀 NovaAI V11 démarrage");
+console.log("🚀 NovaAI V12 démarrage");
 console.log("GROQ:", GROQ_KEY ? "OK" : "ABSENTE");
 console.log("GEMINI:", GEMINI_KEY ? "OK" : "ABSENTE");
 console.log("TAVILY:", TAVILY_KEY ? "OK" : "ABSENTE");
@@ -137,6 +138,56 @@ function detectIntent(message) {
 }
 
 // =====================================================
+// GEMINI VISION (analyse d'image envoyée par l'utilisateur)
+// =====================================================
+async function analyzeImage(image, mimeType) {
+  if (!genAI) throw new Error("Gemini absent");
+
+  const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+
+  const result = await model.generateContent([
+    { inlineData: { data: image, mimeType } },
+    `Analyse cette image. Réponds en français. Donne :
+- objets visibles
+- texte présent
+- informations importantes
+- explication simple`,
+  ]);
+
+  return result.response.text();
+}
+
+// =====================================================
+// GEMINI IMAGE (Nano Banana) — remplace Pollinations
+// Renvoie une data URI base64 (data:image/png;base64,...)
+// =====================================================
+async function generateImageGemini(prompt) {
+  if (!genAI) throw new Error("GEMINI_KEY absente sur le serveur");
+
+  const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-image" });
+
+  const result = await model.generateContent(prompt);
+
+  // Log complet en cas de souci pour debug (on verra la vraie erreur Google dans Render)
+  const candidate = result?.response?.candidates?.[0];
+  if (!candidate) {
+    console.log("GEMINI IMAGE - réponse brute:", JSON.stringify(result?.response, null, 2));
+    throw new Error("Réponse Gemini vide (aucun candidate)");
+  }
+
+  const parts = candidate.content?.parts || [];
+  const imagePart = parts.find((p) => p.inlineData);
+
+  if (!imagePart) {
+    console.log("GEMINI IMAGE - parts reçues:", JSON.stringify(parts, null, 2));
+    throw new Error("Gemini n'a renvoyé aucune image (voir logs Render pour le détail)");
+  }
+
+  const mime = imagePart.inlineData.mimeType || "image/png";
+  return `data:${mime};base64,${imagePart.inlineData.data}`;
+}
+
+// =====================================================
 // /chat — STREAMING SSE
 // Le client envoie : { message, history: [{role, content}, ...] }
 // (l'historique vient de Supabase côté client — plus de mémoire RAM serveur)
@@ -154,12 +205,15 @@ app.post("/chat", async (req, res) => {
 
     // ---- Génération d'image : pas de streaming, réponse directe ----
     if (intent === "image") {
-      const imageURL =
-        "https://image.pollinations.ai/prompt/" +
-        encodeURIComponent(message) +
-        "?model=flux&width=1024&height=1024&nologo=true";
-
-      return res.json({ reply: "🎨 Image créée !", image: imageURL });
+      try {
+        const imageURL = await generateImageGemini(message);
+        return res.json({ reply: "🎨 Image créée !", image: imageURL });
+      } catch (e) {
+        console.log("IMAGE ERROR", e.message || e);
+        return res.json({
+          reply: "⚠️ Erreur génération image (Gemini) : " + (e.message || "inconnue"),
+        });
+      }
     }
 
     if (!GROQ_KEY) {
@@ -239,26 +293,6 @@ app.post("/chat", async (req, res) => {
   }
 });
 
-// =====================================================
-// GEMINI VISION
-// =====================================================
-async function analyzeImage(image, mimeType) {
-  if (!genAI) throw new Error("Gemini absent");
-
-  const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-
-  const result = await model.generateContent([
-    { inlineData: { data: image, mimeType } },
-    `Analyse cette image. Réponds en français. Donne :
-- objets visibles
-- texte présent
-- informations importantes
-- explication simple`,
-  ]);
-
-  return result.response.text();
-}
-
 app.post("/vision", async (req, res) => {
   try {
     const { image, mimeType } = req.body;
@@ -312,12 +346,13 @@ app.post("/generate-image", async (req, res) => {
       }
     }
 
-    const imageURL =
-      "https://image.pollinations.ai/prompt/" +
-      encodeURIComponent(finalPrompt) +
-      "?model=flux&width=1024&height=1024&nologo=true";
-
-    res.json({ image: imageURL, prompt: finalPrompt });
+    try {
+      const imageURL = await generateImageGemini(finalPrompt);
+      res.json({ image: imageURL, prompt: finalPrompt });
+    } catch (e) {
+      console.log("IMAGE ERROR", e.message || e);
+      res.json({ error: "Erreur génération image (Gemini) : " + (e.message || "inconnue") });
+    }
   } catch (e) {
     res.json({ error: "Erreur image." });
   }
@@ -448,9 +483,9 @@ app.post("/ocr", upload.single("file"), async (req, res) => {
 // =====================================================
 // SANTÉ / TEST
 // =====================================================
-app.get("/test", (req, res) => res.json({ status: "NovaAI V11 fonctionne 🚀" }));
+app.get("/test", (req, res) => res.json({ status: "NovaAI V12 fonctionne 🚀" }));
 app.get("/health", (req, res) =>
-  res.status(200).json({ status: "online", version: "V11", time: new Date() })
+  res.status(200).json({ status: "online", version: "V12", time: new Date() })
 );
 app.get("/favicon.ico", (req, res) => res.status(204).end());
 
@@ -463,5 +498,5 @@ app.use((err, req, res, next) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`🚀 NovaAI V11 lancé sur le port ${PORT}`);
+  console.log(`🚀 NovaAI V12 lancé sur le port ${PORT}`);
 });
